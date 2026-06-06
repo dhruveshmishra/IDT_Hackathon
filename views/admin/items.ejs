@@ -1,0 +1,68 @@
+<%- include('../layouts/main') %>
+
+<div class="container" style="max-width: 1100px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+    <h2 style="font-family: var(--font-display);"><i class="fa-solid fa-boxes-stacked"></i> Platform Listings Database</h2>
+    <a href="/admin/dashboard" class="btn btn-outline">&larr; Back to Dashboard</a>
+  </div>
+
+  <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+      <thead>
+        <tr style="border-bottom: 2px solid var(--border); color: var(--text-secondary); font-weight: 600;">
+          <th style="padding: 10px 8px;">Listing Title</th>
+          <th style="padding: 10px 8px;">Category</th>
+          <th style="padding: 10px 8px;">Seller</th>
+          <th style="padding: 10px 8px;">Price / Day</th>
+          <th style="padding: 10px 8px;">Safety Status</th>
+          <th style="padding: 10px 8px; text-align: center;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (items.length === 0) { %>
+          <tr>
+            <td colspan="6" style="padding: 20px; text-align: center; color: var(--text-hint);">No items found on the marketplace.</td>
+          </tr>
+        <% } else { %>
+          <% items.forEach(item => { %>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 12px 8px; font-weight: 600;">
+                <a href="/items/<%= item._id %>" target="_blank"><%= item.title %></a>
+              </td>
+              <td style="padding: 12px 8px; text-transform: capitalize;"><%= item.category %></td>
+              <td style="padding: 12px 8px;"><%= item.owner ? item.owner.name : 'Unknown Owner' %></td>
+              <td style="padding: 12px 8px; font-weight: 700;">₹<%= item.pricePerDay %></td>
+              <td style="padding: 12px 8px;">
+                <span style="font-size:0.75rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+                  <%= item.status === 'active' ? 'background-color:#dcfce7; color:#15803d;' : '' %>
+                  <%= item.status === 'pending_review' ? 'background-color:#fef3c7; color:#d97706;' : '' %>
+                  <%= item.status === 'rejected' ? 'background-color:#fee2e2; color:#dc2626;' : '' %>
+                ">
+                  <%= item.status %>
+                </span>
+              </td>
+              <td style="padding: 12px 8px; text-align: center; display:flex; gap:6px; justify-content:center; align-items:center;">
+                <% if (item.status === 'pending_review' || item.status === 'rejected') { %>
+                  <form action="/admin/items/<%= item._id %>/status?_method=PUT" method="POST" style="display: inline;">
+                    <input type="hidden" name="status" value="active">
+                    <button type="submit" class="btn btn-primary" style="padding: 4px 8px; font-size: 0.75rem;"><i class="fa-solid fa-check"></i> Approve</button>
+                  </form>
+                <% } else { %>
+                  <form action="/admin/items/<%= item._id %>/status?_method=PUT" method="POST" style="display: inline;">
+                    <input type="hidden" name="status" value="rejected">
+                    <button type="submit" class="btn btn-danger" style="padding: 4px 8px; font-size: 0.75rem;"><i class="fa-solid fa-ban"></i> Block</button>
+                  </form>
+                <% } %>
+                <form action="/admin/items/<%= item._id %>?_method=DELETE" method="POST" style="display: inline;" onsubmit="return confirm('Delete this listing permanently?')">
+                  <button type="submit" class="btn btn-danger" style="padding: 4px 8px; font-size: 0.75rem;"><i class="fa-solid fa-trash"></i> Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

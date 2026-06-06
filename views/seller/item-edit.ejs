@@ -1,0 +1,98 @@
+<%- include('../layouts/main') %>
+
+<div class="container" style="max-width: 800px;">
+  <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 2.5rem; box-shadow: var(--shadow-md);">
+    
+    <div style="margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+      <h2 style="font-family: var(--font-display); font-size: 1.8rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-pencil" style="color: var(--primary);"></i> Edit Listing
+      </h2>
+      <p style="color: var(--text-secondary); font-size: 0.9rem;">Modify details of your item listing. Saved changes will be resubmitted for content moderation check.</p>
+    </div>
+
+    <form action="/seller/items/<%= item._id %>" method="POST" enctype="multipart/form-data" id="edit-item-form">
+      
+      <!-- Current images -->
+      <% if (item.images && item.images.length > 0) { %>
+        <div class="form-group">
+          <label>Current Photos</label>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1rem;">
+            <% item.images.forEach(img => { %>
+              <div style="position:relative; width:80px; height:80px; border-radius:4px; overflow:hidden; border:1px solid var(--border);">
+                <img src="<%= img.url %>" style="width:100%; height:100%; object-fit:cover;">
+              </div>
+            <% }) %>
+          </div>
+        </div>
+      <% } %>
+
+      <div class="form-group" style="margin-bottom: 2rem;">
+        <label>Add More Photos (Up to 5)</label>
+        <input type="file" name="images" multiple accept="image/*" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="title">Item Title</label>
+        <input type="text" name="title" id="title" class="form-control" value="<%= item.title %>" required>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Listing Description</label>
+        <textarea name="description" id="description" rows="5" class="form-control" required><%= item.description %></textarea>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="form-group">
+          <label for="category">Category</label>
+          <select name="category" id="category" class="form-control" required>
+            <option value="electronics" <%= item.category === 'electronics' ? 'selected' : '' %>>Electronics</option>
+            <option value="tools" <%= item.category === 'tools' ? 'selected' : '' %>>Tools</option>
+            <option value="vehicles" <%= item.category === 'vehicles' ? 'selected' : '' %>>Vehicles</option>
+            <option value="furniture" <%= item.category === 'furniture' ? 'selected' : '' %>>Furniture</option>
+            <option value="sports" <%= item.category === 'sports' ? 'selected' : '' %>>Sports</option>
+            <option value="clothing" <%= item.category === 'clothing' ? 'selected' : '' %>>Clothing</option>
+            <option value="other" <%= item.category === 'other' ? 'selected' : '' %>>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="tags">Search Tags</label>
+          <input type="text" name="tags" id="tags" class="form-control" value="<%= item.tags.join(', ') %>" placeholder="camera, dslr, nikon (comma separated)">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; align-items: flex-end;">
+        <div class="form-group">
+          <label for="pricePerHour">Price Per Hour (₹)</label>
+          <input type="number" name="pricePerHour" id="pricePerHour" class="form-control" value="<%= item.pricePerHour || '' %>" min="0" required>
+        </div>
+        <div class="form-group">
+          <label for="pricePerDay">Price Per Day (₹)</label>
+          <input type="number" name="pricePerDay" id="pricePerDay" class="form-control" value="<%= item.pricePerDay %>" min="0" required>
+        </div>
+        <div class="form-group">
+          <label for="deposit">Refundable Deposit (₹)</label>
+          <input type="number" name="deposit" id="deposit" class="form-control" value="<%= item.deposit %>" min="0">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 2rem;">
+        <label>Location Details</label>
+        <div style="display: flex; gap: 8px; margin-bottom: 0.75rem;">
+          <input type="text" name="address" id="address" class="form-control" value="<%= item.address %>" required>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <input type="number" step="any" name="lng" id="lng" class="form-control" value="<%= item.location.coordinates[0] %>" required>
+          <input type="number" step="any" name="lat" id="lat" class="form-control" value="<%= item.location.coordinates[1] %>" required>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 1rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
+        <a href="/seller/items" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-primary" style="padding: 12px 30px;"><i class="fa-solid fa-floppy-disk"></i> Save Updates</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

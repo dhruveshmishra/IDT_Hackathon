@@ -1,0 +1,86 @@
+<%- include('../layouts/main') %>
+<% locals.activePage = 'users'; %>
+
+<div class="container">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+    <div>
+      <h1 style="font-size: 1.8rem; margin-bottom:0.25rem;"><i class="fa-solid fa-users"></i> Users Database</h1>
+      <p style="color: var(--text-secondary);"><%= users.length %> registered renters on the platform.</p>
+    </div>
+  </div>
+
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm);">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Address <span style="font-size:0.7rem; font-weight:400; color:var(--text-hint);">(visible to sellers)</span></th>
+          <th>Aadhaar</th>
+          <th>Joined</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (users.length === 0) { %>
+          <tr>
+            <td colspan="7" style="padding: 2rem; text-align: center; color: var(--text-hint);">
+              No users registered on the platform yet.
+            </td>
+          </tr>
+        <% } else { %>
+          <% users.forEach(usr => { %>
+            <tr>
+              <td>
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <% if (usr.avatar && usr.avatar.url) { %>
+                    <img src="<%= usr.avatar.url %>" style="width:34px; height:34px; border-radius:50%; object-fit:cover;" alt="">
+                  <% } else { %>
+                    <div style="width:34px; height:34px; border-radius:50%; background:#f1f5f9; display:flex; align-items:center; justify-content:center; color:var(--text-hint);">
+                      <i class="fa-solid fa-user"></i>
+                    </div>
+                  <% } %>
+                  <span style="font-weight:600;"><%= usr.name %></span>
+                </div>
+              </td>
+              <td style="color:var(--text-secondary);"><%= usr.email %></td>
+              <td style="color:var(--text-secondary);"><%= usr.phone || '—' %></td>
+              <td style="font-size:0.85rem; color:var(--text-secondary); max-width:200px;">
+                <% if (usr.address) { %>
+                  <i class="fa-solid fa-location-dot" style="color:var(--accent);"></i> <%= usr.address %>
+                <% } else { %>
+                  <span style="color:var(--text-hint);">Not provided</span>
+                <% } %>
+              </td>
+              <td>
+                <% if (usr.aadhaarVerified) { %>
+                  <span class="badge badge-success"><i class="fa-solid fa-check"></i> Verified</span>
+                <% } else if (usr.aadhaarDoc && usr.aadhaarDoc.url) { %>
+                  <a href="<%= usr.aadhaarDoc.url %>" target="_blank" class="badge badge-warning">
+                    <i class="fa-solid fa-id-card"></i> Review
+                  </a>
+                <% } else { %>
+                  <span class="badge badge-neutral">Not uploaded</span>
+                <% } %>
+              </td>
+              <td style="font-size:0.82rem; color:var(--text-secondary);">
+                <%= new Date(usr.createdAt).toLocaleDateString('en-IN') %>
+              </td>
+              <td>
+                <form action="/admin/users/<%= usr._id %>?_method=DELETE" method="POST" style="display:inline;"
+                  onsubmit="return confirm('Remove this user account permanently?')">
+                  <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="fa-solid fa-user-xmark"></i> Remove
+                  </button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

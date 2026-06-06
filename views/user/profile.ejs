@@ -1,0 +1,213 @@
+<%- include('../layouts/main') %>
+<% locals.activePage = 'profile'; %>
+
+<div class="container">
+  <!-- Page Header -->
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 1.8rem; margin-bottom: 0.25rem;">My Profile</h1>
+    <p style="color: var(--text-secondary);">Manage your account, address, and Aadhaar verification.</p>
+  </div>
+
+  <div class="profile-layout">
+    <!-- Left: Avatar + Summary -->
+    <div>
+      <div class="profile-sidebar-card">
+        <div class="profile-avatar-wrapper">
+          <div class="profile-avatar">
+            <% if (currentUser.avatar && currentUser.avatar.url) { %>
+              <img src="<%= currentUser.avatar.url %>" alt="Profile avatar">
+            <% } else { %>
+              <i class="fa-solid fa-user"></i>
+            <% } %>
+          </div>
+          <label for="avatarFileQuick" class="profile-avatar-edit" title="Change photo">
+            <i class="fa-solid fa-pen"></i>
+          </label>
+        </div>
+
+        <div class="profile-name"><%= currentUser.name %></div>
+        <div style="margin: 0.4rem 0 0.75rem;">
+          <span class="profile-role-badge"><i class="fa-solid fa-user"></i> Renter</span>
+          <% if (currentUser.aadhaarVerified) { %>
+            <span class="badge badge-success" style="margin-left: 4px;"><i class="fa-solid fa-check"></i> Aadhaar Verified</span>
+          <% } %>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+          <i class="fa-solid fa-envelope"></i> <%= currentUser.email %>
+        </p>
+        <% if (currentUser.phone) { %>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+          <i class="fa-solid fa-phone"></i> <%= currentUser.phone %>
+        </p>
+        <% } %>
+        <% if (currentUser.address) { %>
+        <p style="font-size: 0.85rem; color: var(--text-secondary);">
+          <i class="fa-solid fa-location-dot"></i> <%= currentUser.address %>
+        </p>
+        <% } %>
+
+        <div class="profile-stat-row">
+          <div class="profile-stat">
+            <div class="profile-stat-value">0</div>
+            <div class="profile-stat-label">Bookings</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat-value">
+              <% if (currentUser.aadhaarVerified) { %>
+                <i class="fa-solid fa-circle-check" style="color: var(--success); font-size: 1.5rem;"></i>
+              <% } else { %>
+                <i class="fa-solid fa-circle-xmark" style="color: var(--danger); font-size: 1.5rem;"></i>
+              <% } %>
+            </div>
+            <div class="profile-stat-label">KYC</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Edit Forms -->
+    <div>
+
+      <!-- Basic Info Form -->
+      <div class="profile-form-card">
+        <div class="profile-section-title">
+          <i class="fa-solid fa-pen-to-square" style="color: var(--primary);"></i> Personal Information
+        </div>
+
+        <form action="/user/profile" method="POST" enctype="multipart/form-data">
+          <input type="file" name="avatar" id="avatarFileQuick" style="display:none;" accept="image/*"
+            onchange="this.form.submit()">
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label for="name">Full Name</label>
+              <input type="text" name="name" id="name" class="form-control" value="<%= currentUser.name %>" required>
+            </div>
+            <div class="form-group">
+              <label for="phone">Phone Number</label>
+              <input type="tel" name="phone" id="phone" class="form-control" value="<%= currentUser.phone || '' %>">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="address">
+              <i class="fa-solid fa-location-dot"></i> Your Address
+              <span style="font-size:0.78rem; font-weight:400; color: var(--text-hint);">(visible to sellers & admins)</span>
+            </label>
+            <input type="text" name="address" id="address" class="form-control"
+              value="<%= currentUser.address || '' %>"
+              placeholder="Flat 4B, Andheri West, Mumbai 400053">
+            <span class="form-hint">This helps sellers coordinate item pickup/delivery.</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label for="lng">Longitude</label>
+              <input type="number" name="lng" id="lng" class="form-control" step="any"
+                value="<%= currentUser.location && currentUser.location.coordinates ? currentUser.location.coordinates[0] : '' %>"
+                placeholder="72.8777">
+            </div>
+            <div class="form-group">
+              <label for="lat">Latitude</label>
+              <input type="number" name="lat" id="lat" class="form-control" step="any"
+                value="<%= currentUser.location && currentUser.location.coordinates ? currentUser.location.coordinates[1] : '' %>"
+                placeholder="19.0760">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="saveProfileBtn">
+            <i class="fa-solid fa-floppy-disk"></i> Save Changes
+          </button>
+        </form>
+      </div>
+
+      <!-- Aadhaar Verification Card -->
+      <div class="profile-form-card">
+        <div class="profile-section-title">
+          <i class="fa-solid fa-id-card" style="color: var(--accent);"></i> Aadhaar Verification
+        </div>
+
+        <!-- Current Aadhaar Status Card -->
+        <% if (currentUser.aadhaarNumber || currentUser.aadhaarDoc && currentUser.aadhaarDoc.url) { %>
+          <div class="aadhaar-card" style="margin-bottom: 1.5rem;">
+            <div style="font-size: 0.75rem; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.08em;">Government of India</div>
+            <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 0.25rem;">Aadhaar</div>
+            <div class="aadhaar-number-display">
+              <% if (currentUser.aadhaarNumber) { %>
+                XXXX XXXX <%= currentUser.aadhaarNumber.slice(-4) %>
+              <% } else { %>
+                XXXX XXXX XXXX
+              <% } %>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.75rem;">
+              <span style="font-size:0.8rem; opacity:0.7;"><%= currentUser.name %></span>
+              <% if (currentUser.aadhaarVerified) { %>
+                <span class="aadhaar-status-badge verified"><i class="fa-solid fa-circle-check"></i> Verified</span>
+              <% } else if (currentUser.aadhaarDoc && currentUser.aadhaarDoc.url) { %>
+                <span class="aadhaar-status-badge pending"><i class="fa-solid fa-clock"></i> Pending Review</span>
+              <% } else { %>
+                <span class="aadhaar-status-badge not-uploaded"><i class="fa-solid fa-circle-exclamation"></i> Not Uploaded</span>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+
+        <% if (!currentUser.aadhaarVerified) { %>
+          <form action="/user/aadhaar" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+              <label for="aadhaarNumber">Aadhaar Number (12 digits)</label>
+              <input type="text" name="aadhaarNumber" id="aadhaarNumber" class="form-control"
+                value="<%= currentUser.aadhaarNumber ? currentUser.aadhaarNumber.replace(/(\d{4})(\d{4})(\d{4})/, '$1 $2 $3') : '' %>"
+                placeholder="1234 5678 9012" maxlength="14"
+                oninput="formatAadhaar(this)">
+            </div>
+            <div class="form-group">
+              <label>Aadhaar Card Photo</label>
+              <div class="file-upload-area" onclick="document.getElementById('aadhaarFile').click()">
+                <input type="file" name="aadhaar" id="aadhaarFile" accept="image/*,application/pdf"
+                  onchange="showFileName(this, 'aadhaarFileNameDisplay')">
+                <% if (currentUser.aadhaarDoc && currentUser.aadhaarDoc.url) { %>
+                  <div class="file-upload-icon"><i class="fa-solid fa-check-circle" style="color: var(--success);"></i></div>
+                  <div class="file-upload-text">Aadhaar uploaded — click to replace</div>
+                <% } else { %>
+                  <div class="file-upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                  <div class="file-upload-text" id="aadhaarFileNameDisplay">
+                    Click to upload Aadhaar card image<br>
+                    <small style="color:var(--text-hint);">JPG, PNG, or PDF — max 5MB</small>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-accent" id="submitAadhaarBtn">
+              <i class="fa-solid fa-upload"></i> Submit for Verification
+            </button>
+          </form>
+        <% } else { %>
+          <div style="display: flex; align-items: center; gap: 12px; padding: 1rem; background: #dcfce7; border-radius: var(--radius-md); border: 1px solid #86efac;">
+            <i class="fa-solid fa-circle-check" style="color: var(--success); font-size: 1.5rem;"></i>
+            <div>
+              <strong style="color: #166534;">Aadhaar Verified</strong>
+              <p style="font-size: 0.85rem; color: #166534; margin: 0;">Your identity has been confirmed by our team.</p>
+            </div>
+          </div>
+        <% } %>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  function formatAadhaar(input) {
+    let v = input.value.replace(/\D/g, '').substring(0, 12);
+    input.value = v.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
+  }
+  function showFileName(input, targetId) {
+    if (input.files && input.files[0]) {
+      const el = document.getElementById(targetId);
+      if (el) el.innerHTML = '<i class="fa-solid fa-check-circle" style="color:var(--success);"></i> ' + input.files[0].name;
+    }
+  }
+</script>
+
+<%- include('../layouts/footer') %>

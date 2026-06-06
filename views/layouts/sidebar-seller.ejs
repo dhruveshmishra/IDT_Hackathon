@@ -1,0 +1,127 @@
+<!-- LEFT SIDEBAR: SELLER PORTAL -->
+<nav class="sidebar-nav" id="sidebarNav">
+  <!-- Toggle button -->
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+    <i class="fa-solid fa-chevron-left"></i>
+  </button>
+
+  <!-- Brand -->
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-logo">R</div>
+    <span class="sidebar-brand-text">RentIt Seller</span>
+  </div>
+
+  <!-- Seller Info -->
+  <div class="sidebar-user">
+    <div class="sidebar-avatar">
+      <% if (currentUser && currentUser.avatar && currentUser.avatar.url) { %>
+        <img src="<%= currentUser.avatar.url %>" alt="Avatar">
+      <% } else { %>
+        <i class="fa-solid fa-user-tie"></i>
+      <% } %>
+    </div>
+    <div class="sidebar-user-info">
+      <div class="sidebar-user-name"><%= currentUser ? currentUser.name : 'Seller' %></div>
+      <div class="sidebar-user-role">
+        <% if (currentUser && currentUser.isVerified) { %>
+          <span style="color:#4ADE80;">✓ Verified Seller</span>
+        <% } else { %>
+          <span style="color:#FBBF24;">Pending Verification</span>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <ul class="sidebar-menu">
+    <li class="sidebar-section-label">Dashboard</li>
+    <li>
+      <a href="/seller/dashboard" class="sidebar-menu-link <%= locals.activePage === 'dashboard' ? 'active' : '' %>" data-label="Dashboard">
+        <span class="sidebar-menu-icon"><i class="fa-solid fa-chart-line"></i></span>
+        <span class="sidebar-menu-label">Dashboard</span>
+      </a>
+    </li>
+
+    <li class="sidebar-section-label">Listings</li>
+    <li>
+      <a href="/seller/items" class="sidebar-menu-link <%= locals.activePage === 'items' ? 'active' : '' %>" data-label="My Listings">
+        <span class="sidebar-menu-icon"><i class="fa-solid fa-boxes-stacked"></i></span>
+        <span class="sidebar-menu-label">My Listings</span>
+      </a>
+    </li>
+    <li>
+      <a href="/seller/items/new" class="sidebar-menu-link" data-label="Add Listing">
+        <span class="sidebar-menu-icon"><i class="fa-solid fa-plus-circle"></i></span>
+        <span class="sidebar-menu-label">Add Listing</span>
+      </a>
+    </li>
+
+    <li class="sidebar-section-label">Bookings</li>
+    <li>
+      <a href="/seller/bookings" class="sidebar-menu-link <%= locals.activePage === 'bookings' ? 'active' : '' %>" data-label="Booking Calendar">
+        <span class="sidebar-menu-icon"><i class="fa-regular fa-calendar-days"></i></span>
+        <span class="sidebar-menu-label">Booking Calendar</span>
+      </a>
+    </li>
+
+    <li class="sidebar-section-label">Account</li>
+    <li>
+      <a href="/seller/profile" class="sidebar-menu-link <%= locals.activePage === 'profile' ? 'active' : '' %>" data-label="My Profile">
+        <span class="sidebar-menu-icon"><i class="fa-regular fa-user"></i></span>
+        <span class="sidebar-menu-label">My Profile</span>
+      </a>
+    </li>
+    <li>
+      <a href="/seller/verify" class="sidebar-menu-link <%= locals.activePage === 'verify' ? 'active' : '' %>" data-label="Verification">
+        <span class="sidebar-menu-icon"><i class="fa-solid fa-shield-halved"></i></span>
+        <span class="sidebar-menu-label">Verification Docs</span>
+      </a>
+    </li>
+  </ul>
+
+  <!-- Logout -->
+  <div class="sidebar-footer">
+    <form action="/auth/logout" method="POST">
+      <button type="submit" class="sidebar-logout-btn">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        <span class="sidebar-logout-label">Logout</span>
+      </button>
+    </form>
+  </div>
+</nav>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+(function() {
+  const nav     = document.getElementById('sidebarNav');
+  const toggle  = document.getElementById('sidebarToggle');
+  const content = document.getElementById('pageContent');
+  const overlay = document.getElementById('sidebarOverlay');
+
+  const STORAGE_KEY = 'rentit_sidebar_collapsed';
+  const collapsed = localStorage.getItem(STORAGE_KEY) === 'true';
+  if (collapsed) {
+    nav.classList.add('collapsed');
+    if (content) content.classList.add('collapsed');
+  }
+
+  toggle.addEventListener('click', () => {
+    const isCollapsed = nav.classList.toggle('collapsed');
+    if (content) content.classList.toggle('collapsed', isCollapsed);
+    localStorage.setItem(STORAGE_KEY, isCollapsed);
+  });
+
+  const mobileBtn = document.getElementById('mobileMenuBtn');
+  if (mobileBtn) {
+    mobileBtn.addEventListener('click', () => {
+      nav.classList.add('mobile-open');
+      overlay.classList.add('visible');
+    });
+  }
+  overlay.addEventListener('click', () => {
+    nav.classList.remove('mobile-open');
+    overlay.classList.remove('visible');
+  });
+})();
+</script>

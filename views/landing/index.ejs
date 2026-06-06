@@ -1,0 +1,133 @@
+<%- include('../layouts/main') %>
+
+<!-- Hero Banner -->
+<section style="background: linear-gradient(135deg, #eff6ff 0%, #fff 100%); padding: 6rem 1.5rem; text-align: center; position: relative; overflow: hidden; border-bottom: 1px solid var(--border);">
+  <div style="max-width: 800px; margin: 0 auto; z-index: 10; position: relative;">
+    
+    <span style="background-color: #dbeafe; color: var(--primary); font-size: 0.85rem; font-weight: 700; padding: 6px 14px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.05em; display: inline-block; margin-bottom: 1.5rem;">
+      <i class="fa-solid fa-bolt"></i> Peer-to-Peer Rentals in India
+    </span>
+    
+    <h1 style="font-size: 3.5rem; line-height: 1.15; font-family: var(--font-display); font-weight: 700; margin-bottom: 1.5rem; letter-spacing: -0.02em;">
+      Rent anything, from <span style="background: linear-gradient(to right, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">anyone near you</span>
+    </h1>
+    
+    <p style="font-size: 1.25rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto 2.5rem; line-height: 1.6;">
+      Find items within 1km · Pay securely via UPI & Cards · Chat directly with local neighbors. Save money, reduce waste.
+    </p>
+
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      <a href="/items" class="btn btn-primary" style="padding: 14px 32px; font-size: 1.05rem; box-shadow: var(--shadow-md);"><i class="fa-solid fa-location-arrow"></i> Browse Near Me</a>
+    </div>
+
+  </div>
+
+  <!-- Decorative blur blobs -->
+  <div style="position: absolute; width: 300px; height: 300px; background: rgba(37,99,235,0.15); filter: blur(80px); top: -50px; left: -50px; border-radius: 50%;"></div>
+  <div style="position: absolute; width: 300px; height: 300px; background: rgba(249,115,22,0.1); filter: blur(80px); bottom: -50px; right: -50px; border-radius: 50%;"></div>
+</section>
+
+<div class="container">
+  
+  <!-- Categories Row -->
+  <section style="margin-bottom: 5rem;" id="categories">
+    <h2 style="font-family: var(--font-display); text-align: center; margin-bottom: 2.5rem; font-size: 1.8rem;">Browse Popular Categories</h2>
+    <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+      
+      <a href="/items?category=electronics" class="item-card" style="flex:1; min-width:140px; max-width: 180px; padding: 1.5rem; text-align: center; border-radius: var(--radius-md);">
+        <div style="font-size: 2rem; color: var(--primary); margin-bottom: 0.75rem;"><i class="fa-solid fa-laptop"></i></div>
+        <strong style="color:var(--text-primary); font-size:0.95rem;">Electronics</strong>
+      </a>
+      
+      <a href="/items?category=tools" class="item-card" style="flex:1; min-width:140px; max-width: 180px; padding: 1.5rem; text-align: center; border-radius: var(--radius-md);">
+        <div style="font-size: 2rem; color: var(--accent); margin-bottom: 0.75rem;"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+        <strong style="color:var(--text-primary); font-size:0.95rem;">Tools</strong>
+      </a>
+      
+      <a href="/items?category=vehicles" class="item-card" style="flex:1; min-width:140px; max-width: 180px; padding: 1.5rem; text-align: center; border-radius: var(--radius-md);">
+        <div style="font-size: 2rem; color: var(--success); margin-bottom: 0.75rem;"><i class="fa-solid fa-motorcycle"></i></div>
+        <strong style="color:var(--text-primary); font-size:0.95rem;">Vehicles</strong>
+      </a>
+      
+      <a href="/items?category=furniture" class="item-card" style="flex:1; min-width:140px; max-width: 180px; padding: 1.5rem; text-align: center; border-radius: var(--radius-md);">
+        <div style="font-size: 2rem; color: var(--warning); margin-bottom: 0.75rem;"><i class="fa-solid fa-chair"></i></div>
+        <strong style="color:var(--text-primary); font-size:0.95rem;">Furniture</strong>
+      </a>
+      
+      <a href="/items?category=sports" class="item-card" style="flex:1; min-width:140px; max-width: 180px; padding: 1.5rem; text-align: center; border-radius: var(--radius-md);">
+        <div style="font-size: 2rem; color: #a855f7; margin-bottom: 0.75rem;"><i class="fa-solid fa-bicycle"></i></div>
+        <strong style="color:var(--text-primary); font-size:0.95rem;">Sports</strong>
+      </a>
+
+      <a href="/items?category=clothing" class="item-card" style="flex:1; min-width:140px; max-width: 180px; padding: 1.5rem; text-align: center; border-radius: var(--radius-md);">
+        <div style="font-size: 2rem; color: #ec4899; margin-bottom: 0.75rem;"><i class="fa-solid fa-shirt"></i></div>
+        <strong style="color:var(--text-primary); font-size:0.95rem;">Clothing</strong>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section style="margin-bottom: 5rem;" id="how-it-works">
+    <h2 style="font-family: var(--font-display); text-align: center; margin-bottom: 1rem; font-size: 1.8rem;">How It Works</h2>
+    <p style="color: var(--text-secondary); text-align: center; max-width: 500px; margin: 0 auto 3rem;">RentIt makes renting items as simple as ordering food online.</p>
+
+    <div style="display: flex; gap: 2rem; flex-wrap: wrap; justify-content: center;">
+      
+      <div class="item-card" style="flex: 1; min-width: 260px; max-width: 340px; padding: 2rem; border-radius: var(--radius-lg); position: relative;">
+        <span style="font-size: 4rem; font-weight: 700; color: rgba(37,99,235,0.08); position: absolute; top: 12px; right: 20px; font-family: var(--font-display);">01</span>
+        <div style="font-size: 2rem; color: var(--primary); margin-bottom: 1.25rem;"><i class="fa-solid fa-magnifying-glass-location"></i></div>
+        <h3 style="font-family: var(--font-display); font-size: 1.2rem; margin-bottom: 0.75rem;">Search Nearby</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">Find tools, electronics, or gear located within 1km using our integrated Leaflet map panel search.</p>
+      </div>
+
+      <div class="item-card" style="flex: 1; min-width: 260px; max-width: 340px; padding: 2rem; border-radius: var(--radius-lg); position: relative;">
+        <span style="font-size: 4rem; font-weight: 700; color: rgba(249,115,22,0.08); position: absolute; top: 12px; right: 20px; font-family: var(--font-display);">02</span>
+        <div style="font-size: 2rem; color: var(--accent); margin-bottom: 1.25rem;"><i class="fa-solid fa-credit-card"></i></div>
+        <h3 style="font-family: var(--font-display); font-size: 1.2rem; margin-bottom: 0.75rem;">Secure Book & Pay</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">Select your dates, pay safely using Razorpay (supporting UPI & cards), and coordinate handovers.</p>
+      </div>
+
+      <div class="item-card" style="flex: 1; min-width: 260px; max-width: 340px; padding: 2rem; border-radius: var(--radius-lg); position: relative;">
+        <span style="font-size: 4rem; font-weight: 700; color: rgba(22,163,74,0.08); position: absolute; top: 12px; right: 20px; font-family: var(--font-display);">03</span>
+        <div style="font-size: 2rem; color: var(--success); margin-bottom: 1.25rem;"><i class="fa-solid fa-circle-check"></i></div>
+        <h3 style="font-family: var(--font-display); font-size: 1.2rem; margin-bottom: 0.75rem;">Return & Rate</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">Return the item to the owner after use, get your deposit refunded, and rate your experience.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- AI features banner -->
+  <section style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); border-radius: var(--radius-lg); padding: 3.5rem; color: #fff; margin-bottom: 5rem; position: relative; box-shadow: var(--shadow-md);">
+    <div style="max-width: 600px;">
+      <span style="background-color: rgba(255,255,255,0.2); color: #fff; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 9999px; text-transform: uppercase; margin-bottom: 1rem; display: inline-block;">✦ Intelligent Portal</span>
+      <h2 style="font-family: var(--font-display); color: #fff; font-size: 2.2rem; margin-bottom: 1rem; letter-spacing: -0.01em;">Smart rentals powered by Gemini AI</h2>
+      <p style="font-size: 1rem; opacity: 0.9; margin-bottom: 2rem; line-height: 1.6;">
+        We integrate Google Gemini AI directly into our workflows to summarize reviews, moderate content, generate product descriptions, suggest local market prices, and parse search queries.
+      </p>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; margin-top: 1rem;">
+      <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: var(--radius-md); padding: 1.25rem;">
+        <h4 style="color: #fff; margin-bottom: 4px; font-family: var(--font-display); font-size: 1rem;">🤖 Smart Search</h4>
+        <p style="font-size: 0.8rem; opacity: 0.8; margin: 0;">Type searches in plain natural English and let AI build parameters.</p>
+      </div>
+      <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: var(--radius-md); padding: 1.25rem;">
+        <h4 style="color: #fff; margin-bottom: 4px; font-family: var(--font-display); font-size: 1rem;">✍️ Auto-Descriptions</h4>
+        <p style="font-size: 0.8rem; opacity: 0.8; margin: 0;">Upload photos and get listing descriptions generated instantly.</p>
+      </div>
+      <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: var(--radius-md); padding: 1.25rem;">
+        <h4 style="color: #fff; margin-bottom: 4px; font-family: var(--font-display); font-size: 1rem;">💰 Price Advisor</h4>
+        <p style="font-size: 0.8rem; opacity: 0.8; margin: 0;">Obtain fair pricing suggestion advice matching current market trends.</p>
+      </div>
+    </div>
+
+    <div style="position: absolute; bottom: 16px; right: 20px; font-size: 0.75rem; opacity: 0.6; font-weight: 600;">
+      Powered by Google Gemini 1.5 Flash
+    </div>
+  </section>
+
+</div>
+
+<%- include('../layouts/footer') %>

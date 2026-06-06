@@ -1,0 +1,623 @@
+<%- include('../layouts/main') %>
+
+<div class="container" style="max-width: 1100px;">
+  <div style="display: flex; gap: 2.5rem; flex-wrap: wrap; align-items: flex-start;">
+    
+    <!-- Left Column (60% width) -->
+    <div style="flex: 3; min-width: 320px;">
+      
+      <!-- Image Gallery -->
+      <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 2rem; box-shadow: var(--shadow-sm);">
+        <div style="width: 100%; height: 400px; background-color: #f1f5f9; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;">
+          <% if (item.images && item.images.length > 0) { %>
+            <img src="<%= item.images[0].url %>" id="main-gallery-img" style="width: 100%; height: 100%; object-fit: cover;" alt="<%= item.title %>">
+          <% } else { %>
+            <i class="fa-solid fa-camera" style="font-size: 5rem; color: var(--text-hint);"></i>
+          <% } %>
+        </div>
+        
+        <% if (item.images && item.images.length > 1) { %>
+          <div style="display: flex; gap: 8px; padding: 12px; overflow-x: auto; background-color: #f8fafc; border-top: 1px solid var(--border);">
+            <% item.images.forEach((img, idx) => { %>
+              <img src="<%= img.url %>" class="gallery-thumbnail" onclick="document.getElementById('main-gallery-img').src='<%= img.url %>'" style="width: 60px; height: 60px; object-fit: cover; border-radius: var(--radius-sm); border: 2px solid <%= idx === 0 ? 'var(--primary)' : 'transparent' %>; cursor: pointer;">
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Item Meta -->
+      <div style="margin-bottom: 2rem;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.5rem; flex-wrap: wrap;">
+          <span class="item-card-badge" style="position: static;"><%= item.category %></span>
+          <% if (item.aiGenerated) { %>
+            <span style="background-color: #e0f2fe; color: #0369a1; font-size: 0.75rem; font-weight: 600; padding: 4px 8px; border-radius: var(--radius-sm); display: inline-flex; align-items: center; gap: 4px;">
+              <i class="fa-solid fa-robot"></i> AI-Generated Listing
+            </span>
+          <% } %>
+          <% if (item.isAvailable) { %>
+            <span style="background-color: #dcfce7; color: #15803d; font-size: 0.75rem; font-weight: 600; padding: 4px 8px; border-radius: var(--radius-sm);">Available</span>
+          <% } else { %>
+            <span style="background-color: #fee2e2; color: #b91c1c; font-size: 0.75rem; font-weight: 600; padding: 4px 8px; border-radius: var(--radius-sm);">Rented Out</span>
+          <% } %>
+        </div>
+
+        <h1 style="font-size: 2.2rem; font-family: var(--font-display); margin-bottom: 0.75rem;"><%= item.title %></h1>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 1rem;">
+          <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;"><i class="fa-solid fa-location-dot"></i> <%= item.address || 'Local Area' %></p>
+          <% if (locals.distanceKm !== null && locals.distanceKm !== undefined) { %>
+            <%
+              const dk = locals.distanceKm;
+              let dBg, dColor, dIcon, dLabel;
+              if (dk < 0.1) { dBg='#dcfce7'; dColor='#15803d'; dIcon='fa-walking'; dLabel = Math.round(dk*1000)+'m away'; }
+              else if (dk <= 1) { dBg='#dcfce7'; dColor='#15803d'; dIcon='fa-walking'; dLabel = dk.toFixed(1)+' km away'; }
+              else if (dk <= 5) { dBg='#dbeafe'; dColor='#1d4ed8'; dIcon='fa-bicycle'; dLabel = dk.toFixed(1)+' km away'; }
+              else { dBg='#fef9c3'; dColor='#92400e'; dIcon='fa-car'; dLabel = dk.toFixed(1)+' km away'; }
+            %>
+            <span style="background: <%- dBg %>; color: <%- dColor %>; font-weight: 700; font-size: 0.8rem; padding: 4px 12px; border-radius: 99px; display: inline-flex; align-items: center; gap: 6px;">
+              <i class="fa-solid <%- dIcon %>"></i> <%- dLabel %>
+            </span>
+          <% } %>
+        </div>
+        
+        <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem; font-family: var(--font-display);">Description</h3>
+        <p style="color: var(--text-secondary); white-space: pre-line; margin-bottom: 1.5rem;"><%= item.description %></p>
+
+        <!-- Tags -->
+        <% if (item.tags && item.tags.length > 0) { %>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 2rem;">
+            <% item.tags.forEach(tag => { %>
+              <span style="background-color: #f1f5f9; color: var(--text-secondary); font-size: 0.8rem; font-weight: 500; padding: 4px 10px; border-radius: 9999px;">#<%= tag %></span>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- AI Review Summary Box -->
+      <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 2.5rem; box-shadow: var(--shadow-sm);">
+        <h3 style="font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 8px; margin-bottom: 0.5rem;">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> AI Review Summary
+        </h3>
+        <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; font-style: italic;">
+          "<%= reviewSummary %>"
+        </p>
+        <span style="font-size: 0.75rem; color: var(--text-hint); display: block; margin-top: 0.5rem;">✦ Generated dynamically via Gemini AI</span>
+      </div>
+
+      <!-- Reviews Section -->
+      <div>
+        <h3 style="font-size: 1.3rem; font-family: var(--font-display); margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+          Reviews (<%= reviews.length %>)
+        </h3>
+
+        <% if (reviews.length === 0) { %>
+          <p style="color: var(--text-secondary); font-style: italic; margin-bottom: 2rem;">No reviews yet. Be the first to leave feedback!</p>
+        <% } else { %>
+          <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem;">
+            <% reviews.forEach(review => { %>
+              <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; box-shadow: var(--shadow-sm);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <% if (review.author.avatar && review.author.avatar.url) { %>
+                      <img src="<%= review.author.avatar.url %>" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" alt="avatar">
+                    <% } else { %>
+                      <div style="width: 28px; height: 28px; border-radius: 50%; background-color:#cbd5e1; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700;"><%= review.author.name[0] %></div>
+                    <% } %>
+                    <strong style="font-size: 0.9rem;"><%= review.author.name %></strong>
+                  </div>
+                  <div style="color: #fbbf24; font-size: 0.85rem;">
+                    <% for(let i=0; i<5; i++) { %>
+                      <i class="<%= i < review.rating ? 'fa-solid' : 'fa-regular' %> fa-star"></i>
+                    <% } %>
+                  </div>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;"><%= review.comment %></p>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+
+        <!-- Review Input Form (only for logged in users) -->
+        <% if (currentUser && currentUser.role === 'user') { %>
+          <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm);">
+            <h4 style="font-family: var(--font-display); margin-bottom: 1rem;">Leave a Review</h4>
+            <form action="/user/review/<%= item._id %>" method="POST">
+              <div class="form-group">
+                <label for="rating">Rating</label>
+                <select name="rating" id="rating" class="form-control" style="max-width: 150px;" required>
+                  <option value="5">5 Stars — Excellent</option>
+                  <option value="4">4 Stars — Good</option>
+                  <option value="3">3 Stars — Average</option>
+                  <option value="2">2 Stars — Poor</option>
+                  <option value="1">1 Star — Terrible</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="comment">Review Comment</label>
+                <textarea name="comment" id="comment" rows="3" class="form-control" placeholder="Share your experience renting this item..." required></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Submit Review</button>
+            </form>
+          </div>
+        <% } %>
+      </div>
+
+    </div>
+
+    <!-- Right Column (40% width) -->
+    <div style="flex: 2; min-width: 300px; position: sticky; top: 90px; display: flex; flex-direction: column; gap: 1.5rem;">
+      
+      <!-- Booking Widget Card -->
+      <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 2rem; box-shadow: var(--shadow-md);">
+        <h3 style="font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+          <span>Rental Booking</span>
+        </h3>
+        
+        <form id="booking-form">
+          <!-- Rent Mode Toggle -->
+          <div style="display: flex; gap: 8px; margin-bottom: 1.25rem; background: #f1f5f9; padding: 4px; border-radius: var(--radius-md);">
+            <button type="button" id="mode-daily-btn" class="btn btn-primary" style="flex: 1; padding: 6px; font-size: 0.825rem; font-weight: 700; border-radius: var(--radius-sm);">Daily Rent</button>
+            <button type="button" id="mode-hourly-btn" class="btn btn-secondary" style="flex: 1; padding: 6px; font-size: 0.825rem; font-weight: 700; border-radius: var(--radius-sm); background:transparent; color:var(--text-secondary); border:none;">Hourly Rent</button>
+          </div>
+          <input type="hidden" id="rental-mode-input" name="rentalMode" value="daily">
+
+          <!-- Daily Selector Group -->
+          <div class="form-group" id="daily-select-group">
+            <label for="date-range">Select Dates</label>
+            <input type="text" id="date-range" class="form-control" placeholder="Choose start and end dates" style="background-color:#fff;" required>
+          </div>
+
+          <!-- Hourly Selector Group -->
+          <div id="hourly-select-group" style="display: none; flex-direction: column; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group" style="margin: 0;">
+              <label for="hourly-start-date">Select Start Date & Time</label>
+              <input type="text" id="hourly-start-date" class="form-control" placeholder="Choose start date & time" style="background-color:#fff;">
+            </div>
+            <div class="form-group" style="margin: 0;">
+              <label for="hourly-duration">Select Duration</label>
+              <select id="hourly-duration" class="form-control">
+                <option value="1">1 Hour — 15% rate</option>
+                <option value="2">2 Hours — 25% rate</option>
+                <option value="4">4 Hours — 40% rate</option>
+                <option value="6">6 Hours — 55% rate</option>
+                <option value="9">9 Hours — 70% rate</option>
+                <option value="13">13 Hours — 85% rate</option>
+                <option value="24">24 Hours — 100% rate</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Auto calculation pricing breakdowns -->
+          <div style="background-color:#f8fafc; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; display:none;" id="price-breakdown">
+            <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.9rem; color:var(--text-secondary);">
+              <span id="breakdown-label">₹<%= item.pricePerDay %> x <span id="days-count">0</span> days</span>
+              <span>₹<span id="rental-subtotal">0</span></span>
+            </div>
+            <% if (item.deposit > 0) { %>
+              <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.9rem; color:var(--text-secondary);">
+                <span>Refundable Deposit</span>
+                <span>₹<%= item.deposit %></span>
+              </div>
+            <% } %>
+            <div style="display:flex; justify-content:space-between; border-top:1px dashed var(--border); padding-top:0.5rem; font-weight:700; font-size:1.05rem;">
+              <span>Total Amount</span>
+              <span>₹<span id="rental-total">0</span></span>
+            </div>
+          </div>
+
+          <input type="hidden" name="itemId" value="<%= item._id %>">
+          <input type="hidden" name="startDate" id="start-date-input">
+          <input type="hidden" name="endDate" id="end-date-input">
+          <input type="hidden" name="totalDays" id="total-days-input">
+          <input type="hidden" name="totalAmount" id="total-amount-input">
+          <input type="hidden" name="deposit" value="<%= item.deposit %>">
+
+          <% if (!currentUser) { %>
+            <a href="/auth/login" class="btn btn-primary" style="width: 100%;"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login to Book</a>
+          <% } else if (currentUser.role === 'user') { %>
+            <% if (!currentUser.aadhaarVerified) { %>
+              <div style="background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem; text-align: center; box-shadow: var(--shadow-sm);">
+                <p style="color: #b45309; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  <i class="fa-solid fa-triangle-exclamation"></i> Aadhaar Verification Required
+                </p>
+                <p style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 0.75rem; line-height: 1.4;">
+                  You must verify your Aadhaar and get admin approval before booking any items.
+                </p>
+                <a href="/user/profile" class="btn btn-outline" style="font-size: 0.8rem; padding: 6px 12px; width: 100%; border-color: #b45309; color: #b45309;">
+                  Go to Profile to Upload Aadhaar
+                </a>
+              </div>
+              <button type="button" class="btn btn-primary" style="width: 100%; opacity: 0.65; cursor: not-allowed;" disabled>
+                <i class="fa-solid fa-lock"></i> Booking Locked
+              </button>
+            <% } else { %>
+              <button type="submit" id="book-btn" class="btn btn-primary" style="width: 100%;" disabled>
+                <i class="fa-solid fa-credit-card"></i> Book & Pay
+              </button>
+            <% } %>
+          <% } else { %>
+            <p style="text-align: center; color: var(--danger); font-size: 0.85rem; font-weight: 600;">You must have a Renter account to book items.</p>
+          <% } %>
+        </form>
+      </div>
+
+      <!-- Seller Profile Card -->
+      <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <% if (item.owner.avatar && item.owner.avatar.url) { %>
+            <img src="<%= item.owner.avatar.url %>" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" alt="owner avatar">
+          <% } else { %>
+            <div style="width: 50px; height: 50px; border-radius: 50%; background-color:#cbd5e1; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700;"><%= item.owner.name[0] %></div>
+          <% } %>
+          <div>
+            <h4 style="margin: 0; font-size: 0.95rem; font-family: var(--font-display);"><%= item.owner.name %></h4>
+            <span style="color: var(--text-secondary); font-size: 0.8rem;">Seller Profile</span>
+            <% if (item.owner.isVerified) { %>
+              <i class="fa-solid fa-circle-check" style="color: var(--success); font-size: 0.85rem;" title="Verified Business"></i>
+            <% } %>
+          </div>
+        </div>
+        
+        <!-- Chat trigger or booking creation check -->
+        <% if (currentUser && currentUser.role === 'user') { %>
+          <button id="start-chat-btn" class="btn btn-outline" style="padding: 8px 12px; font-size: 0.8rem;">
+            <i class="fa-regular fa-comment-dots"></i> Chat
+          </button>
+        <% } %>
+      </div>
+
+      <!-- Location Mini-Map with Distance -->
+      <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm);">
+        <div style="padding: 0.875rem 1rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: 600; font-size: 0.9rem;"><i class="fa-solid fa-map-location-dot" style="color: var(--primary);"></i> Location</span>
+          <% if (locals.distanceKm !== null && locals.distanceKm !== undefined) { %>
+            <span style="font-size: 0.82rem; color: var(--text-secondary);">
+              <i class="fa-solid fa-route"></i> <%= locals.distanceKm.toFixed(1) %> km from you
+            </span>
+          <% } %>
+        </div>
+        <div id="mini-map" style="width:100%; height:200px;"></div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- Socket.io / flatpickr / payment handlers -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const itemPrice = <%= item.pricePerDay %>;
+    const itemHourlyPrice = <%= item.pricePerHour || Math.round(item.pricePerDay / 10) %>;
+    const itemDeposit = <%= item.deposit %>;
+    const itemId = '<%= item._id %>';
+    const sellerId = '<%= item.owner._id %>';
+
+    // Image gallery thumbnail borders
+    const thumbs = document.querySelectorAll('.gallery-thumbnail');
+    thumbs.forEach(t => {
+      t.addEventListener('click', () => {
+        thumbs.forEach(x => x.style.borderColor = 'transparent');
+        t.style.borderColor = 'var(--primary)';
+      });
+    });
+
+    // Pricing multipliers for hourly durations
+    const hourlyMultipliers = {
+      1: 0.15,
+      2: 0.25,
+      4: 0.40,
+      6: 0.55,
+      9: 0.70,
+      13: 0.85,
+      24: 1.00
+    };
+
+    // Mode Toggle Elements
+    const modeDailyBtn = document.getElementById('mode-daily-btn');
+    const modeHourlyBtn = document.getElementById('mode-hourly-btn');
+    const rentalModeInput = document.getElementById('rental-mode-input');
+    const dailySelectGroup = document.getElementById('daily-select-group');
+    const hourlySelectGroup = document.getElementById('hourly-select-group');
+
+    const dailyInput = document.getElementById('date-range');
+    const hourlyInput = document.getElementById('hourly-start-date');
+    const hourlyDurationSelect = document.getElementById('hourly-duration');
+
+    let dailyPickerInstance = null;
+    let hourlyPickerInstance = null;
+
+    function setRentalMode(mode) {
+      rentalModeInput.value = mode;
+      document.getElementById('price-breakdown').style.display = 'none';
+      document.getElementById('book-btn').disabled = true;
+
+      if (mode === 'daily') {
+        modeDailyBtn.className = "btn btn-primary";
+        modeDailyBtn.style.background = "";
+        modeDailyBtn.style.color = "";
+        
+        modeHourlyBtn.className = "btn btn-secondary";
+        modeHourlyBtn.style.background = "transparent";
+        modeHourlyBtn.style.color = "var(--text-secondary)";
+        modeHourlyBtn.style.border = "none";
+
+        dailySelectGroup.style.display = "block";
+        hourlySelectGroup.style.display = "none";
+        
+        dailyInput.required = true;
+        hourlyInput.required = false;
+        
+        if (dailyPickerInstance) dailyPickerInstance.clear();
+      } else {
+        modeHourlyBtn.className = "btn btn-primary";
+        modeHourlyBtn.style.background = "";
+        modeHourlyBtn.style.color = "";
+        
+        modeDailyBtn.className = "btn btn-secondary";
+        modeDailyBtn.style.background = "transparent";
+        modeDailyBtn.style.color = "var(--text-secondary)";
+        modeDailyBtn.style.border = "none";
+
+        dailySelectGroup.style.display = "none";
+        hourlySelectGroup.style.display = "flex";
+        
+        dailyInput.required = false;
+        hourlyInput.required = true;
+
+        if (hourlyPickerInstance) hourlyPickerInstance.clear();
+      }
+    }
+
+    modeDailyBtn.addEventListener('click', () => setRentalMode('daily'));
+    modeHourlyBtn.addEventListener('click', () => setRentalMode('hourly'));
+
+    // Daily flatpickr
+    dailyPickerInstance = flatpickr("#date-range", {
+      mode: "range",
+      minDate: "today",
+      dateFormat: "Y-m-d",
+      onClose: function(selectedDates) {
+        if (selectedDates.length === 2) {
+          const start = selectedDates[0];
+          const end = selectedDates[1];
+          const diffTime = Math.abs(end - start);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+          const subtotal = diffDays * itemPrice;
+          const total = subtotal + itemDeposit;
+
+          document.getElementById('breakdown-label').innerHTML = `₹${itemPrice} x <span id="days-count">${diffDays}</span> days`;
+          document.getElementById('rental-subtotal').textContent = subtotal;
+          document.getElementById('rental-total').textContent = total;
+          
+          document.getElementById('start-date-input').value = start.toISOString();
+          document.getElementById('end-date-input').value = end.toISOString();
+          document.getElementById('total-days-input').value = diffDays;
+          document.getElementById('total-amount-input').value = total;
+
+          document.getElementById('price-breakdown').style.display = 'block';
+          document.getElementById('book-btn').disabled = false;
+        } else {
+          document.getElementById('price-breakdown').style.display = 'none';
+          document.getElementById('book-btn').disabled = true;
+        }
+      }
+    });
+
+    // Hourly flatpickr
+    hourlyPickerInstance = flatpickr("#hourly-start-date", {
+      enableTime: true,
+      minDate: "today",
+      dateFormat: "Y-m-d H:i",
+      onClose: function(selectedDates) {
+        calculateHourlyPrice(selectedDates);
+      }
+    });
+
+    hourlyDurationSelect.addEventListener('change', () => {
+      if (hourlyPickerInstance && hourlyPickerInstance.selectedDates.length > 0) {
+        calculateHourlyPrice(hourlyPickerInstance.selectedDates);
+      }
+    });
+
+    function calculateHourlyPrice(selectedDates) {
+      if (selectedDates.length === 1) {
+        const start = selectedDates[0];
+        const hours = parseInt(hourlyDurationSelect.value, 10);
+        const end = new Date(start.getTime() + hours * 60 * 60 * 1000);
+        
+        const subtotal = itemHourlyPrice * hours;
+        const total = subtotal + itemDeposit;
+ 
+        document.getElementById('breakdown-label').innerHTML = `₹${itemHourlyPrice} x <span id="days-count">${hours}</span> hours`;
+        document.getElementById('rental-subtotal').textContent = subtotal;
+        document.getElementById('rental-total').textContent = total;
+        
+        document.getElementById('start-date-input').value = start.toISOString();
+        document.getElementById('end-date-input').value = end.toISOString();
+        document.getElementById('total-days-input').value = (hours / 24).toFixed(3);
+        document.getElementById('total-amount-input').value = total;
+ 
+        document.getElementById('price-breakdown').style.display = 'block';
+        document.getElementById('book-btn').disabled = false;
+      } else {
+        document.getElementById('price-breakdown').style.display = 'none';
+        document.getElementById('book-btn').disabled = true;
+      }
+    }
+
+    // Check availability & process booking on submit
+    const bookingForm = document.getElementById('booking-form');
+    if (bookingForm) {
+      bookingForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        window.showAILoader('Verifying dates and initiating payment...');
+
+        try {
+          // POST to bookings creation route
+          const response = await fetch('/bookings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              item: itemId,
+              startDate: document.getElementById('start-date-input').value,
+              endDate: document.getElementById('end-date-input').value,
+              totalDays: document.getElementById('total-days-input').value,
+              totalAmount: document.getElementById('total-amount-input').value,
+              deposit: itemDeposit
+            })
+          });
+
+          const data = await response.json();
+          window.hideAILoader();
+
+          if (!data.success) {
+            // Check for conflict options generated by Gemini
+            if (data.alternativesText) {
+              alert(data.error + '\n\nAI Recommendations:\n' + data.alternativesText);
+            } else {
+              alert('Booking failed: ' + data.error);
+            }
+            return;
+          }
+
+          // Trigger Razorpay payment checkout logic
+          const order = data.order;
+          const bookingId = data.bookingId;
+
+          if (order.id.startsWith('order_mock_')) {
+            // Running in sandbox mock checkout mode
+            const confirmMock = confirm(`[Mock Checkout Sandbox]\nOrder ID: ${order.id}\nAmount: ₹${order.amount/100}\nClick OK to simulate successful payment.`);
+            if (confirmMock) {
+              const verifyRes = await fetch('/payments/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  bookingId: bookingId,
+                  razorpay_order_id: order.id,
+                  razorpay_payment_id: 'pay_mock_' + Math.random().toString(36).substring(2, 12),
+                  razorpay_signature: 'signature_mock_hash_123897'
+                })
+              });
+              const verifyData = await verifyRes.json();
+              if (verifyData.success) {
+                alert('Mock payment successful!');
+                window.location.href = '/user/bookings';
+              } else {
+                alert('Mock verification failed: ' + verifyData.error);
+              }
+            }
+          } else {
+            // Live Razorpay payment instance checkout
+            const options = {
+              key: data.razorpayKeyId,
+              amount: order.amount,
+              currency: 'INR',
+              order_id: order.id,
+              name: 'RentIt Marketplace',
+              description: `Booking for <%= item.title %>`,
+              handler: async function(response) {
+                window.showAILoader('Verifying transaction...');
+                const verifyRes = await fetch('/payments/verify', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    bookingId: bookingId,
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature
+                  })
+                });
+                const verifyData = await verifyRes.json();
+                window.hideAILoader();
+                if (verifyData.success) {
+                  window.location.href = '/user/bookings';
+                } else {
+                  alert('Verification failed: ' + verifyData.error);
+                }
+              }
+            };
+            new Razorpay(options).open();
+          }
+        } catch (err) {
+          window.hideAILoader();
+          alert('Network transaction error: ' + err.message);
+        }
+      });
+    }
+
+    // Mini location map — shows item pin + user pin + distance line
+    <% if (item.location && item.location.coordinates) { %>
+      const itemLng = <%= item.location.coordinates[0] %>;
+      const itemLat = <%= item.location.coordinates[1] %>;
+
+      const miniMap = L.map('mini-map', {
+        zoomControl: true,
+        dragging: true,
+        doubleClickZoom: false,
+        scrollWheelZoom: false
+      }).setView([itemLat, itemLng], 14);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(miniMap);
+
+      // Item marker (orange)
+      const itemIcon = L.divIcon({
+        html: `<div style="background:var(--accent);width:14px;height:14px;border:3px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.3);"></div>`,
+        className: 'custom-div-icon', iconSize: [14,14], iconAnchor: [7,7]
+      });
+      L.marker([itemLat, itemLng], { icon: itemIcon }).addTo(miniMap)
+        .bindPopup(`<b><%= item.title %></b><br>₹<%= item.pricePerDay %>/day`);
+
+      // User location pin (blue) + dotted line
+      <% if (currentUser && currentUser.location && currentUser.location.coordinates && currentUser.location.coordinates[0]) { %>
+        const userLng = <%= currentUser.location.coordinates[0] %>;
+        const userLat = <%= currentUser.location.coordinates[1] %>;
+
+        const userIcon = L.divIcon({
+          html: `<div style="background:var(--primary);width:12px;height:12px;border:3px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.3);"></div>`,
+          className: 'custom-div-icon', iconSize: [12,12], iconAnchor: [6,6]
+        });
+        L.marker([userLat, userLng], { icon: userIcon }).addTo(miniMap)
+          .bindPopup('<b>Your Location</b>');
+
+        // Draw dashed distance line
+        L.polyline([[userLat, userLng], [itemLat, itemLng]], {
+          color: '#2563EB', weight: 2, dashArray: '6,6', opacity: 0.7
+        }).addTo(miniMap);
+
+        // Fit map to show both pins
+        miniMap.fitBounds([[userLat, userLng], [itemLat, itemLng]], { padding: [30, 30] });
+      <% } %>
+    <% } %>
+
+    // Handle quick start-chat action
+    const startChatBtn = document.getElementById('start-chat-btn');
+    if (startChatBtn) {
+      startChatBtn.addEventListener('click', async () => {
+        window.showAILoader('Opening chat room...');
+        try {
+          // Query or create a booking reference
+          // For chat without formal active booking, we redirect to chat screen directly via mock booking
+          // or direct room reference if there is any booking
+          const response = await fetch(`/chat/direct/${sellerId}`, { method: 'POST' });
+          const chatData = await response.json();
+          window.hideAILoader();
+          if (chatData.success) {
+            window.location.href = `/user/chat/${chatData.bookingId}`;
+          } else {
+            alert('Could not start chat: ' + chatData.error);
+          }
+        } catch(e) {
+          window.hideAILoader();
+          // Fallback to custom placeholder mock booking chat
+          window.location.href = `/user/bookings`;
+        }
+      });
+    }
+  });
+</script>
+
+<%- include('../layouts/footer') %>

@@ -1,0 +1,219 @@
+<%- include('../layouts/main') %>
+<% locals.activePage = 'sellers'; %>
+
+<div class="container">
+  <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <h1 style="font-size: 1.8rem; margin-bottom: 0.25rem;">Seller Management</h1>
+      <p style="color: var(--text-secondary);">Approve new sellers and verify their documents.</p>
+    </div>
+  </div>
+
+  <!-- ============================
+       SECTION 1: Pending Approval
+       ============================ -->
+  <% const pendingApproval = sellers.filter(s => !s.sellerApproved); %>
+  <% if (pendingApproval.length > 0) { %>
+  <div style="margin-bottom: 2.5rem;">
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 1rem;">
+      <h2 style="font-size: 1.2rem;">
+        <span class="badge badge-warning"><i class="fa-solid fa-clock"></i> Pending Login Approval</span>
+      </h2>
+      <span style="color: var(--text-secondary); font-size: 0.9rem;">(<%= pendingApproval.length %> sellers waiting)</span>
+    </div>
+    <div style="background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Seller</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Address</th>
+            <th>Aadhaar</th>
+            <th>Signed Up</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% pendingApproval.forEach(seller => { %>
+          <tr>
+            <td>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <% if (seller.avatar && seller.avatar.url) { %>
+                  <img src="<%= seller.avatar.url %>" style="width:36px; height:36px; border-radius:50%; object-fit:cover;" alt="">
+                <% } else { %>
+                  <div style="width:36px; height:36px; border-radius:50%; background:#f1f5f9; display:flex; align-items:center; justify-content:center; color:var(--text-hint);">
+                    <i class="fa-solid fa-user"></i>
+                  </div>
+                <% } %>
+                <div>
+                  <div style="font-weight:600;"><%= seller.name %></div>
+                  <div style="font-size:0.75rem; color:var(--text-secondary);">
+                    <%= seller.sellerProfile && seller.sellerProfile.businessName ? seller.sellerProfile.businessName : 'No business name' %>
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td style="color:var(--text-secondary);"><%= seller.email %></td>
+            <td style="color:var(--text-secondary);"><%= seller.phone || '—' %></td>
+            <td style="font-size:0.85rem; color:var(--text-secondary); max-width:160px;">
+              <%= seller.address || (seller.sellerProfile && seller.sellerProfile.address) || '—' %>
+            </td>
+            <td>
+              <% if (seller.aadhaarDoc && seller.aadhaarDoc.url) { %>
+                <a href="<%= seller.aadhaarDoc.url %>" target="_blank" class="badge badge-info">
+                  <i class="fa-solid fa-id-card"></i> View
+                </a>
+              <% } else { %>
+                <span class="badge badge-neutral">Not uploaded</span>
+              <% } %>
+              <% if (seller.aadhaarNumber) { %>
+                <div style="font-size:0.75rem; color:var(--text-hint); margin-top:4px;">
+                  XXXX XXXX <%= seller.aadhaarNumber.slice(-4) %>
+                </div>
+              <% } %>
+            </td>
+            <td style="font-size:0.82rem; color:var(--text-secondary);">
+              <%= new Date(seller.createdAt).toLocaleDateString('en-IN') %>
+            </td>
+            <td>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <!-- Approve -->
+                <form action="/admin/sellers/<%= seller._id %>/approve?_method=PUT" method="POST" style="display:inline;">
+                  <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Approve this seller?')">
+                    <i class="fa-solid fa-check"></i> Approve
+                  </button>
+                </form>
+                <!-- Reject & Remove -->
+                <form action="/admin/sellers/<%= seller._id %>/reject-approval?_method=PUT" method="POST" style="display:inline;">
+                  <input type="hidden" name="reason" value="Account did not meet verification criteria.">
+                  <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Reject and remove this seller account?')">
+                    <i class="fa-solid fa-xmark"></i> Reject
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <% } else { %>
+    <div style="background: #dcfce7; border: 1px solid #86efac; border-radius: var(--radius-md); padding: 1rem 1.5rem; margin-bottom: 2rem; color: #166534;">
+      <i class="fa-solid fa-circle-check"></i> No sellers pending approval. All caught up!
+    </div>
+  <% } %>
+
+  <!-- ============================
+       SECTION 2: Approved Sellers (Doc Verification)
+       ============================ -->
+  <% const approvedSellers = sellers.filter(s => s.sellerApproved); %>
+  <div>
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 1rem;">
+      <h2 style="font-size: 1.2rem;">
+        <span class="badge badge-success"><i class="fa-solid fa-store"></i> Approved Sellers</span>
+      </h2>
+      <span style="color: var(--text-secondary); font-size: 0.9rem;">(<%= approvedSellers.length %> total)</span>
+    </div>
+
+    <% if (approvedSellers.length === 0) { %>
+      <p style="color: var(--text-secondary); padding: 2rem; text-align:center;">No approved sellers yet.</p>
+    <% } else { %>
+    <div style="background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Seller</th>
+            <th>Email</th>
+            <th>Address</th>
+            <th>Aadhaar</th>
+            <th>Doc Verification</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% approvedSellers.forEach(seller => { %>
+          <tr>
+            <td>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <% if (seller.avatar && seller.avatar.url) { %>
+                  <img src="<%= seller.avatar.url %>" style="width:36px; height:36px; border-radius:50%; object-fit:cover;" alt="">
+                <% } else { %>
+                  <div style="width:36px; height:36px; border-radius:50%; background:#f1f5f9; display:flex; align-items:center; justify-content:center; color:var(--text-hint);">
+                    <i class="fa-solid fa-user"></i>
+                  </div>
+                <% } %>
+                <div>
+                  <div style="font-weight:600;"><%= seller.name %></div>
+                  <div style="font-size:0.75rem; color:var(--text-secondary);">
+                    <%= seller.sellerProfile && seller.sellerProfile.businessName ? seller.sellerProfile.businessName : 'No business name' %>
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td style="color:var(--text-secondary);"><%= seller.email %></td>
+            <td style="font-size:0.85rem; color:var(--text-secondary); max-width:160px;">
+              <%= seller.address || (seller.sellerProfile && seller.sellerProfile.address) || '—' %>
+            </td>
+            <td>
+              <% if (seller.aadhaarDoc && seller.aadhaarDoc.url) { %>
+                <a href="<%= seller.aadhaarDoc.url %>" target="_blank" class="badge badge-info">
+                  <i class="fa-solid fa-id-card"></i> View
+                </a>
+                <% if (seller.aadhaarVerified) { %>
+                  <span class="badge badge-success" style="margin-left:4px;">✓ Verified</span>
+                <% } %>
+              <% } else { %>
+                <span class="badge badge-neutral">Not uploaded</span>
+              <% } %>
+              <% if (seller.aadhaarNumber) { %>
+                <div style="font-size:0.75rem; color:var(--text-hint); margin-top:4px;">
+                  XXXX XXXX <%= seller.aadhaarNumber.slice(-4) %>
+                </div>
+              <% } %>
+            </td>
+            <td>
+              <% if (seller.sellerProfile && seller.sellerProfile.verificationDoc && seller.sellerProfile.verificationDoc.url) { %>
+                <a href="<%= seller.sellerProfile.verificationDoc.url %>" target="_blank" class="badge badge-info">
+                  <i class="fa-solid fa-file"></i> View Doc
+                </a>
+              <% } else { %>
+                <span class="badge badge-neutral">Not submitted</span>
+              <% } %>
+            </td>
+            <td>
+              <% if (seller.isVerified) { %>
+                <span class="badge badge-success"><i class="fa-solid fa-check"></i> Verified</span>
+              <% } else { %>
+                <span class="badge badge-warning"><i class="fa-solid fa-clock"></i> Pending</span>
+              <% } %>
+            </td>
+            <td>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <% if (!seller.isVerified && seller.sellerProfile && seller.sellerProfile.verificationDoc && seller.sellerProfile.verificationDoc.url) { %>
+                  <form action="/admin/sellers/<%= seller._id %>/verify?_method=PUT" method="POST" style="display:inline;">
+                    <button type="submit" class="btn btn-success btn-sm"><i class="fa-solid fa-file-shield"></i> Verify Docs</button>
+                  </form>
+                  <form action="/admin/sellers/<%= seller._id %>/reject?_method=PUT" method="POST" style="display:inline;">
+                    <input type="hidden" name="reason" value="Documents did not pass verification.">
+                    <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-xmark"></i> Reject</button>
+                  </form>
+                <% } else if (seller.isVerified) { %>
+                  <span style="color:var(--success); font-size:0.85rem;"><i class="fa-solid fa-check"></i> All clear</span>
+                <% } else { %>
+                  <span style="color:var(--text-hint); font-size:0.82rem;">Awaiting docs</span>
+                <% } %>
+              </div>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

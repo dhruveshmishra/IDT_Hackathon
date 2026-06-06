@@ -1,0 +1,17 @@
+<nav class="navbar">
+  <a href="/user/home" class="nav-brand">RentIt<span>.</span></a>
+  <ul class="nav-links">
+    <li><a href="/user/home" class="nav-link"><i class="fa-solid fa-house"></i> Home</a></li>
+    <li><a href="/items" class="nav-link"><i class="fa-solid fa-magnifying-glass"></i> Browse</a></li>
+    <li><a href="/user/bookings" class="nav-link"><i class="fa-solid fa-receipt"></i> My Bookings</a></li>
+    <li><a href="/user/profile" class="nav-link"><i class="fa-regular fa-user"></i> Profile</a></li>
+    <% if (currentUser.avatar && currentUser.avatar.url) { %>
+      <li><img src="<%= currentUser.avatar.url %>" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" alt="avatar"></li>
+    <% } %>
+    <li>
+      <form action="/auth/logout" method="POST" style="display: inline;">
+        <button type="submit" class="btn btn-outline" style="padding: 4px 12px; font-size: 0.85rem;"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</button>
+      </form>
+    </li>
+  </ul>
+</nav>

@@ -1,0 +1,93 @@
+<%- include('../layouts/main') %>
+<% locals.activePage = 'aadhaar'; %>
+
+<div class="container">
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 1.8rem; margin-bottom: 0.25rem;"><i class="fa-solid fa-id-card"></i> Aadhaar Review</h1>
+    <p style="color: var(--text-secondary);">Review and verify submitted Aadhaar documents from users and sellers.</p>
+  </div>
+
+  <% if (!usersWithAadhaar || usersWithAadhaar.length === 0) { %>
+    <div style="text-align:center; padding: 4rem 2rem; background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border);">
+      <i class="fa-solid fa-circle-check" style="font-size: 3rem; color: var(--success); margin-bottom: 1rem; display: block;"></i>
+      <h3>All Caught Up!</h3>
+      <p style="color: var(--text-secondary);">No pending Aadhaar documents to review.</p>
+    </div>
+  <% } else { %>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
+      <% usersWithAadhaar.forEach(usr => { %>
+        <div style="background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow-sm);">
+          
+          <!-- Aadhaar doc image preview -->
+          <div style="height: 160px; background: #f8fafc; display:flex; align-items:center; justify-content:center; border-bottom: 1px solid var(--border); overflow:hidden;">
+            <% if (usr.aadhaarDoc && usr.aadhaarDoc.url && (usr.aadhaarDoc.url.match(/\.(jpg|jpeg|png|webp)$/i))) { %>
+              <img src="<%= usr.aadhaarDoc.url %>" style="width:100%; height:100%; object-fit:cover;" alt="Aadhaar doc">
+            <% } else if (usr.aadhaarDoc && usr.aadhaarDoc.url) { %>
+              <div style="text-align:center; color: var(--text-secondary);">
+                <i class="fa-solid fa-file-pdf" style="font-size: 3rem; color: var(--danger);"></i>
+                <div style="font-size:0.8rem; margin-top:0.5rem;">PDF Document</div>
+                <a href="<%= usr.aadhaarDoc.url %>" target="_blank" class="btn btn-outline" style="margin-top:0.5rem; font-size:0.8rem;">
+                  <i class="fa-solid fa-eye"></i> View PDF
+                </a>
+              </div>
+            <% } %>
+          </div>
+
+          <div style="padding: 1.25rem;">
+            <!-- User Info -->
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:1rem;">
+              <div style="width:40px; height:40px; border-radius:50%; background:#f1f5f9; display:flex; align-items:center; justify-content:center; color:var(--text-hint); flex-shrink:0;">
+                <% if (usr.avatar && usr.avatar.url) { %>
+                  <img src="<%= usr.avatar.url %>" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" alt="">
+                <% } else { %>
+                  <i class="fa-solid fa-user"></i>
+                <% } %>
+              </div>
+              <div>
+                <div style="font-weight:600;"><%= usr.name %></div>
+                <div style="font-size:0.8rem; color:var(--text-secondary);">
+                  <%= usr.email %>
+                  <span class="badge <%= usr.role === 'seller' ? 'badge-warning' : 'badge-info' %>" style="margin-left:4px;"><%= usr.role %></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Aadhaar Number -->
+            <% if (usr.aadhaarNumber) { %>
+              <div class="aadhaar-card" style="margin-bottom: 1rem; padding: 0.875rem 1rem;">
+                <div style="font-size: 0.65rem; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.08em;">Aadhaar</div>
+                <div style="font-family: 'Courier New', monospace; font-size: 1.1rem; font-weight:700; letter-spacing: 0.15em; margin: 0.25rem 0;">
+                  XXXX XXXX <%= usr.aadhaarNumber.slice(-4) %>
+                </div>
+                <div style="font-size:0.78rem; opacity:0.7;"><%= usr.name %></div>
+              </div>
+            <% } %>
+
+            <!-- Address -->
+            <% if (usr.address) { %>
+              <p style="font-size:0.82rem; color:var(--text-secondary); margin-bottom: 1rem;">
+                <i class="fa-solid fa-location-dot" style="color:var(--accent);"></i> <%= usr.address %>
+              </p>
+            <% } %>
+
+            <!-- Verify Button -->
+            <% if (!usr.aadhaarVerified) { %>
+              <form action="/admin/aadhaar-review/<%= usr._id %>/verify?_method=PUT" method="POST">
+                <button type="submit" class="btn btn-success" style="width:100%;" onclick="return confirm('Confirm Aadhaar verification for <%= usr.name %>?')">
+                  <i class="fa-solid fa-id-card-clip"></i> Verify Aadhaar
+                </button>
+              </form>
+            <% } else { %>
+              <div class="badge badge-success" style="width:100%; justify-content:center; padding: 0.6rem;">
+                <i class="fa-solid fa-circle-check"></i> Aadhaar Already Verified
+              </div>
+            <% } %>
+
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../layouts/footer') %>

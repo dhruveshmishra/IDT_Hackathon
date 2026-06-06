@@ -1,0 +1,25 @@
+<div class="spinner-backdrop" id="ai-loader">
+  <div class="spinner-card">
+    <div class="spinner"></div>
+    <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 600;">✦ Gemini AI Active</h3>
+    <p style="color: var(--text-secondary); font-size: 0.85rem;" id="ai-loader-text">Analyzing query parameters...</p>
+  </div>
+</div>
+
+<script>
+  window.showAILoader = function(message) {
+    const loader = document.getElementById('ai-loader');
+    const textEl = document.getElementById('ai-loader-text');
+    if (loader) {
+      if (message) textEl.textContent = message;
+      loader.style.display = 'flex';
+    }
+  };
+
+  window.hideAILoader = function() {
+    const loader = document.getElementById('ai-loader');
+    if (loader) {
+      loader.style.display = 'none';
+    }
+  };
+</script>

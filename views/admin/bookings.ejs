@@ -1,0 +1,66 @@
+<%- include('../layouts/main') %>
+
+<div class="container" style="max-width: 1100px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+    <h2 style="font-family: var(--font-display);"><i class="fa-solid fa-receipt"></i> Platform Bookings Log</h2>
+    <a href="/admin/dashboard" class="btn btn-outline">&larr; Back to Dashboard</a>
+  </div>
+
+  <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+      <thead>
+        <tr style="border-bottom: 2px solid var(--border); color: var(--text-secondary); font-weight: 600;">
+          <th style="padding: 10px 8px;">Booking ID</th>
+          <th style="padding: 10px 8px;">Item Title</th>
+          <th style="padding: 10px 8px;">Renter / Seller</th>
+          <th style="padding: 10px 8px;">Rental Dates</th>
+          <th style="padding: 10px 8px;">Status</th>
+          <th style="padding: 10px 8px;">Payment</th>
+          <th style="padding: 10px 8px;">GTV</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (bookings.length === 0) { %>
+          <tr>
+            <td colspan="7" style="padding: 20px; text-align: center; color: var(--text-hint);">No bookings recorded on the platform yet.</td>
+          </tr>
+        <% } else { %>
+          <% bookings.forEach(booking => { %>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 12px 8px; font-family: monospace; font-size: 0.8rem;"><%= booking._id %></td>
+              <td style="padding: 12px 8px; font-weight: 600;"><%= booking.item ? booking.item.title : 'Deleted Item' %></td>
+              <td style="padding: 12px 8px; font-size: 0.85rem;">
+                R: <%= booking.renter ? booking.renter.name : 'N/A' %><br/>
+                S: <%= booking.seller ? booking.seller.name : 'N/A' %>
+              </td>
+              <td style="padding: 12px 8px; font-size: 0.85rem; color: var(--text-secondary);">
+                <%= new Date(booking.startDate).toLocaleDateString() %> - <%= new Date(booking.endDate).toLocaleDateString() %>
+              </td>
+              <td style="padding: 12px 8px;">
+                <span style="font-size:0.75rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+                  <%= booking.status === 'confirmed' ? 'background-color:#dcfce7; color:#15803d;' : '' %>
+                  <%= booking.status === 'pending' ? 'background-color:#fef3c7; color:#b45309;' : '' %>
+                  <%= booking.status === 'active' ? 'background-color:#eff6ff; color:#2563eb;' : '' %>
+                  <%= booking.status === 'completed' ? 'background-color:#f1f5f9; color:#64748b;' : '' %>
+                  <%= booking.status === 'cancelled' ? 'background-color:#fee2e2; color:#dc2626;' : '' %>
+                ">
+                  <%= booking.status %>
+                </span>
+              </td>
+              <td style="padding: 12px 8px;">
+                <span style="font-size:0.75rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+                  <%= booking.payment.status === 'paid' ? 'background-color:#dcfce7; color:#15803d;' : 'background-color:#fee2e2; color:#dc2626;' %>
+                ">
+                  <%= booking.payment.status %>
+                </span>
+              </td>
+              <td style="padding: 12px 8px; font-weight: 700;">₹<%= booking.totalAmount %></td>
+            </tr>
+          <% }) %>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

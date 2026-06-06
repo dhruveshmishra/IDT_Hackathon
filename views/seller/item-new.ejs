@@ -1,0 +1,305 @@
+<%- include('../layouts/main') %>
+
+<div class="container" style="max-width: 800px;">
+  <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 2.5rem; box-shadow: var(--shadow-md);">
+    
+    <div style="margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+      <h2 style="font-family: var(--font-display); font-size: 1.8rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-square-plus" style="color: var(--primary);"></i> List an Item for Rent
+      </h2>
+      <p style="color: var(--text-secondary); font-size: 0.9rem;">Fill in details or upload images to trigger Gemini AI automatic description generation assistance.</p>
+    </div>
+
+    <form action="/seller/items" method="POST" enctype="multipart/form-data" id="new-item-form">
+      
+      <!-- Image Upload section -->
+      <div class="form-group" style="margin-bottom: 2rem;">
+        <label>Upload Item Photos (Up to 5)</label>
+        <div style="border: 2px dashed var(--border); border-radius: var(--radius-md); padding: 2rem; text-align: center; background-color: #f8fafc; cursor: pointer; position: relative;" id="drop-zone">
+          <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.5rem; color: var(--text-hint); margin-bottom: 8px;"></i>
+          <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0 0 8px;">Drag and drop image files here, or click to browse</p>
+          <span style="font-size: 0.75rem; color: var(--text-hint);">Supports JPG, PNG (Max 5MB per photo)</span>
+          <input type="file" name="images" id="file-input" multiple accept="image/*" style="position: absolute; inset: 0; opacity: 0; cursor: pointer;" required>
+        </div>
+
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 1rem;" id="thumbnails-container"></div>
+        
+        <!-- Gemini AI autofill button -->
+        <button type="button" class="btn btn-outline" id="ai-generate-btn" style="margin-top: 1rem; border-color: #c084fc; color: #7e22ce; display: none;">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> ✦ Generate Description with Gemini
+        </button>
+      </div>
+
+      <!-- AI Generation details indicator -->
+      <div id="ai-panel" style="background-color: #faf5ff; border: 1px solid #e9d5ff; border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 2rem; display: none;">
+        <h4 style="color: #7e22ce; margin-bottom: 0.5rem; font-family: var(--font-display);"><i class="fa-solid fa-robot"></i> Gemini AI Suggestions</h4>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0 0 1rem;">Gemini has analyzed your item. Accept or customize the suggestions below.</p>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn btn-outline" style="border-color:#e9d5ff; background:#fff; font-size:0.8rem; padding:6px 12px;" onclick="acceptAISuggestions()">Accept AI Output</button>
+          <button type="button" class="btn btn-outline" style="border-color:#e9d5ff; background:#fff; font-size:0.8rem; padding:6px 12px;" onclick="document.getElementById('ai-panel').style.display='none'">Edit Manually</button>
+        </div>
+      </div>
+
+      <!-- Item details fields -->
+      <div class="form-group">
+        <label for="title">Item Title</label>
+        <input type="text" name="title" id="title" class="form-control" placeholder="e.g. Nikon D3500 DSLR Camera" required>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Listing Description</label>
+        <textarea name="description" id="description" rows="5" class="form-control" placeholder="Describe the item condition, inclusions, and rental instructions..." required></textarea>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="form-group">
+          <label for="category">Category</label>
+          <select name="category" id="category" class="form-control" required>
+            <option value="">Select Category</option>
+            <option value="electronics">Electronics</option>
+            <option value="tools">Tools</option>
+            <option value="vehicles">Vehicles</option>
+            <option value="furniture">Furniture</option>
+            <option value="sports">Sports</option>
+            <option value="clothing">Clothing</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="tags">Search Tags</label>
+          <input type="text" name="tags" id="tags" class="form-control" placeholder="camera, dslr, nikon (comma separated)">
+        </div>
+      </div>
+
+      <!-- Pricing fields -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; align-items: flex-end;">
+        <div class="form-group">
+          <label for="pricePerHour">Price Per Hour (₹)</label>
+          <input type="number" name="pricePerHour" id="pricePerHour" class="form-control" placeholder="30" min="0" required>
+        </div>
+        <div class="form-group">
+          <label for="pricePerDay">Price Per Day (₹)</label>
+          <input type="number" name="pricePerDay" id="pricePerDay" class="form-control" placeholder="250" min="0" required>
+        </div>
+        <div class="form-group">
+          <label for="deposit">Refundable Deposit (₹)</label>
+          <input type="number" name="deposit" id="deposit" class="form-control" placeholder="1000" min="0">
+        </div>
+      </div>
+
+      <!-- Price advice action -->
+      <div style="margin-bottom: 2rem;">
+        <button type="button" class="btn btn-outline" id="ai-pricing-btn" style="border-color:#38bdf8; color:#0369a1; font-size:0.85rem; padding: 6px 12px;">
+          <i class="fa-solid fa-coins"></i> ✦ Get Price Suggestion
+        </button>
+        <div id="pricing-advice-box" style="background-color:#f0f9ff; border:1px solid #bae6fd; border-radius: var(--radius-sm); padding: 12px; font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px; display:none;">
+          <!-- suggestions text -->
+        </div>
+      </div>
+
+      <!-- Location coordinates pickers -->
+      <div class="form-group" style="margin-bottom: 2rem;">
+        <label>Item Location Details</label>
+        <div style="display: flex; gap: 8px; margin-bottom: 0.75rem;">
+          <input type="text" name="address" id="address" class="form-control" placeholder="Enter full pick up address..." style="flex:1;" required>
+          <button type="button" id="use-my-loc-btn" class="btn btn-outline" style="padding: 10px 14px;"><i class="fa-solid fa-location-dot"></i> My Location</button>
+        </div>
+        
+        <div style="height: 250px; margin-bottom: 1rem; border:1px solid var(--border); border-radius: var(--radius-md); overflow:hidden;">
+          <div id="location-picker-map" style="width:100%; height:100%;"></div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <input type="number" step="any" name="lng" id="lng" class="form-control" placeholder="Longitude" required>
+          <input type="number" step="any" name="lat" id="lat" class="form-control" placeholder="Latitude" required>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 1rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
+        <button type="submit" class="btn btn-primary" style="padding: 12px 30px;"><i class="fa-solid fa-rocket"></i> Publish Listing</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script>
+  let aiDescriptionData = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const fileInput = document.getElementById('file-input');
+    const thumbnailsContainer = document.getElementById('thumbnails-container');
+    const aiGenerateBtn = document.getElementById('ai-generate-btn');
+    const dropZone = document.getElementById('drop-zone');
+
+    // Local coordinates picker leaflet map
+    let defaultLng = 72.8777;
+    let defaultLat = 19.0760;
+    
+    const map = L.map('location-picker-map').setView([defaultLat, defaultLng], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
+    
+    function updateInputs(latVal, lngVal) {
+      document.getElementById('lat').value = latVal;
+      document.getElementById('lng').value = lngVal;
+    }
+    updateInputs(defaultLat, defaultLng);
+
+    marker.on('dragend', function(e) {
+      const position = marker.getLatLng();
+      updateInputs(position.lat, position.lng);
+    });
+
+    map.on('click', function(e) {
+      marker.setLatLng(e.latlng);
+      updateInputs(e.latlng.lat, e.latlng.lng);
+    });
+
+    // Capture location coords
+    const useMyLocBtn = document.getElementById('use-my-loc-btn');
+    useMyLocBtn.addEventListener('click', () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((pos) => {
+          const latVal = pos.coords.latitude;
+          const lngVal = pos.coords.longitude;
+          map.setView([latVal, lngVal], 15);
+          marker.setLatLng([latVal, lngVal]);
+          updateInputs(latVal, lngVal);
+        });
+      }
+    });
+
+    // File input thumbnail pre-renderer
+    fileInput.addEventListener('change', () => {
+      thumbnailsContainer.innerHTML = '';
+      const files = fileInput.files;
+      if (files.length > 0) {
+        aiGenerateBtn.style.display = 'inline-flex';
+        for(let i=0; i<Math.min(files.length, 5); i++) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.style.width = '60px';
+            img.style.height = '60px';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '4px';
+            img.style.border = '1px solid var(--border)';
+            thumbnailsContainer.appendChild(img);
+          }
+          reader.readAsDataURL(files[i]);
+        }
+      } else {
+        aiGenerateBtn.style.display = 'none';
+      }
+    });
+
+    // Gemini AI Listing Enhancer
+    aiGenerateBtn.addEventListener('click', async () => {
+      const title = document.getElementById('title').value;
+      if (!title) {
+        alert('Please specify an Item Title first so Gemini has metadata to work with.');
+        return;
+      }
+
+      window.showAILoader('Gemini is analyzing photo tags & title details...');
+      
+      try {
+        // Send to description route with mock fallback
+        const response = await fetch('/ai/generate-description', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: title,
+            imageUrl: '' // In real app, first image buffer is uploaded or passed as blob
+          })
+        });
+
+        const resData = await response.json();
+        window.hideAILoader();
+
+        if (resData.success) {
+          aiDescriptionData = resData.data;
+          document.getElementById('ai-panel').style.display = 'block';
+          
+          // Render suggest preview
+          const suggestionText = `
+            <strong>Suggested Description:</strong> ${aiDescriptionData.description}<br/>
+            <strong>Category:</strong> ${aiDescriptionData.category}<br/>
+            <strong>Tags:</strong> ${aiDescriptionData.tags.join(', ')}
+          `;
+          const textContainer = document.createElement('div');
+          textContainer.innerHTML = suggestionText;
+          textContainer.style.fontSize = '0.85rem';
+          textContainer.style.marginTop = '8px';
+          document.getElementById('ai-panel').appendChild(textContainer);
+        } else {
+          alert('AI generation error: ' + resData.error);
+        }
+      } catch (err) {
+        window.hideAILoader();
+        alert('Error: ' + err.message);
+      }
+    });
+
+    // Gemini AI Pricing suggestion
+    const aiPricingBtn = document.getElementById('ai-pricing-btn');
+    aiPricingBtn.addEventListener('click', async () => {
+      const title = document.getElementById('title').value;
+      const desc = document.getElementById('description').value;
+      const category = document.getElementById('category').value;
+
+      if (!title || !desc || !category) {
+        alert('Please fill out the Title, Description, and Category fields first.');
+        return;
+      }
+
+      window.showAILoader('Consulting price ranges...');
+      try {
+        const response = await fetch('/ai/suggest-price', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title,
+            description: desc,
+            category,
+            comparables: [
+              { title: 'Standard model', pricePerDay: 200 },
+              { title: 'Premium version', pricePerDay: 450 }
+            ]
+          })
+        });
+        const priceData = await response.json();
+        window.hideAILoader();
+
+        if (priceData.success) {
+          const adviceBox = document.getElementById('pricing-advice-box');
+          adviceBox.innerHTML = `
+            <strong>Suggested Price:</strong> ₹${priceData.data.suggestedPrice} / day (Range: ₹${priceData.data.minPrice} - ₹${priceData.data.maxPrice})<br/>
+            <strong>Reasoning:</strong> ${priceData.data.reasoning}
+          `;
+          adviceBox.style.display = 'block';
+          document.getElementById('pricePerDay').value = priceData.data.suggestedPrice;
+        }
+      } catch (err) {
+        window.hideAILoader();
+        alert('Pricing helper error: ' + err.message);
+      }
+    });
+  });
+
+  function acceptAISuggestions() {
+    if (aiDescriptionData) {
+      document.getElementById('description').value = aiDescriptionData.description;
+      document.getElementById('category').value = aiDescriptionData.category;
+      document.getElementById('tags').value = aiDescriptionData.tags.join(', ');
+      document.getElementById('ai-panel').style.display = 'none';
+    }
+  }
+</script>
+
+<%- include('../layouts/footer') %>

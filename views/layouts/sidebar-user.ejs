@@ -1,0 +1,113 @@
+<!-- LEFT SIDEBAR: USER PORTAL -->
+<nav class="sidebar-nav" id="sidebarNav">
+  <!-- Toggle button -->
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+    <i class="fa-solid fa-chevron-left"></i>
+  </button>
+
+  <!-- Brand -->
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-logo">R</div>
+    <span class="sidebar-brand-text">RentIt<span style="color:var(--accent);">.</span></span>
+  </div>
+
+  <!-- User Info -->
+  <div class="sidebar-user">
+    <div class="sidebar-avatar">
+      <% if (currentUser && currentUser.avatar && currentUser.avatar.url) { %>
+        <img src="<%= currentUser.avatar.url %>" alt="Avatar">
+      <% } else { %>
+        <i class="fa-solid fa-user"></i>
+      <% } %>
+    </div>
+    <div class="sidebar-user-info">
+      <div class="sidebar-user-name"><%= currentUser ? currentUser.name : 'User' %></div>
+      <div class="sidebar-user-role">
+        <% if (currentUser && currentUser.aadhaarVerified) { %>
+          <span style="color:#4ADE80;">✓ Verified</span>
+        <% } else { %>
+          <span style="color:#94A3B8;">Renter</span>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <ul class="sidebar-menu">
+    <li class="sidebar-section-label">Explore</li>
+    <li>
+      <a href="/user/home" class="sidebar-menu-link <%= locals.activePage === 'home' ? 'active' : '' %>" data-label="Home">
+        <span class="sidebar-menu-icon"><i class="fa-solid fa-house"></i></span>
+        <span class="sidebar-menu-label">Home</span>
+      </a>
+    </li>
+    <li>
+      <a href="/items" class="sidebar-menu-link <%= locals.activePage === 'browse' ? 'active' : '' %>" data-label="Browse Items">
+        <span class="sidebar-menu-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+        <span class="sidebar-menu-label">Browse Items</span>
+      </a>
+    </li>
+
+    <li class="sidebar-section-label">My Activity</li>
+    <li>
+      <a href="/user/bookings" class="sidebar-menu-link <%= locals.activePage === 'bookings' ? 'active' : '' %>" data-label="My Bookings">
+        <span class="sidebar-menu-icon"><i class="fa-solid fa-receipt"></i></span>
+        <span class="sidebar-menu-label">My Bookings</span>
+      </a>
+    </li>
+
+    <li class="sidebar-section-label">Account</li>
+    <li>
+      <a href="/user/profile" class="sidebar-menu-link <%= locals.activePage === 'profile' ? 'active' : '' %>" data-label="My Profile">
+        <span class="sidebar-menu-icon"><i class="fa-regular fa-user"></i></span>
+        <span class="sidebar-menu-label">My Profile</span>
+      </a>
+    </li>
+  </ul>
+
+  <!-- Logout -->
+  <div class="sidebar-footer">
+    <form action="/auth/logout" method="POST">
+      <button type="submit" class="sidebar-logout-btn">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        <span class="sidebar-logout-label">Logout</span>
+      </button>
+    </form>
+  </div>
+</nav>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+(function() {
+  const nav     = document.getElementById('sidebarNav');
+  const toggle  = document.getElementById('sidebarToggle');
+  const content = document.getElementById('pageContent');
+  const overlay = document.getElementById('sidebarOverlay');
+
+  const STORAGE_KEY = 'rentit_sidebar_collapsed';
+  const collapsed = localStorage.getItem(STORAGE_KEY) === 'true';
+  if (collapsed) {
+    nav.classList.add('collapsed');
+    if (content) content.classList.add('collapsed');
+  }
+
+  toggle.addEventListener('click', () => {
+    const isCollapsed = nav.classList.toggle('collapsed');
+    if (content) content.classList.toggle('collapsed', isCollapsed);
+    localStorage.setItem(STORAGE_KEY, isCollapsed);
+  });
+
+  const mobileBtn = document.getElementById('mobileMenuBtn');
+  if (mobileBtn) {
+    mobileBtn.addEventListener('click', () => {
+      nav.classList.add('mobile-open');
+      overlay.classList.add('visible');
+    });
+  }
+  overlay.addEventListener('click', () => {
+    nav.classList.remove('mobile-open');
+    overlay.classList.remove('visible');
+  });
+})();
+</script>

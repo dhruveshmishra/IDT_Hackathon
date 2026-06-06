@@ -1,0 +1,82 @@
+<%- include('../layouts/main') %>
+
+<div class="container" style="max-width: 800px;">
+  <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 2.5rem; box-shadow: var(--shadow-md);">
+    
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+      <h2 style="font-family: var(--font-display);">Booking Transaction Invoice</h2>
+      <a href="/user/bookings" class="btn btn-outline">&larr; Back to History</a>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+      <div>
+        <h4 style="color:var(--text-secondary); text-transform:uppercase; font-size:0.75rem; margin-bottom:4px;">Booking Reference ID</h4>
+        <p style="font-family:monospace; font-weight:600;"><%= booking._id %></p>
+      </div>
+      <div>
+        <h4 style="color:var(--text-secondary); text-transform:uppercase; font-size:0.75rem; margin-bottom:4px;">Date Created</h4>
+        <p><%= new Date(booking.createdAt).toLocaleDateString() %></p>
+      </div>
+    </div>
+
+    <!-- Item Details banner -->
+    <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 2rem; background-color: #f8fafc; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <h3 style="font-family:var(--font-display); font-size:1.15rem; margin-bottom:4px;"><%= booking.item ? booking.item.title : 'Deleted Item' %></h3>
+        <p style="font-size:0.85rem; color:var(--text-secondary); margin:0;">
+          Category: <%= booking.item ? booking.item.category : 'N/A' %> | Daily rate: ₹<%= booking.item ? booking.item.pricePerDay : 0 %>
+        </p>
+      </div>
+      <div style="text-align:right;">
+        <span style="font-size:0.75rem; text-transform:uppercase; font-weight:700; padding:4px 8px; border-radius:4px; background-color:#eff6ff; color:var(--primary);">
+          <%= booking.status %>
+        </span>
+      </div>
+    </div>
+
+    <!-- Booking calculations -->
+    <div style="background-color: var(--surface); border:1px solid var(--border); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 2rem;">
+      <h4 style="font-family:var(--font-display); margin-bottom:1rem;">Price Calculation</h4>
+      <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; color:var(--text-secondary);">
+        <span>Rental Subtotal (<%= booking.totalDays %> days)</span>
+        <span>₹<%= booking.totalAmount - (booking.deposit || 0) %></span>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; color:var(--text-secondary);">
+        <span>Refundable Security Deposit</span>
+        <span>₹<%= booking.deposit || 0 %></span>
+      </div>
+      <div style="display:flex; justify-content:space-between; border-top:1px dashed var(--border); padding-top:0.5rem; font-weight:700; font-size:1.1rem; color:var(--text-primary);">
+        <span>Total Amount Charged</span>
+        <span>₹<%= booking.totalAmount %></span>
+      </div>
+    </div>
+
+    <!-- Parties details -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:2rem;">
+      <div>
+        <h4 style="font-family:var(--font-display); font-size:0.95rem; margin-bottom:0.5rem;">Renter Information</h4>
+        <p style="font-size:0.9rem; color:var(--text-secondary);">
+          Name: <strong><%= booking.renter ? booking.renter.name : 'N/A' %></strong><br/>
+          Email: <%= booking.renter ? booking.renter.email : 'N/A' %><br/>
+          Phone: <%= booking.renter ? booking.renter.phone : 'N/A' %>
+        </p>
+      </div>
+      <div>
+        <h4 style="font-family:var(--font-display); font-size:0.95rem; margin-bottom:0.5rem;">Seller Information</h4>
+        <p style="font-size:0.9rem; color:var(--text-secondary);">
+          Name: <strong><%= booking.seller ? booking.seller.name : 'N/A' %></strong><br/>
+          Email: <%= booking.seller ? booking.seller.email : 'N/A' %><br/>
+          Phone: <%= booking.seller ? booking.seller.phone : 'N/A' %>
+        </p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex; justify-content:flex-end; gap:1rem; border-top:1px solid var(--border); padding-top:1.5rem;">
+      <a href="/user/chat/<%= booking._id %>" class="btn btn-primary"><i class="fa-regular fa-comment-dots"></i> Message Center</a>
+    </div>
+
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

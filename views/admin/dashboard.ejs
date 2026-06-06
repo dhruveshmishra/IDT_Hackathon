@@ -1,0 +1,110 @@
+<%- include('../layouts/main') %>
+
+<div class="container" style="max-width: 1200px;">
+  <h2 style="font-family: var(--font-display); margin-bottom: 2.5rem; display: flex; align-items: center; gap: 8px;">
+    <i class="fa-solid fa-gauge" style="color: var(--primary);"></i> Admin Operations Control Center
+  </h2>
+
+  <!-- Stats Grid -->
+  <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 3rem;">
+    <div class="stat-card">
+      <span class="stat-card-title">Total Renters</span>
+      <span class="stat-card-value"><%= totalUsers %></span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card-title">Total Sellers</span>
+      <span class="stat-card-value"><%= totalSellers %></span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card-title">Active Listings</span>
+      <span class="stat-card-value"><%= activeListings %></span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card-title">Total Bookings</span>
+      <span class="stat-card-value"><%= totalBookings %></span>
+    </div>
+    <div class="stat-card" style="border-color:#16a34a; background-color: #f0fdf4;">
+      <span class="stat-card-title" style="color:#16a34a;">Platform GTV</span>
+      <span class="stat-card-value" style="color:#16a34a;">₹<%= totalRevenue %></span>
+    </div>
+    <div class="stat-card" style="border-color:#d97706; background-color: #fffbeb;">
+      <span class="stat-card-title" style="color:#b45309;">Pending Verifications</span>
+      <span class="stat-card-value" style="color:#b45309;"><%= pendingVerifications %></span>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+    
+    <!-- Quick verification lists (60% width) -->
+    <div style="flex: 2; min-width: 350px; background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.75rem; box-shadow: var(--shadow-sm);">
+      <h3 style="font-family: var(--font-display); font-size: 1.25rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+        Pending Seller Documents Review
+      </h3>
+
+      <% if (pendingSellersList.length === 0) { %>
+        <p style="color: var(--text-hint); text-align: center; padding: 2rem;">No pending verifications in queue.</p>
+      <% } else { %>
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <% pendingSellersList.forEach(seller => { %>
+            <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+              <div>
+                <strong style="font-size: 1rem; display: block;"><%= seller.name %></strong>
+                <span style="font-size: 0.8rem; color: var(--text-secondary);"><%= seller.email %> | <%= seller.phone %></span>
+                <% if (seller.sellerProfile && seller.sellerProfile.verificationDoc) { %>
+                  <a href="<%= seller.sellerProfile.verificationDoc.url %>" target="_blank" style="font-size: 0.8rem; display: block; margin-top: 6px; font-weight: 600;"><i class="fa-solid fa-file-image"></i> View Document Image</a>
+                <% } %>
+              </div>
+              <div style="display: flex; gap: 6px;">
+                <form action="/admin/sellers/<%= seller._id %>/verify?_method=PUT" method="POST" style="display: inline;">
+                  <button type="submit" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem;"><i class="fa-solid fa-check"></i> Verify</button>
+                </form>
+                <button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openRejectModal('<%= seller._id %>')"><i class="fa-solid fa-xmark"></i> Reject</button>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Quick Navigation (40% width) -->
+    <div style="flex: 1; min-width: 250px; background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.75rem; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 1.25rem;">
+      <h3 style="font-family: var(--font-display); font-size: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">Quick Navigation</h3>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <a href="/admin/users" class="btn btn-outline" style="justify-content: flex-start; padding: 10px;"><i class="fa-solid fa-users"></i> Users Database</a>
+        <a href="/admin/sellers" class="btn btn-outline" style="justify-content: flex-start; padding: 10px;"><i class="fa-solid fa-user-shield"></i> Verification Center</a>
+        <a href="/admin/items" class="btn btn-outline" style="justify-content: flex-start; padding: 10px;"><i class="fa-solid fa-boxes-stacked"></i> All Listings</a>
+        <a href="/admin/bookings" class="btn btn-outline" style="justify-content: flex-start; padding: 10px;"><i class="fa-solid fa-receipt"></i> Booking Logs</a>
+        <a href="/admin/payments" class="btn btn-outline" style="justify-content: flex-start; padding: 10px;"><i class="fa-solid fa-indian-rupee-sign"></i> Payments Audits</a>
+        <a href="/admin/moderation" class="btn btn-outline" style="justify-content: flex-start; padding: 10px;"><i class="fa-solid fa-triangle-exclamation"></i> Flagged Content Queue</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Simple inline reject dialog model mockup -->
+<div id="reject-modal" style="position:fixed; inset: 0; background:rgba(0,0,0,0.5); display:none; justify-content:center; align-items:center; z-index:1000;">
+  <div style="background:#fff; padding:2rem; border-radius:10px; max-width:400px; width:100%;">
+    <h3 style="margin-bottom:1rem; font-family:var(--font-display);">Reject Verification</h3>
+    <form id="reject-form" method="POST">
+      <div class="form-group">
+        <label for="reject-reason">Reason for Rejection</label>
+        <textarea name="reason" id="reject-reason" rows="3" class="form-control" placeholder="Provide reason e.g., Blurred doc photo..." required></textarea>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button type="button" class="btn btn-outline" onclick="document.getElementById('reject-modal').style.display='none'">Cancel</button>
+        <button type="submit" class="btn btn-danger">Confirm Reject</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openRejectModal(id) {
+    const form = document.getElementById('reject-form');
+    form.action = `/admin/sellers/${id}/reject?_method=PUT`;
+    document.getElementById('reject-modal').style.display = 'flex';
+  }
+</script>
+
+<%- include('../layouts/footer') %>

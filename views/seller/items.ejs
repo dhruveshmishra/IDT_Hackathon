@@ -1,0 +1,76 @@
+<%- include('../layouts/main') %>
+
+<div class="dashboard-layout">
+  
+  <aside class="dashboard-sidebar">
+    <ul class="dashboard-sidebar-menu">
+      <li><a href="/seller/dashboard" class="dashboard-sidebar-link"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+      <li><a href="/seller/items" class="dashboard-sidebar-link active"><i class="fa-solid fa-list"></i> My Listings</a></li>
+      <li><a href="/seller/bookings" class="dashboard-sidebar-link"><i class="fa-regular fa-calendar-days"></i> Bookings Calendar</a></li>
+      <li><a href="/seller/profile" class="dashboard-sidebar-link"><i class="fa-solid fa-indian-rupee-sign"></i> Payout Details</a></li>
+      <li><a href="/seller/verify" class="dashboard-sidebar-link"><i class="fa-solid fa-user-shield"></i> Business Verification</a></li>
+    </ul>
+  </aside>
+
+  <main class="dashboard-main">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <h2 style="font-family: var(--font-display);">My Listed Items</h2>
+      <a href="/seller/items/new" class="btn btn-primary"><i class="fa-solid fa-plus"></i> List New Item</a>
+    </div>
+
+    <% if (items.length === 0) { %>
+      <div style="text-align: center; padding: 4rem 2rem; background-color: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
+        <div style="font-size: 3rem; color: var(--text-hint); margin-bottom: 1.25rem;"><i class="fa-solid fa-boxes-packing"></i></div>
+        <h3 style="margin-bottom: 0.5rem; font-family: var(--font-display);">No Listings Found</h3>
+        <p style="color: var(--text-secondary); max-width: 400px; margin: 0 auto 1.5rem;">List your spare products (tools, electronics, camping gear) and start earning rental income today.</p>
+        <a href="/seller/items/new" class="btn btn-primary">Create Your First Listing</a>
+      </div>
+    <% } else { %>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+        <% items.forEach(item => { %>
+          <div class="item-card">
+            <div class="item-card-img-wrapper">
+              <% if (item.images && item.images.length > 0) { %>
+                <img src="<%= item.images[0].url %>" class="item-card-img" alt="<%= item.title %>">
+              <% } else { %>
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-hint); font-size: 2rem; background: #e2e8f0;"><i class="fa-solid fa-camera"></i></div>
+              <% } %>
+              <div class="item-card-badge"><%= item.category %></div>
+            </div>
+            
+            <div class="item-card-content">
+              <h3 class="item-card-title"><%= item.title %></h3>
+              <p style="font-size: 1.15rem; font-weight: 700; color: var(--primary); margin-bottom: 8px;">
+                ₹<%= item.pricePerDay %> <span style="font-size: 0.8rem; font-weight: 400; color: var(--text-secondary);">/day</span>
+              </p>
+
+              <!-- Status labels -->
+              <div style="margin-bottom: 1rem; display: flex; gap: 6px; flex-wrap: wrap;">
+                <span style="font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+                  <%= item.status === 'active' ? 'background-color: #dcfce7; color: #16a34a;' : '' %>
+                  <%= item.status === 'pending_review' ? 'background-color: #fef3c7; color: #d97706;' : '' %>
+                  <%= item.status === 'rejected' ? 'background-color: #fee2e2; color: #dc2626;' : '' %>
+                ">
+                  <%= item.status %>
+                </span>
+                <% if (item.flagged) { %>
+                  <span style="background-color: #fee2e2; color: #dc2626; font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;">Flagged Content</span>
+                <% } %>
+              </div>
+
+              <div class="item-card-footer" style="gap: 8px;">
+                <a href="/seller/items/<%= item._id %>/edit" class="btn btn-outline" style="flex: 1; padding: 6px; font-size: 0.8rem; text-align: center;"><i class="fa-solid fa-pencil"></i> Edit</a>
+                
+                <form action="/seller/items/<%= item._id %>?_method=DELETE" method="POST" style="flex: 1; display: inline;" onsubmit="return confirm('Are you sure you want to delete this listing?')">
+                  <button type="submit" class="btn btn-danger" style="width: 100%; padding: 6px; font-size: 0.8rem;"><i class="fa-solid fa-trash"></i> Delete</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </main>
+</div>
+
+<%- include('../layouts/footer') %>

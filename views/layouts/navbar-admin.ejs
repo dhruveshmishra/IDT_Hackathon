@@ -1,0 +1,15 @@
+<nav class="navbar">
+  <a href="/admin/dashboard" class="nav-brand">RentIt<span>.</span> Control Portal</a>
+  <ul class="nav-links">
+    <li><a href="/admin/dashboard" class="nav-link"><i class="fa-solid fa-gauge"></i> Dashboard</a></li>
+    <li><a href="/admin/users" class="nav-link"><i class="fa-solid fa-users"></i> Users</a></li>
+    <li><a href="/admin/sellers" class="nav-link"><i class="fa-solid fa-user-shield"></i> Verification Queue</a></li>
+    <li><a href="/admin/moderation" class="nav-link"><i class="fa-solid fa-triangle-exclamation"></i> Content Moderation</a></li>
+    <li><a href="/admin/payments" class="nav-link"><i class="fa-solid fa-indian-rupee-sign"></i> Payments Log</a></li>
+    <li>
+      <form action="/auth/logout" method="POST" style="display: inline;">
+        <button type="submit" class="btn btn-outline" style="padding: 4px 12px; font-size: 0.85rem;"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</button>
+      </form>
+    </li>
+  </ul>
+</nav>

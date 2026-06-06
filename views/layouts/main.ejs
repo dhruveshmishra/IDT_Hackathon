@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RentIt — P2P Marketplace</title>
+  
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- Leaflet Maps -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Date Picker -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+  <!-- Charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Socket.io -->
+  <script src="/socket.io/socket.io.js"></script>
+
+  <!-- Razorpay -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+  <!-- Flash Messages Toast -->
+  <%- include('../partials/flash') %>
+
+  <!-- AI Loader Backdrop -->
+  <%- include('../partials/loader') %>
+
+  <% 
+    // Determine if we are on a dashboard-type route
+    const isDashboardRoute = currentPath && (
+      currentPath.startsWith('/user') ||
+      currentPath.startsWith('/admin') ||
+      currentPath.startsWith('/seller') ||
+      currentPath.startsWith('/bookings') ||
+      currentPath.startsWith('/chat') ||
+      currentPath.startsWith('/payments')
+    );
+    const isAuthRoute = currentPath && (
+      currentPath.startsWith('/auth') ||
+      currentPath === '/'
+    );
+  %>
+
+  <% if (!currentUser && (isAuthRoute || !isDashboardRoute)) { %>
+    <!-- ============================
+         GUEST: Top Navbar (landing + auth pages only)
+         ============================ -->
+    <nav class="navbar">
+      <a href="/" class="nav-brand">RentIt<span>.</span></a>
+      <ul class="nav-links">
+        <li><a href="/#how-it-works" class="nav-link">How it works</a></li>
+        <li><a href="/items" class="nav-link">Browse Items</a></li>
+        <li><a href="/auth/login" class="nav-link">User Login</a></li>
+        <li><a href="/auth/signup" class="btn btn-primary">Sign Up</a></li>
+      </ul>
+    </nav>
+
+  <% } else if (currentUser && isDashboardRoute && currentUser.role === 'admin') { %>
+    <!-- ============================
+         ADMIN: Left Sidebar + Mobile topbar (dashboard routes only)
+         ============================ -->
+    <div class="mobile-topbar">
+      <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <span class="mobile-brand">RentIt<span>.</span> Admin</span>
+    </div>
+    <%- include('./sidebar-admin') %>
+
+  <% } else if (currentUser && isDashboardRoute && currentUser.role === 'seller') { %>
+    <!-- ============================
+         SELLER: Left Sidebar + Mobile topbar (dashboard routes only)
+         ============================ -->
+    <div class="mobile-topbar">
+      <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <span class="mobile-brand">RentIt<span>.</span> Seller</span>
+    </div>
+    <%- include('./sidebar-seller') %>
+
+  <% } else if (currentUser && isDashboardRoute && currentUser.role === 'user') { %>
+    <!-- ============================
+         USER: Left Sidebar + Mobile topbar (dashboard routes only)
+         ============================ -->
+    <div class="mobile-topbar">
+      <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <span class="mobile-brand">RentIt<span>.</span></span>
+    </div>
+    <%- include('./sidebar-user') %>
+
+  <% } else if (currentUser && !isDashboardRoute) { %>
+    <!-- ============================
+         LOGGED-IN USER on PUBLIC PAGE: Slim top bar (no sidebar)
+         ============================ -->
+    <nav class="navbar" style="border-bottom: 1px solid var(--border); background: var(--surface);">
+      <a href="/" class="nav-brand">RentIt<span>.</span></a>
+      <ul class="nav-links" style="gap: 0.75rem;">
+        <li><a href="/items" class="nav-link" style="font-size:0.9rem;">Browse</a></li>
+        <% if (currentUser.role === 'user') { %>
+          <li><a href="/user/home" class="nav-link" style="font-size:0.9rem;"><i class="fa-solid fa-gauge"></i> Dashboard</a></li>
+        <% } else if (currentUser.role === 'seller') { %>
+          <li><a href="/seller/dashboard" class="nav-link" style="font-size:0.9rem;"><i class="fa-solid fa-gauge"></i> Seller Portal</a></li>
+        <% } else if (currentUser.role === 'admin') { %>
+          <li><a href="/admin/dashboard" class="nav-link" style="font-size:0.9rem;"><i class="fa-solid fa-gauge"></i> Admin</a></li>
+        <% } %>
+        <li>
+          <form action="/auth/logout" method="POST" style="margin:0;">
+            <button type="submit" class="btn btn-outline" style="font-size:0.82rem; padding: 6px 14px;">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+            </button>
+          </form>
+        </li>
+      </ul>
+    </nav>
+
+  <% } %>
+
+  <!-- Main page content wrapper (offsets for sidebar when on dashboard routes and logged in) -->
+  <% if (currentUser && isDashboardRoute) { %>
+  <div class="sidebar-page-content" id="pageContent">
+  <% } %>

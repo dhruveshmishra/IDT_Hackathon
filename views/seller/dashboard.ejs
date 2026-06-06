@@ -1,0 +1,175 @@
+<%- include('../layouts/main') %>
+
+<div class="dashboard-layout">
+  
+  <!-- Sidebar Navigation -->
+  <aside class="dashboard-sidebar">
+    <ul class="dashboard-sidebar-menu">
+      <li><a href="/seller/dashboard" class="dashboard-sidebar-link active"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+      <li><a href="/seller/items" class="dashboard-sidebar-link"><i class="fa-solid fa-list"></i> My Listings</a></li>
+      <li><a href="/seller/bookings" class="dashboard-sidebar-link"><i class="fa-regular fa-calendar-days"></i> Bookings Calendar</a></li>
+      <li><a href="/seller/profile" class="dashboard-sidebar-link"><i class="fa-solid fa-indian-rupee-sign"></i> Payout Details</a></li>
+      <li><a href="/seller/verify" class="dashboard-sidebar-link"><i class="fa-solid fa-user-shield"></i> Business Verification</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Workspace -->
+  <main class="dashboard-main">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <h2 style="font-family: var(--font-display);">Seller Analytics Overview</h2>
+      <a href="/seller/items/new" class="btn btn-primary"><i class="fa-solid fa-plus"></i> List New Item</a>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <span class="stat-card-title">Total Earnings</span>
+        <span class="stat-card-value">₹<%= earnings %></span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card-title">Active Bookings</span>
+        <span class="stat-card-value"><%= activeBookings %></span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card-title">Listed Items</span>
+        <span class="stat-card-value"><%= itemsCount %></span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card-title">Average Rating</span>
+        <span class="stat-card-value"><i class="fa-solid fa-star" style="color:#fbbf24;"></i> <%= avgRating > 0 ? avgRating.toFixed(1) : 'N/A' %></span>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 2rem;">
+      <!-- Chart section (60% width) -->
+      <div style="flex: 2; min-width: 350px; background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm);">
+        <h3 style="font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 1rem;">Earnings Analytics (Last 30 days)</h3>
+        <div style="height: 250px;">
+          <canvas id="earnings-chart"></canvas>
+        </div>
+      </div>
+      
+      <!-- Payout quick status (40% width) -->
+      <div style="flex: 1; min-width: 250px; background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 1rem;">
+        <h3 style="font-family: var(--font-display); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">Verification Status</h3>
+        
+        <% if (currentUser.isVerified) { %>
+          <div style="background-color: #dcfce7; border-left: 4px solid var(--success); padding: 12px; border-radius: var(--radius-sm); color: #15803d; font-size: 0.85rem; font-weight: 600;">
+            <i class="fa-solid fa-circle-check"></i> Account Verified
+          </div>
+        <% } else if (currentUser.sellerProfile && currentUser.sellerProfile.verificationDoc && currentUser.sellerProfile.verificationDoc.url) { %>
+          <div style="background-color: #fef3c7; border-left: 4px solid var(--warning); padding: 12px; border-radius: var(--radius-sm); color: #b45309; font-size: 0.85rem; font-weight: 600;">
+            <i class="fa-solid fa-clock"></i> Verification In Progress
+          </div>
+        <% } else { %>
+          <div style="background-color: #fee2e2; border-left: 4px solid var(--danger); padding: 12px; border-radius: var(--radius-sm); color: #b91c1c; font-size: 0.85rem; font-weight: 600;">
+            <i class="fa-solid fa-triangle-exclamation"></i> Action Required: Verify Business
+          </div>
+          <a href="/seller/verify" class="btn btn-accent" style="font-size: 0.85rem; text-align: center;">Upload Business Documents</a>
+        <% } %>
+
+        <div style="border-top: 1px solid var(--border); padding-top: 0.75rem; margin-top: auto;">
+          <h4 style="font-size: 0.9rem; margin-bottom: 6px;">Payout Account</h4>
+          <p style="font-size: 0.85rem; color: var(--text-secondary);">
+            UPI ID: <strong><%= (currentUser.sellerProfile.payoutDetails && currentUser.sellerProfile.payoutDetails.upi) ? currentUser.sellerProfile.payoutDetails.upi : 'Not Configured' %></strong>
+          </p>
+          <a href="/seller/profile" style="font-size: 0.8rem; font-weight: 600; margin-top: 6px; display: inline-block;">Update settings &rarr;</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Bookings Table -->
+    <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); overflow-x: auto;">
+      <h3 style="font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 1rem;">Recent Booking Operations</h3>
+      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--border); color: var(--text-secondary); font-weight: 600;">
+            <th style="padding: 10px 8px;">Item Name</th>
+            <th style="padding: 10px 8px;">Renter</th>
+            <th style="padding: 10px 8px;">Rental Dates</th>
+            <th style="padding: 10px 8px;">Amount</th>
+            <th style="padding: 10px 8px;">Status</th>
+            <th style="padding: 10px 8px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (recentBookings.length === 0) { %>
+            <tr>
+              <td colspan="6" style="padding: 20px; text-align: center; color: var(--text-hint);">No bookings received yet.</td>
+            </tr>
+          <% } else { %>
+            <% recentBookings.forEach(booking => { %>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 12px 8px; font-weight: 600;"><%= booking.item ? booking.item.title : 'Deleted Item' %></td>
+                <td style="padding: 12px 8px;"><%= booking.renter ? booking.renter.name : 'Unknown Renter' %></td>
+                <td style="padding: 12px 8px; font-size: 0.8rem; color: var(--text-secondary);">
+                  <%= new Date(booking.startDate).toLocaleDateString() %> - <%= new Date(booking.endDate).toLocaleDateString() %>
+                </td>
+                <td style="padding: 12px 8px; font-weight: 700;">₹<%= booking.totalAmount %></td>
+                <td style="padding: 12px 8px;">
+                  <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+                    <%= booking.status === 'confirmed' ? 'background-color: #dcfce7; color: #16a34a;' : '' %>
+                    <%= booking.status === 'pending' ? 'background-color: #fef3c7; color: #d97706;' : '' %>
+                    <%= booking.status === 'active' ? 'background-color: #eff6ff; color: #2563eb;' : '' %>
+                    <%= booking.status === 'completed' ? 'background-color: #f1f5f9; color: #64748b;' : '' %>
+                    <%= booking.status === 'cancelled' ? 'background-color: #fee2e2; color: #dc2626;' : '' %>
+                  ">
+                    <%= booking.status %>
+                  </span>
+                </td>
+                <td style="padding: 12px 8px;">
+                  <a href="/seller/bookings" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 4px;">Manage</a>
+                </td>
+              </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+<!-- Chart.js configuration scripts -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const ctx = document.getElementById('earnings-chart').getContext('2d');
+    
+    // Generating dummy but realistic chart bars representing dates
+    const labels = [];
+    const data = [];
+    for(let i=14; i>=0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      labels.push(d.toLocaleDateString(undefined, {month: 'short', day: 'numeric'}));
+      // Random mock earnings distribution for chart
+      data.push(i % 3 === 0 ? Math.floor(Math.random() * 2500) + 500 : 0);
+    }
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Daily Revenue (INR)',
+          data: data,
+          backgroundColor: '#2563eb',
+          borderColor: '#1d4ed8',
+          borderWidth: 1,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  });
+</script>
+
+<%- include('../layouts/footer') %>

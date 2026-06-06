@@ -1,0 +1,69 @@
+<%- include('../layouts/main') %>
+
+<div class="container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh;">
+  <div style="max-width: 600px; text-align: center; margin-bottom: 2rem;">
+    <h2 style="font-family: var(--font-display); font-size: 2rem; margin-bottom: 0.5rem;">Select Your Account Type</h2>
+    <p style="color: var(--text-secondary);">Choose how you want to participate in the RentIt marketplace. You can always browse items as a guest, but listing items requires a Seller profile.</p>
+  </div>
+  
+  <form action="/auth/role-select" method="POST" style="display: flex; gap: 2rem; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 700px;">
+    
+    <!-- User Card -->
+    <label style="cursor: pointer; flex: 1; min-width: 250px;">
+      <input type="radio" name="role" value="user" checked style="display: none;">
+      <div class="item-card role-card" style="padding: 2rem; text-align: center; border: 2px solid var(--border); transition: border-color 0.2s;">
+        <div style="font-size: 3rem; color: var(--primary); margin-bottom: 1rem;">
+          <i class="fa-solid fa-bag-shopping"></i>
+        </div>
+        <h3 style="font-family: var(--font-display); margin-bottom: 0.5rem;">I want to Rent Items</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">Browse nearby listings, book products securely, and chat with local sellers.</p>
+      </div>
+    </label>
+    
+    <!-- Seller Card -->
+    <label style="cursor: pointer; flex: 1; min-width: 250px;">
+      <input type="radio" name="role" value="seller" style="display: none;">
+      <div class="item-card role-card" style="padding: 2rem; text-align: center; border: 2px solid var(--border); transition: border-color 0.2s;">
+        <div style="font-size: 3rem; color: var(--accent); margin-bottom: 1rem;">
+          <i class="fa-solid fa-store"></i>
+        </div>
+        <h3 style="font-family: var(--font-display); margin-bottom: 0.5rem;">I want to List & Earn</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">List your spare products, coordinate bookings, manage earnings, and chat with renters.</p>
+      </div>
+    </label>
+    
+    <div style="width: 100%; text-align: center; margin-top: 1.5rem;">
+      <button type="submit" class="btn btn-primary" style="padding: 12px 36px; font-size: 1rem;">
+        Continue <i class="fa-solid fa-circle-chevron-right"></i>
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const cards = document.querySelectorAll('.role-card');
+    const inputs = document.querySelectorAll('input[type="radio"]');
+
+    function updateHighlight() {
+      inputs.forEach((input, index) => {
+        if (input.checked) {
+          cards[index].style.borderColor = input.value === 'seller' ? 'var(--accent)' : 'var(--primary)';
+          cards[index].style.backgroundColor = '#f8fafc';
+        } else {
+          cards[index].style.borderColor = 'var(--border)';
+          cards[index].style.backgroundColor = 'var(--surface)';
+        }
+      });
+    }
+
+    inputs.forEach((input) => {
+      input.addEventListener('change', updateHighlight);
+    });
+
+    updateHighlight();
+  });
+</script>
+
+<%- include('../layouts/footer') %>

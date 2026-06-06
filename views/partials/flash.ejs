@@ -1,0 +1,30 @@
+<div class="flash-container" id="flash-container">
+  <% if (success && success.length > 0) { %>
+    <div class="flash-alert flash-alert-success">
+      <i class="fa-solid fa-circle-check"></i>
+      <span><%= success %></span>
+    </div>
+  <% } %>
+  <% if (error && error.length > 0) { %>
+    <div class="flash-alert flash-alert-error">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span><%= error %></span>
+    </div>
+  <% } %>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const alerts = document.querySelectorAll('.flash-alert');
+    alerts.forEach(alert => {
+      setTimeout(() => {
+        alert.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        alert.style.opacity = '0';
+        alert.style.transform = 'translateX(120%)';
+        setTimeout(() => {
+          alert.remove();
+        }, 500);
+      }, 4000);
+    });
+  });
+</script>

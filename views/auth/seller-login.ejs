@@ -1,0 +1,28 @@
+<%- include('../layouts/main') %>
+
+<div class="container">
+  <div class="form-card" style="border-top: 4px solid var(--accent);">
+    <h2 style="text-align: center; margin-bottom: 0.5rem; font-family: var(--font-display);">Seller Portal</h2>
+    <p style="text-align: center; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Log in to manage your listings, bookings, and earnings.</p>
+    
+    <form action="/auth/login" method="POST">
+      <div class="form-group">
+        <label for="email">Seller Email Address</label>
+        <input type="email" name="email" id="email" class="form-control" placeholder="seller@example.com" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" name="password" id="password" class="form-control" placeholder="Enter your password" required>
+      </div>
+      <button type="submit" class="btn btn-accent" style="width: 100%; margin-top: 1rem;">
+        <i class="fa-solid fa-store"></i> Seller Sign In
+      </button>
+    </form>
+    
+    <p style="text-align: center; margin-top: 1.5rem; color: var(--text-secondary); font-size: 0.9rem;">
+      Want to sell on RentIt? <a href="/auth/signup" style="color: var(--accent); font-weight: 600;">Register as a Seller</a>
+    </p>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

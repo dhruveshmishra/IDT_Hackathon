@@ -1,0 +1,136 @@
+<!-- LEFT SIDEBAR: ADMIN PORTAL -->
+<nav class="sidebar-nav" id="sidebarNav">
+  <!-- Toggle button -->
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar" title="Toggle sidebar">
+    <i class="fa-solid fa-chevron-left"></i>
+  </button>
+
+  <!-- Brand -->
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-logo">R</div>
+    <span class="sidebar-brand-text">RentIt Admin</span>
+  </div>
+
+  <!-- Admin Info -->
+  <div class="sidebar-user">
+    <div class="sidebar-avatar">
+      <% if (currentUser && currentUser.avatar && currentUser.avatar.url) { %>
+        <img src="<%= currentUser.avatar.url %>" alt="Avatar">
+      <% } else { %>
+        <i class="fa-solid fa-user-shield"></i>
+      <% } %>
+    </div>
+    <div class="sidebar-user-info">
+      <div class="sidebar-user-name"><%= currentUser ? currentUser.name : 'Admin' %></div>
+      <div class="sidebar-user-role">Administrator</div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <ul class="sidebar-menu">
+    <li class="sidebar-section-label">Overview</li>
+    <li>
+      <a href="/admin/dashboard" class="sidebar-menu-link <%= locals.activePage === 'dashboard' ? 'active' : '' %>" data-label="Dashboard">
+        <span class="sidebar-menu-icon"><i class="fa-solid fa-gauge"></i></span>
+        <span class="sidebar-menu-label">Dashboard</span>
+      </a>
+    </li>
+
+    <li class="sidebar-section-label">Management</li>
+    <li>
+      <a href="/admin/sellers" class="sidebar-menu-link <%= locals.activePage === 'sellers' ? 'active' : '' %>" data-label="Sellers">
+        <span class="sidebar-menu-icon"><i class="fa-solid fa-store"></i></span>
+        <span class="sidebar-menu-label">Sellers</span>
+      </a>
+    </li>
+    <li>
+      <a href="/admin/users" class="sidebar-menu-link <%= locals.activePage === 'users' ? 'active' : '' %>" data-label="Users">
+        <span class="sidebar-menu-icon"><i class="fa-solid fa-users"></i></span>
+        <span class="sidebar-menu-label">Users</span>
+      </a>
+    </li>
+    <li>
+      <a href="/admin/items" class="sidebar-menu-link <%= locals.activePage === 'items' ? 'active' : '' %>" data-label="Listings">
+        <span class="sidebar-menu-icon"><i class="fa-solid fa-boxes-stacked"></i></span>
+        <span class="sidebar-menu-label">Listings</span>
+      </a>
+    </li>
+    <li>
+      <a href="/admin/bookings" class="sidebar-menu-link <%= locals.activePage === 'bookings' ? 'active' : '' %>" data-label="Bookings">
+        <span class="sidebar-menu-icon"><i class="fa-solid fa-calendar-check"></i></span>
+        <span class="sidebar-menu-label">Bookings</span>
+      </a>
+    </li>
+
+    <li class="sidebar-section-label">Verification</li>
+    <li>
+      <a href="/admin/moderation" class="sidebar-menu-link <%= locals.activePage === 'moderation' ? 'active' : '' %>" data-label="Content Moderation">
+        <span class="sidebar-menu-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+        <span class="sidebar-menu-label">Moderation</span>
+      </a>
+    </li>
+    <li>
+      <a href="/admin/aadhaar-review" class="sidebar-menu-link <%= locals.activePage === 'aadhaar' ? 'active' : '' %>" data-label="Aadhaar Review">
+        <span class="sidebar-menu-icon"><i class="fa-solid fa-id-card"></i></span>
+        <span class="sidebar-menu-label">Aadhaar Review</span>
+      </a>
+    </li>
+
+    <li class="sidebar-section-label">Finance</li>
+    <li>
+      <a href="/admin/payments" class="sidebar-menu-link <%= locals.activePage === 'payments' ? 'active' : '' %>" data-label="Payments">
+        <span class="sidebar-menu-icon"><i class="fa-solid fa-indian-rupee-sign"></i></span>
+        <span class="sidebar-menu-label">Payments Log</span>
+      </a>
+    </li>
+  </ul>
+
+  <!-- Logout -->
+  <div class="sidebar-footer">
+    <form action="/auth/logout" method="POST">
+      <button type="submit" class="sidebar-logout-btn">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        <span class="sidebar-logout-label">Logout</span>
+      </button>
+    </form>
+  </div>
+</nav>
+
+<!-- Mobile overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+(function() {
+  const nav     = document.getElementById('sidebarNav');
+  const toggle  = document.getElementById('sidebarToggle');
+  const content = document.getElementById('pageContent');
+  const overlay = document.getElementById('sidebarOverlay');
+
+  const STORAGE_KEY = 'rentit_sidebar_collapsed';
+  const collapsed = localStorage.getItem(STORAGE_KEY) === 'true';
+  if (collapsed) {
+    nav.classList.add('collapsed');
+    if (content) content.classList.add('collapsed');
+  }
+
+  toggle.addEventListener('click', () => {
+    const isCollapsed = nav.classList.toggle('collapsed');
+    if (content) content.classList.toggle('collapsed', isCollapsed);
+    localStorage.setItem(STORAGE_KEY, isCollapsed);
+  });
+
+  // Mobile: open sidebar
+  const mobileBtn = document.getElementById('mobileMenuBtn');
+  if (mobileBtn) {
+    mobileBtn.addEventListener('click', () => {
+      nav.classList.add('mobile-open');
+      overlay.classList.add('visible');
+    });
+  }
+
+  overlay.addEventListener('click', () => {
+    nav.classList.remove('mobile-open');
+    overlay.classList.remove('visible');
+  });
+})();
+</script>

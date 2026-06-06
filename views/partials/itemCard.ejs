@@ -1,0 +1,76 @@
+<div class="item-card">
+  <div class="item-card-img-wrapper">
+    <% if (item.images && item.images.length > 0) { %>
+      <img src="<%= item.images[0].url %>" class="item-card-img" alt="<%= item.title %>">
+    <% } else { %>
+      <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-hint); font-size: 2.5rem; background: #e2e8f0;">
+        <i class="fa-solid fa-camera"></i>
+      </div>
+    <% } %>
+    <div class="item-card-badge"><%= item.category %></div>
+
+    <!-- Distance pill overlay (top-left) -->
+    <%
+      let distKm = null;
+      let distBg = '#f1f5f9';
+      let distColor = '#475569';
+      let distIcon = 'fa-location-dot';
+      if (item.dist && item.dist.calculated != null) {
+        distKm = (item.dist.calculated / 1000);
+      }
+      if (distKm !== null) {
+        if (distKm <= 1) { distBg = '#dcfce7'; distColor = '#15803d'; }
+        else if (distKm <= 5) { distBg = '#dbeafe'; distColor = '#1d4ed8'; }
+        else { distBg = '#fef9c3'; distColor = '#92400e'; }
+      }
+    %>
+    <% if (distKm !== null) { %>
+      <div style="position: absolute; top: 10px; left: 10px; background: <%= distBg %>; color: <%= distColor %>; font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 99px; display: flex; align-items: center; gap: 4px; backdrop-filter: blur(4px);">
+        <i class="fa-solid fa-<%= distKm <= 1 ? 'walking' : (distKm <= 5 ? 'bicycle' : 'car') %>"></i>
+        <% if (distKm < 0.1) { %>
+          <%= (item.dist.calculated).toFixed(0) %>m away
+        <% } else { %>
+          <%= distKm.toFixed(1) %> km away
+        <% } %>
+      </div>
+    <% } %>
+  </div>
+
+  <div class="item-card-content">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 4px;">
+      <h3 class="item-card-title"><%= item.title %></h3>
+    </div>
+
+    <!-- Seller name -->
+    <% if (item.owner) { %>
+    <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 6px; display: flex; align-items: center; gap: 5px;">
+      <i class="fa-solid fa-store" style="color: var(--accent);"></i>
+      <%= item.owner.sellerProfile && item.owner.sellerProfile.businessName
+            ? item.owner.sellerProfile.businessName
+            : item.owner.name %>
+      <% if (item.owner.isVerified) { %>
+        <i class="fa-solid fa-circle-check" style="color: var(--success); font-size: 0.7rem;" title="Verified Seller"></i>
+      <% } %>
+    </div>
+    <% } %>
+
+    <div class="item-card-meta">
+      <div class="item-card-rating">
+        <i class="fa-solid fa-star"></i>
+        <%= item.avgRating > 0 ? item.avgRating.toFixed(1) : 'New' %>
+        <% if (item.reviewCount > 0) { %>
+          (<%= item.reviewCount %>)
+        <% } %>
+      </div>
+      <div style="font-weight: 700; font-size: 1rem; color: var(--accent);">
+        ₹<%= item.pricePerDay %><span style="font-size: 0.75rem; font-weight: 400; color: var(--text-secondary);">/day</span>
+      </div>
+    </div>
+
+    <div class="item-card-footer">
+      <a href="/items/<%= item._id %>" class="btn btn-primary" style="width: 100%; padding: 8px 12px; font-size: 0.85rem;">
+        <i class="fa-solid fa-calendar-check"></i> View & Book
+      </a>
+    </div>
+  </div>
+</div>

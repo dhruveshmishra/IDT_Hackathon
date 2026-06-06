@@ -1,0 +1,25 @@
+<%- include('../layouts/main') %>
+
+<div class="container">
+  <div class="form-card">
+    <h2 style="text-align: center; margin-bottom: 1.5rem; font-family: var(--font-display);">Welcome Back</h2>
+    <form action="/auth/login" method="POST">
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" name="email" id="email" class="form-control" placeholder="name@example.com" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" name="password" id="password" class="form-control" placeholder="Enter your password" required>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+        <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+      </button>
+    </form>
+    <p style="text-align: center; margin-top: 1.5rem; color: var(--text-secondary); font-size: 0.9rem;">
+      New to RentIt? <a href="/auth/signup">Create an account</a>
+    </p>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

@@ -1,0 +1,48 @@
+<%- include('../layouts/main') %>
+
+<div class="container" style="max-width: 1100px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+    <h2 style="font-family: var(--font-display);"><i class="fa-solid fa-file-invoice-dollar"></i> Platform Payments Ledger</h2>
+    <a href="/admin/dashboard" class="btn btn-outline">&larr; Back to Dashboard</a>
+  </div>
+
+  <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+      <thead>
+        <tr style="border-bottom: 2px solid var(--border); color: var(--text-secondary); font-weight: 600;">
+          <th style="padding: 10px 8px;">Order ID</th>
+          <th style="padding: 10px 8px;">Payment ID</th>
+          <th style="padding: 10px 8px;">Booking ID</th>
+          <th style="padding: 10px 8px;">Sender / Receiver</th>
+          <th style="padding: 10px 8px;">GTV Amount</th>
+          <th style="padding: 10px 8px;">Commission (10%)</th>
+          <th style="padding: 10px 8px;">Net Payout</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (bookings.length === 0) { %>
+          <tr>
+            <td colspan="7" style="padding: 20px; text-align: center; color: var(--text-hint);">No completed payments registered.</td>
+          </tr>
+        <% } else { %>
+          <% bookings.forEach(booking => { %>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 12px 8px; font-family: monospace; font-size: 0.8rem;"><%= booking.payment.orderId || 'Mock Order' %></td>
+              <td style="padding: 12px 8px; font-family: monospace; font-size: 0.8rem;"><%= booking.payment.paymentId || 'Mock Pay' %></td>
+              <td style="padding: 12px 8px; font-family: monospace; font-size: 0.8rem;"><%= booking._id %></td>
+              <td style="padding: 12px 8px; font-size: 0.85rem;">
+                From: <%= booking.renter ? booking.renter.name : 'Unknown' %><br/>
+                To: <%= booking.seller ? booking.seller.name : 'Unknown' %>
+              </td>
+              <td style="padding: 12px 8px; font-weight: 700;">₹<%= booking.totalAmount %></td>
+              <td style="padding: 12px 8px; color: var(--success); font-weight: 600;">₹<%= (booking.totalAmount * 0.1).toFixed(0) %></td>
+              <td style="padding: 12px 8px; font-weight: 700; color: var(--primary);">₹<%= (booking.totalAmount * 0.9).toFixed(0) %></td>
+            </tr>
+          <% }) %>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>
