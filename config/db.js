@@ -6,14 +6,22 @@ const localMongoUrl = process.env.LOCAL_MONGO_URL || 'mongodb://127.0.0.1:27017/
 mongoose.set('strictQuery', false);
 
 async function connectDB() {
+  const connectionOptions = {
+    serverSelectionTimeoutMS: 5000,
+    maxPoolSize: 10,
+    minPoolSize: 2,
+    socketTimeoutMS: 45000,
+    keepAlive: true
+  };
+
   try {
-    await mongoose.connect(mongoUrl, { serverSelectionTimeoutMS: 2000 });
+    await mongoose.connect(mongoUrl, connectionOptions);
     console.log('Successfully connected to MongoDB Atlas');
   } catch (error) {
     console.error('Failed to connect to MongoDB Atlas. Error:', error.message);
     console.log(`Attempting fallback connection to local MongoDB: ${localMongoUrl}`);
     try {
-      await mongoose.connect(localMongoUrl, { serverSelectionTimeoutMS: 2000 });
+      await mongoose.connect(localMongoUrl, connectionOptions);
       console.log('Successfully connected to local MongoDB');
     } catch (localError) {
       console.error('Fallback to local MongoDB also failed:', localError.message);

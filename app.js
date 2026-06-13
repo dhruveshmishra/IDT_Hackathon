@@ -12,6 +12,7 @@ const flash = require('connect-flash');
 const { Server } = require('socket.io');
 const http = require('http');
 const path = require('path');
+const compression = require('compression');
 
 // Configs
 require('./config/db');
@@ -67,6 +68,7 @@ const sellerSession = session({
 
 // Helper function to apply core middleware to Express sub-apps
 function applyBaseMiddleware(appInstance, sessionMiddleware) {
+  appInstance.use(compression());
   appInstance.set('view engine', 'ejs');
   appInstance.set('views', path.join(__dirname, 'views'));
   
