@@ -54,11 +54,7 @@ router.post('/login', (req, res, next) => {
       return res.redirect('/auth/login');
     }
 
-    // User/Renter-specific Aadhaar verification gate
-    if (user.role === 'user' && !user.aadhaarVerified) {
-      req.flash('error', 'Your account is pending admin Aadhaar verification and approval. You will be notified once approved.');
-      return res.redirect('/auth/login');
-    }
+    // User/Renter-specific Aadhaar verification gate is bypassed for logging in, but checked during booking creation.
 
     req.login(user, (loginErr) => {
       if (loginErr) return next(loginErr);
