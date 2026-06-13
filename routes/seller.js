@@ -731,6 +731,14 @@ router.get('/messages/:bookingId', async (req, res) => {
   try {
     const sellerId = req.user._id;
 
+    // First mark messages as read for this booking
+    if (Message) {
+      await Message.updateMany(
+        { booking: req.params.bookingId, sender: { $ne: sellerId }, readBy: { $ne: sellerId } },
+        { $addToSet: { readBy: sellerId } }
+      );
+    }
+
     const bookings = await Booking.find({ seller: sellerId })
       .populate('item')
       .populate('renter', 'name avatar')
@@ -774,15 +782,37 @@ router.get('/messages/:bookingId', async (req, res) => {
       messages = await Message.find({ booking: req.params.bookingId })
         .populate('sender', 'name')
         .sort({ createdAt: 1 });
-
-      // Mark messages as read
-      await Message.updateMany(
-        { booking: req.params.bookingId, sender: { $ne: sellerId }, readBy: { $ne: sellerId } },
-        { $addToSet: { readBy: sellerId } }
-      );
     }
 
     res.render('seller/messages', { threads, activeBooking, messages, totalUnread });
+  } catch (err) {
+    req.flash('error', err.message);
+    res.redirect('/seller/messages');
+  }
+});
+
+// POST /seller/messages/:bookingId/clear
+router.post('/messages/:bookingId/clear', async (req, res) => {
+  try {
+    if (Message) {
+      await Message.deleteMany({ booking: req.params.bookingId });
+    }
+    req.flash('success', 'Chat cleared successfully.');
+    res.redirect('/seller/messages/' + req.params.bookingId);
+  } catch (err) {
+    req.flash('error', err.message);
+    res.redirect('/seller/messages');
+  }
+});
+
+// POST /seller/messages/:bookingId/delete
+router.post('/messages/:bookingId/delete', async (req, res) => {
+  try {
+    if (Message) {
+      await Message.deleteMany({ booking: req.params.bookingId });
+    }
+    req.flash('success', 'Chat deleted successfully.');
+    res.redirect('/seller/messages');
   } catch (err) {
     req.flash('error', err.message);
     res.redirect('/seller/messages');

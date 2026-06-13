@@ -351,6 +351,18 @@
           <i class="fa-solid fa-tag" style="font-size:0.7rem;"></i>
           <%= activeBooking.item ? activeBooking.item.title : 'Deleted listing' %>
         </span>
+        <div style="display: flex; gap: 8px; margin-left: 10px;">
+          <form action="/seller/messages/<%= activeBooking._id %>/clear" method="POST" onsubmit="return confirm('Are you sure you want to clear all messages in this chat?');" style="display: inline;">
+            <button type="submit" class="btn" style="padding: 5px 10px; font-size: 0.75rem; color: #dc2626; border: 1px solid #fca5a5; background: #fff5f5; border-radius: var(--radius-md); cursor: pointer;" title="Clear Chat">
+              <i class="fa-regular fa-trash-can"></i> Clear
+            </button>
+          </form>
+          <form action="/seller/messages/<%= activeBooking._id %>/delete" method="POST" onsubmit="return confirm('Are you sure you want to delete this chat history?');" style="display: inline;">
+            <button type="submit" class="btn" style="padding: 5px 10px; font-size: 0.75rem; color: #7f1d1d; border: 1px solid #f87171; background: #fee2e2; border-radius: var(--radius-md); cursor: pointer;" title="Delete Chat">
+              <i class="fa-solid fa-trash-can"></i> Delete
+            </button>
+          </form>
+        </div>
       </div>
 
       <!-- Messages Thread -->
@@ -411,6 +423,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Unread badge update when a new message arrives while on another page
   socket.on('new-message-notify', (data) => {
+    <% if (locals.activeBooking) { %>
+      if (data.bookingId === '<%= activeBooking._id %>') return;
+    <% } %>
+
     const badge = document.getElementById('sidebar-unread-badge');
     const threadBadge = document.getElementById(`badge-${data.bookingId}`);
 
