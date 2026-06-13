@@ -61,6 +61,16 @@
         <span class="sidebar-menu-label">AI Inspection</span>
       </a>
     </li>
+    <li class="sidebar-section-label">Messages</li>
+    <li>
+      <a href="/user/messages" class="sidebar-menu-link <%= locals.activePage === 'messages' ? 'active' : '' %>" data-label="Inbox">
+        <span class="sidebar-menu-icon" style="position: relative;">
+          <i class="fa-regular fa-comment-dots"></i>
+          <span id="sidebar-unread-badge" style="position: absolute; top: -5px; right: -5px; width: 8px; height: 8px; border-radius: 50%; background-color: var(--primary); display: none;"></span>
+        </span>
+        <span class="sidebar-menu-label">Inbox</span>
+      </a>
+    </li>
 
     <li class="sidebar-section-label">Account</li>
     <li>

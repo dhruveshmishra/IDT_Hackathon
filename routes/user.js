@@ -6,6 +6,7 @@ const User = require('../models/User');
 const Item = require('../models/Item');
 const Booking = require('../models/Booking');
 const Review = require('../models/Review');
+const Message = require('../models/Message');
 const cloudinary = require('../config/cloudinary');
 const { assessDamage } = require('../utils/geminiHelpers');
 
@@ -304,6 +305,109 @@ router.post('/inspection', upload.fields([
   } catch (err) {
     console.error('AI Inspection Portal Error:', err.message);
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────
+// GET /user/messages            — inbox list
+// GET /user/messages/:bookingId — open thread
+// ─────────────────────────────────────────────
+router.get('/messages', async (req, res) => {
+  try {
+    const renterId = req.user._id;
+
+    const bookings = await Booking.find({ renter: renterId })
+      .populate('item')
+      .populate('seller', 'name avatar')
+      .sort({ updatedAt: -1 });
+
+    const renterBookings = bookings.filter(b => b.item);
+
+    let threads = [];
+    let totalUnread = 0;
+
+    for (const booking of renterBookings) {
+      let lastMsg = null;
+      let unread = 0;
+
+      if (Message) {
+        lastMsg = await Message.findOne({ booking: booking._id })
+          .sort({ createdAt: -1 }).select('text createdAt sender');
+        unread = await Message.countDocuments({
+          booking: booking._id,
+          sender: { $ne: renterId },
+          readBy: { $ne: renterId }
+        });
+      }
+
+      totalUnread += unread;
+      threads.push({ booking, lastMsg, unread });
+    }
+
+    res.render('user/messages', { threads, activeBooking: null, messages: [], totalUnread, activePage: 'messages' });
+  } catch (err) {
+    req.flash('error', err.message);
+    res.redirect('/user/home');
+  }
+});
+
+router.get('/messages/:bookingId', async (req, res) => {
+  try {
+    const renterId = req.user._id;
+
+    const bookings = await Booking.find({ renter: renterId })
+      .populate('item')
+      .populate('seller', 'name avatar')
+      .sort({ updatedAt: -1 });
+
+    const renterBookings = bookings.filter(b => b.item);
+
+    let threads = [];
+    let totalUnread = 0;
+
+    for (const booking of renterBookings) {
+      let lastMsg = null;
+      let unread = 0;
+
+      if (Message) {
+        lastMsg = await Message.findOne({ booking: booking._id })
+          .sort({ createdAt: -1 }).select('text createdAt sender');
+        unread = await Message.countDocuments({
+          booking: booking._id,
+          sender: { $ne: renterId },
+          readBy: { $ne: renterId }
+        });
+      }
+
+      totalUnread += unread;
+      threads.push({ booking, lastMsg, unread });
+    }
+
+    const activeBooking = await Booking.findById(req.params.bookingId)
+      .populate('seller', 'name avatar _id')
+      .populate('item', 'title');
+
+    if (!activeBooking) {
+      req.flash('error', 'Conversation not found.');
+      return res.redirect('/user/messages');
+    }
+
+    let messages = [];
+    if (Message) {
+      messages = await Message.find({ booking: req.params.bookingId })
+        .populate('sender', 'name')
+        .sort({ createdAt: 1 });
+
+      await Message.updateMany(
+        { booking: req.params.bookingId, sender: { $ne: renterId }, readBy: { $ne: renterId } },
+        { $addToSet: { readBy: renterId } }
+      );
+    }
+
+    res.render('user/messages', { threads, activeBooking, messages, totalUnread, activePage: 'messages' });
+  } catch (err) {
+    req.flash('error', err.message);
+    res.redirect('/user/messages');
   }
 });
 
