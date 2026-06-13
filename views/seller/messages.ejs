@@ -271,7 +271,7 @@
       <i class="fa-regular fa-comment-dots" style="color:var(--primary); font-size:1.1rem;"></i>
       <h3>Messages</h3>
       <% if (locals.totalUnread && totalUnread > 0) { %>
-        <span class="inbox-total-badge"><%= totalUnread %></span>
+        <span class="inbox-total-badge" id="inbox-header-total-badge"><%= totalUnread %></span>
       <% } %>
     </div>
 
@@ -535,6 +535,31 @@ document.addEventListener('DOMContentLoaded', () => {
   if (sidebarBadge) {
     sidebarBadge.textContent = '<%= totalUnread %>';
     sidebarBadge.style.display = 'flex';
+  }
+  <% } %>
+
+  <% if (locals.activeBooking) { %>
+  // Instantly clear the active thread's badge in the UI
+  const activeBadge = document.getElementById('badge-<%= activeBooking._id %>');
+  if (activeBadge) {
+    const unreadCount = parseInt(activeBadge.textContent || '0', 10);
+    activeBadge.style.display = 'none';
+    
+    // Also subtract from the total unread badges
+    const sidebarBadge = document.getElementById('sidebar-unread-badge');
+    const headerBadge = document.getElementById('inbox-header-total-badge');
+    [sidebarBadge, headerBadge].forEach(badge => {
+      if (badge) {
+        const currentTotal = parseInt(badge.textContent || '0', 10);
+        const newTotal = Math.max(0, currentTotal - unreadCount);
+        if (newTotal > 0) {
+          badge.textContent = newTotal;
+          badge.style.display = 'flex';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+    });
   }
   <% } %>
 
