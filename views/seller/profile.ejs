@@ -135,61 +135,109 @@
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <div class="form-group" style="grid-column: 1/-1;">
-            <label for="address">
-              Personal Address
-              <span style="font-size:0.78rem; font-weight:400; color: var(--text-hint);">(visible to renters)</span>
-            </label>
-            <input type="text" name="address" id="address" class="form-control"
-              value="<%= currentUser.address || '' %>"
-              placeholder="Your personal address">
-          </div>
-          <div class="form-group" style="grid-column: 1/-1;">
-            <label for="businessAddress">Business Address</label>
-            <input type="text" name="businessAddress" id="businessAddress" class="form-control"
-              value="<%= (currentUser.sellerProfile && currentUser.sellerProfile.address) ? currentUser.sellerProfile.address : '' %>"
-              placeholder="Shop / warehouse address">
-          </div>
+            <!-- Personal Address with autocomplete -->
+            <div class="form-group" style="grid-column: 1/-1; position: relative;">
+              <label for="address">
+                Personal Address
+                <span style="font-size:0.78rem; font-weight:400; color: var(--text-hint);">(visible to renters)</span>
+              </label>
+              <div style="position: relative;">
+                <input type="text" name="address" id="address" class="form-control"
+                  value="<%= currentUser.address || '' %>"
+                  placeholder="Your personal address" autocomplete="off" style="padding-right: 30px;">
+                <i class="fa-solid fa-magnifying-glass" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); color:var(--text-hint); pointer-events:none;"></i>
+                <div id="personal-address-suggestions" style="
+                  display:none; position:absolute; top:100%; left:0; right:0;
+                  background:#fff; border:1px solid var(--border); border-top:none;
+                  border-radius:0 0 var(--radius-md) var(--radius-md);
+                  box-shadow:var(--shadow-md); z-index:9999; max-height:180px; overflow-y:auto;">
+                </div>
+              </div>
+            </div>
+
+            <!-- Business Address with autocomplete -->
+            <div class="form-group" style="grid-column: 1/-1; position: relative;">
+              <label for="businessAddress">Business Address</label>
+              <div style="position: relative;">
+                <input type="text" name="businessAddress" id="businessAddress" class="form-control"
+                  value="<%= (currentUser.sellerProfile && currentUser.sellerProfile.address) ? currentUser.sellerProfile.address : '' %>"
+                  placeholder="Shop / warehouse address" autocomplete="off" style="padding-right: 30px;">
+                <i class="fa-solid fa-magnifying-glass" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); color:var(--text-hint); pointer-events:none;"></i>
+                <div id="business-address-suggestions" style="
+                  display:none; position:absolute; top:100%; left:0; right:0;
+                  background:#fff; border:1px solid var(--border); border-top:none;
+                  border-radius:0 0 var(--radius-md) var(--radius-md);
+                  box-shadow:var(--shadow-md); z-index:9999; max-height:180px; overflow-y:auto;">
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="profile-section-title" style="margin-top: 1.5rem;">
             <i class="fa-solid fa-wallet" style="color: var(--success);"></i> Payout Details
           </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div class="form-group">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="form-group" style="grid-column: 1 / -1;">
               <label for="upi">UPI ID</label>
               <input type="text" name="upi" id="upi" class="form-control"
                 value="<%= (currentUser.sellerProfile && currentUser.sellerProfile.payoutDetails && currentUser.sellerProfile.payoutDetails.upi) ? currentUser.sellerProfile.payoutDetails.upi : '' %>"
                 placeholder="yourname@upi">
             </div>
             <div class="form-group">
-              <label for="bank">Bank Account No.</label>
-              <input type="text" name="bank" id="bank" class="form-control"
-                value="<%= (currentUser.sellerProfile && currentUser.sellerProfile.payoutDetails && currentUser.sellerProfile.payoutDetails.bank) ? currentUser.sellerProfile.payoutDetails.bank : '' %>"
+              <label for="bankName">Bank Name</label>
+              <input type="text" name="bankName" id="bankName" class="form-control"
+                value="<%= (currentUser.sellerProfile && currentUser.sellerProfile.payoutDetails && currentUser.sellerProfile.payoutDetails.bankName) ? currentUser.sellerProfile.payoutDetails.bankName : '' %>"
+                placeholder="e.g. State Bank of India">
+            </div>
+            <div class="form-group">
+              <label for="bankHolderName">Account Holder Name</label>
+              <input type="text" name="bankHolderName" id="bankHolderName" class="form-control"
+                value="<%= (currentUser.sellerProfile && currentUser.sellerProfile.payoutDetails && currentUser.sellerProfile.payoutDetails.bankHolderName) ? currentUser.sellerProfile.payoutDetails.bankHolderName : '' %>"
+                placeholder="Name as in bank records">
+            </div>
+            <div class="form-group">
+              <label for="bankAccount">Bank Account Number</label>
+              <input type="text" name="bankAccount" id="bankAccount" class="form-control"
+                value="<%= (currentUser.sellerProfile && currentUser.sellerProfile.payoutDetails && currentUser.sellerProfile.payoutDetails.bankAccount) ? currentUser.sellerProfile.payoutDetails.bankAccount : '' %>"
                 placeholder="XXXXXXXX1234">
+            </div>
+            <div class="form-group">
+              <label for="bankIfsc">IFSC Code</label>
+              <input type="text" name="bankIfsc" id="bankIfsc" class="form-control"
+                value="<%= (currentUser.sellerProfile && currentUser.sellerProfile.payoutDetails && currentUser.sellerProfile.payoutDetails.bankIfsc) ? currentUser.sellerProfile.payoutDetails.bankIfsc : '' %>"
+                placeholder="e.g. SBIN0001234">
             </div>
           </div>
 
-          <!-- GPS Location -->
-          <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <!-- GPS Location with Map -->
+          <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
               <label style="margin: 0; font-size: 0.9rem; font-weight: 600;">
                 <i class="fa-solid fa-location-crosshairs" style="color: var(--primary);"></i>
-                Your GPS Location
-                <span style="font-size: 0.75rem; font-weight: 400; color: var(--text-hint);">(used to show your listings on map)</span>
+                Your Store GPS Location
+                <span style="font-size: 0.75rem; font-weight: 400; color: var(--text-hint);">(used to locate your listings)</span>
               </label>
-              <button type="button" class="btn btn-outline btn-sm" id="detectLocBtn">
+              <button type="button" class="btn btn-outline btn-sm" id="detectLocBtn" style="padding: 4px 10px; font-size: 0.8rem;">
                 <i class="fa-solid fa-crosshairs"></i> Detect
               </button>
             </div>
+
+            <!-- Leaflet Map Picker -->
+            <div style="height:200px; margin-bottom:0.75rem; border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; position:relative;">
+              <div id="location-picker-map" style="width:100%; height:100%;"></div>
+              <div style="position:absolute; bottom:8px; right:8px; background:rgba(255,255,255,0.9); border-radius:6px; padding:4px 8px; font-size:0.7rem; color:var(--text-secondary); pointer-events:none; box-shadow:var(--shadow-sm); z-index: 1000;">
+                <i class="fa-solid fa-hand-pointer"></i> Drag pin to adjust GPS location
+              </div>
+            </div>
+
             <input type="hidden" name="lat" id="latInput" value="<%= currentUser.location && currentUser.location.coordinates ? currentUser.location.coordinates[1] : '' %>">
             <input type="hidden" name="lng" id="lngInput" value="<%= currentUser.location && currentUser.location.coordinates ? currentUser.location.coordinates[0] : '' %>">
             <p id="gpsStatus" style="font-size: 0.82rem; color: var(--text-secondary); margin: 0;">
               <% if (currentUser.location && currentUser.location.coordinates && currentUser.location.coordinates[0]) { %>
                 <i class="fa-solid fa-check-circle" style="color:var(--success);"></i>
-                Saved: (<%= currentUser.location.coordinates[1].toFixed(5) %>, <%= currentUser.location.coordinates[0].toFixed(5) %>)
+                Saved: (<span id="savedLatVal"><%= currentUser.location.coordinates[1].toFixed(5) %></span>, <span id="savedLngVal"><%= currentUser.location.coordinates[0].toFixed(5) %></span>)
               <% } else { %>
-                <i class="fa-solid fa-circle-info"></i> No location saved yet — click Detect to set it.
+                <i class="fa-solid fa-circle-info"></i> No location saved yet — click Detect or drag pin on map.
               <% } %>
             </p>
           </div>
@@ -287,35 +335,150 @@
     }
   }
 
-  // GPS Detect button
-  const detectLocBtn = document.getElementById('detectLocBtn');
-  detectLocBtn.addEventListener('click', () => {
-    if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
-    detectLocBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-    detectLocBtn.disabled = true;
+  document.addEventListener('DOMContentLoaded', () => {
+    const personalInput = document.getElementById('address');
+    const personalSuggestions = document.getElementById('personal-address-suggestions');
+    const businessInput = document.getElementById('businessAddress');
+    const businessSuggestions = document.getElementById('business-address-suggestions');
+    const latInput = document.getElementById('latInput');
+    const lngInput = document.getElementById('lngInput');
+    const detectLocBtn = document.getElementById('detectLocBtn');
+    const gpsStatusText = document.getElementById('gpsStatus');
 
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-      document.getElementById('latInput').value = lat;
-      document.getElementById('lngInput').value = lng;
-      document.getElementById('gpsStatus').innerHTML =
-        `<i class="fa-solid fa-check-circle" style="color:var(--success);"></i> Detected: (${lat.toFixed(5)}, ${lng.toFixed(5)}) — <em>Save profile to store it.</em>`;
-      
-      // Also save immediately to DB
-      await fetch('/seller/location/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lat, lng })
+    // ── Leaflet map setup ──
+    const savedLat = parseFloat(latInput.value) || 19.0760;
+    const savedLng = parseFloat(lngInput.value) || 72.8777;
+
+    const map = L.map('location-picker-map').setView([savedLat, savedLng], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    const marker = L.marker([savedLat, savedLng], { draggable: true }).addTo(map);
+
+    function updateCoords(lat, lng, label = 'Pin location') {
+      latInput.value = lat;
+      lngInput.value = lng;
+      gpsStatusText.innerHTML = `<i class="fa-solid fa-check-circle" style="color:var(--success);"></i> ${label}: (${lat.toFixed(5)}, ${lng.toFixed(5)}) — <em>Save profile to store it.</em>`;
+    }
+
+    // ── Reverse geocode on pin move ──
+    async function reverseGeocode(lat, lng, targetInput) {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+          { headers: { 'Accept-Language': 'en', 'User-Agent': 'RentItApp/1.0' } }
+        );
+        const data = await res.json();
+        if (data && data.display_name && targetInput) {
+          targetInput.value = data.display_name;
+        }
+      } catch (e) { /* silent */ }
+    }
+
+    marker.on('dragend', () => {
+      const { lat, lng } = marker.getLatLng();
+      updateCoords(lat, lng, 'Map pin');
+      // Update business address by default when map pin is moved
+      reverseGeocode(lat, lng, businessInput);
+    });
+
+    map.on('click', (e) => {
+      marker.setLatLng(e.latlng);
+      updateCoords(e.latlng.lat, e.latlng.lng, 'Map click');
+      reverseGeocode(e.latlng.lat, e.latlng.lng, businessInput);
+    });
+
+    // ── Autocomplete helper ──
+    function setupAutocomplete(inputEl, suggestionsEl) {
+      let timer = null;
+      inputEl.addEventListener('input', () => {
+        clearTimeout(timer);
+        const query = inputEl.value.trim();
+        if (query.length < 3) {
+          suggestionsEl.style.display = 'none';
+          return;
+        }
+        timer = setTimeout(() => {
+          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=in`, {
+            headers: { 'Accept-Language': 'en', 'User-Agent': 'RentItApp/1.0' }
+          })
+          .then(r => r.json())
+          .then(data => {
+            suggestionsEl.innerHTML = '';
+            if (!data || data.length === 0) {
+              suggestionsEl.style.display = 'none';
+              return;
+            }
+            data.forEach(item => {
+              const div = document.createElement('div');
+              div.style.padding = '8px 10px';
+              div.style.cursor = 'pointer';
+              div.style.borderBottom = '1px solid var(--border)';
+              div.style.fontSize = '0.85rem';
+              div.innerHTML = `<i class="fa-solid fa-location-dot" style="color:var(--primary); margin-right:8px;"></i> ${item.display_name}`;
+              
+              div.addEventListener('mouseover', () => div.style.background = '#f8fafc');
+              div.addEventListener('mouseout', () => div.style.background = 'transparent');
+              div.addEventListener('click', () => {
+                const lat = parseFloat(item.lat);
+                const lon = parseFloat(item.lon);
+                inputEl.value = item.display_name;
+                updateCoords(lat, lon, 'Selected address');
+                marker.setLatLng([lat, lon]);
+                map.setView([lat, lon], 15);
+                suggestionsEl.style.display = 'none';
+              });
+              suggestionsEl.appendChild(div);
+            });
+            suggestionsEl.style.display = 'block';
+          })
+          .catch(() => { suggestionsEl.style.display = 'none'; });
+        }, 350);
       });
 
-      detectLocBtn.innerHTML = '<i class="fa-solid fa-check"></i> Got it';
-      detectLocBtn.disabled = false;
-    }, (err) => {
-      alert('Location error: ' + err.message);
-      detectLocBtn.innerHTML = '<i class="fa-solid fa-crosshairs"></i> Detect';
-      detectLocBtn.disabled = false;
-    }, { enableHighAccuracy: true });
+      document.addEventListener('click', (e) => {
+        if (!inputEl.contains(e.target) && !suggestionsEl.contains(e.target)) {
+          suggestionsEl.style.display = 'none';
+        }
+      });
+    }
+
+    setupAutocomplete(personalInput, personalSuggestions);
+    setupAutocomplete(businessInput, businessSuggestions);
+
+    // ── GPS Detect Button ──
+    detectLocBtn.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser.');
+        return;
+      }
+      detectLocBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+      detectLocBtn.disabled = true;
+
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        updateCoords(lat, lng, 'Detected GPS');
+        marker.setLatLng([lat, lng]);
+        map.setView([lat, lng], 15);
+        reverseGeocode(lat, lng, businessInput);
+
+        // Also save immediately to DB via AJAX if desired
+        await fetch('/seller/location/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lat, lng })
+        });
+
+        detectLocBtn.innerHTML = '<i class="fa-solid fa-check"></i> Got it';
+        detectLocBtn.disabled = false;
+      }, (err) => {
+        alert('Could not get your location: ' + err.message);
+        detectLocBtn.innerHTML = '<i class="fa-solid fa-crosshairs"></i> Detect';
+        detectLocBtn.disabled = false;
+      }, { enableHighAccuracy: true });
+    });
   });
 </script>
 

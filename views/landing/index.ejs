@@ -1,133 +1,498 @@
 <%- include('../layouts/main') %>
 
-<!-- Hero Banner -->
-<section style="background: linear-gradient(135deg, #eff6ff 0%, #fff 100%); padding: 6rem 1.5rem; text-align: center; position: relative; overflow: hidden; border-bottom: 1px solid var(--border);">
-  <div style="max-width: 800px; margin: 0 auto; z-index: 10; position: relative;">
-    
-    <span style="background-color: #dbeafe; color: var(--primary); font-size: 0.85rem; font-weight: 700; padding: 6px 14px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.05em; display: inline-block; margin-bottom: 1.5rem;">
-      <i class="fa-solid fa-bolt"></i> Peer-to-Peer Rentals in India
-    </span>
-    
-    <h1 style="font-size: 3.5rem; line-height: 1.15; font-family: var(--font-display); font-weight: 700; margin-bottom: 1.5rem; letter-spacing: -0.02em;">
-      Rent anything, from <span style="background: linear-gradient(to right, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">anyone near you</span>
-    </h1>
-    
-    <p style="font-size: 1.25rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto 2.5rem; line-height: 1.6;">
-      Find items within 1km · Pay securely via UPI & Cards · Chat directly with local neighbors. Save money, reduce waste.
-    </p>
+<!-- Custom Styling for Premium Rentit4me Theme -->
+<style>
+  /* Hero Carousel / Peek Banner Slider */
+  .peek-banner-container {
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    border-radius: var(--radius-lg);
+    margin-bottom: 2.5rem;
+    box-shadow: var(--shadow-md);
+    background: #f8fafc;
+  }
+  .peek-banner-track {
+    display: flex;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .peek-banner-slide {
+    min-width: 100%;
+    position: relative;
+    aspect-ratio: 21 / 9;
+    overflow: hidden;
+    background: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .peek-banner-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .banner-overlay-content {
+    position: absolute;
+    left: 8%;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #fff;
+    max-width: 450px;
+    z-index: 10;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+  .banner-overlay-content h1 {
+    color: #fff;
+    font-size: 2.8rem;
+    font-family: var(--font-display);
+    line-height: 1.15;
+    margin-bottom: 1rem;
+  }
+  .banner-overlay-content p {
+    font-size: 1.1rem;
+    opacity: 0.95;
+    margin-bottom: 1.5rem;
+  }
 
-    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-      <a href="/items" class="btn btn-primary" style="padding: 14px 32px; font-size: 1.05rem; box-shadow: var(--shadow-md);"><i class="fa-solid fa-location-arrow"></i> Browse Near Me</a>
+  /* Horizontal Scrolling Features Section */
+  .scroll-wrapper {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 1.5rem 0.5rem;
+    margin-bottom: 3.5rem;
+    border-bottom: 1px solid var(--border);
+    scrollbar-width: none; /* Firefox */
+  }
+  .scroll-wrapper::-webkit-scrollbar {
+    display: none; /* Safari / Chrome */
+  }
+  .features-section {
+    display: inline-flex;
+    gap: 1.5rem;
+  }
+  .feature-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    min-width: 250px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .feature-item:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+  }
+  .feature-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background: var(--primary-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 1.35rem;
+    flex-shrink: 0;
+  }
+  .feature-text {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+  }
+
+  /* Modern Category Sections */
+  .section-indicator {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  .indicator-bar {
+    width: 60px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .indicator-inner {
+    width: 50%;
+    height: 100%;
+    background: var(--primary);
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+    font-weight: 700;
+  }
+  .title-highlight {
+    background: linear-gradient(to right, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 4rem;
+  }
+  .category-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem 1rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.25s ease;
+    cursor: pointer;
+  }
+  .category-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--primary);
+    box-shadow: var(--shadow-md);
+  }
+  .category-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    color: var(--primary);
+    transition: background 0.2s;
+  }
+  .category-card:hover .category-icon {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+  }
+  .category-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.925rem;
+  }
+
+  /* Two Column Listing Callouts */
+  .callout-banners {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 4.5rem;
+  }
+  .callout-card {
+    border-radius: var(--radius-lg);
+    padding: 3rem 2.5rem;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 280px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+  }
+  .callout-card.product {
+    background: linear-gradient(135deg, #0e57da 0%, #1e40af 100%);
+  }
+  .callout-card.service {
+    background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  }
+  .callout-card h3 {
+    color: #fff;
+    font-size: 2rem;
+    font-family: var(--font-display);
+    margin-bottom: 0.5rem;
+    z-index: 2;
+  }
+  .callout-card p {
+    font-size: 1.05rem;
+    opacity: 0.9;
+    max-width: 320px;
+    margin-bottom: 2rem;
+    z-index: 2;
+  }
+
+  /* FAQ Accordion */
+  .faq-section {
+    display: flex;
+    gap: 3rem;
+    margin-bottom: 5rem;
+    flex-wrap: wrap;
+  }
+  .faq-left {
+    flex: 1;
+    min-width: 280px;
+  }
+  .faq-left h2 {
+    font-size: 2.2rem;
+    line-height: 1.25;
+    font-family: var(--font-display);
+  }
+  .faq-right {
+    flex: 2;
+    min-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .faq-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .faq-item:hover {
+    border-color: var(--primary);
+  }
+  .faq-question {
+    padding: 1.25rem 1.5rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1rem;
+    color: var(--text-primary);
+  }
+  .faq-toggle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+  }
+  .faq-answer {
+    display: none;
+    padding: 0 1.5rem 1.5rem 1.5rem;
+    color: var(--text-secondary);
+    font-size: 0.925rem;
+    line-height: 1.6;
+    border-top: 1px solid var(--border);
+  }
+  .faq-item.active .faq-answer {
+    display: block;
+  }
+
+  @media (max-width: 768px) {
+    .callout-banners {
+      grid-template-columns: 1fr;
+    }
+    .peek-banner-slide {
+      aspect-ratio: 16 / 9;
+    }
+    .banner-overlay-content h1 {
+      font-size: 1.8rem;
+    }
+  }
+</style>
+
+<div class="container" style="margin-top: 2rem;">
+
+  <!-- Hero Carousel Slider (Inspired by Rentit4me) -->
+  <div class="peek-banner-container">
+    <div class="peek-banner-track" id="bannerTrack">
+      
+      <!-- Slide 1 (List Product Focus) -->
+      <div class="peek-banner-slide">
+        <img src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80" alt="List Products">
+        <div class="banner-overlay-content">
+          <h1>Free up space, earn extra income</h1>
+          <p>List your home appliances, furniture, laptops, or tools and earn passive income securely.</p>
+          <a href="/items" class="btn btn-primary" style="padding: 12px 28px;">Browse Products</a>
+        </div>
+      </div>
+
+      <!-- Slide 2 (Verification and Safety Focus) -->
+      <div class="peek-banner-slide">
+        <img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1200&q=80" alt="Verified Rentals">
+        <div class="banner-overlay-content">
+          <h1>Direct P2P Verified Rentals</h1>
+          <p>Every account is Aadhaar KYC verified. Make secure direct transfers to listing owners near you.</p>
+          <a href="/auth/login" class="btn btn-primary" style="padding: 12px 28px; background:var(--accent); border-color:var(--accent);">Join RentIt Now</a>
+        </div>
+      </div>
+
+      <!-- Slide 3 (Gemini Smart Tools Focus) -->
+      <div class="peek-banner-slide">
+        <img src="https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=1200&q=80" alt="Smart AI Tools">
+        <div class="banner-overlay-content">
+          <h1>Intelligent AI Descriptions</h1>
+          <p>Create lists instantly. Upload photos and let Google Gemini AI draft professional descriptions.</p>
+          <a href="/items" class="btn btn-primary" style="padding: 12px 28px;">Try Smart Search</a>
+        </div>
+      </div>
+
     </div>
-
   </div>
 
-  <!-- Decorative blur blobs -->
-  <div style="position: absolute; width: 300px; height: 300px; background: rgba(37,99,235,0.15); filter: blur(80px); top: -50px; left: -50px; border-radius: 50%;"></div>
-  <div style="position: absolute; width: 300px; height: 300px; background: rgba(249,115,22,0.1); filter: blur(80px); bottom: -50px; right: -50px; border-radius: 50%;"></div>
-</section>
-
-<div class="container">
-  
-  <!-- Categories Row -->
-  <section style="margin-bottom: 5rem;" id="categories">
-    <h2 style="font-family: var(--font-display); text-align: center; margin-bottom: 2.5rem; font-size: 1.8rem;">Browse Popular Categories</h2>
-    <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
-      
-      <a href="/items?category=electronics" class="item-card" style="flex:1; min-width:140px; max-width: 180px; padding: 1.5rem; text-align: center; border-radius: var(--radius-md);">
-        <div style="font-size: 2rem; color: var(--primary); margin-bottom: 0.75rem;"><i class="fa-solid fa-laptop"></i></div>
-        <strong style="color:var(--text-primary); font-size:0.95rem;">Electronics</strong>
-      </a>
-      
-      <a href="/items?category=tools" class="item-card" style="flex:1; min-width:140px; max-width: 180px; padding: 1.5rem; text-align: center; border-radius: var(--radius-md);">
-        <div style="font-size: 2rem; color: var(--accent); margin-bottom: 0.75rem;"><i class="fa-solid fa-screwdriver-wrench"></i></div>
-        <strong style="color:var(--text-primary); font-size:0.95rem;">Tools</strong>
-      </a>
-      
-      <a href="/items?category=vehicles" class="item-card" style="flex:1; min-width:140px; max-width: 180px; padding: 1.5rem; text-align: center; border-radius: var(--radius-md);">
-        <div style="font-size: 2rem; color: var(--success); margin-bottom: 0.75rem;"><i class="fa-solid fa-motorcycle"></i></div>
-        <strong style="color:var(--text-primary); font-size:0.95rem;">Vehicles</strong>
-      </a>
-      
-      <a href="/items?category=furniture" class="item-card" style="flex:1; min-width:140px; max-width: 180px; padding: 1.5rem; text-align: center; border-radius: var(--radius-md);">
-        <div style="font-size: 2rem; color: var(--warning); margin-bottom: 0.75rem;"><i class="fa-solid fa-chair"></i></div>
-        <strong style="color:var(--text-primary); font-size:0.95rem;">Furniture</strong>
-      </a>
-      
-      <a href="/items?category=sports" class="item-card" style="flex:1; min-width:140px; max-width: 180px; padding: 1.5rem; text-align: center; border-radius: var(--radius-md);">
-        <div style="font-size: 2rem; color: #a855f7; margin-bottom: 0.75rem;"><i class="fa-solid fa-bicycle"></i></div>
-        <strong style="color:var(--text-primary); font-size:0.95rem;">Sports</strong>
-      </a>
-
-      <a href="/items?category=clothing" class="item-card" style="flex:1; min-width:140px; max-width: 180px; padding: 1.5rem; text-align: center; border-radius: var(--radius-md);">
-        <div style="font-size: 2rem; color: #ec4899; margin-bottom: 0.75rem;"><i class="fa-solid fa-shirt"></i></div>
-        <strong style="color:var(--text-primary); font-size:0.95rem;">Clothing</strong>
-      </a>
-
-    </div>
-  </section>
-
-  <!-- How It Works -->
-  <section style="margin-bottom: 5rem;" id="how-it-works">
-    <h2 style="font-family: var(--font-display); text-align: center; margin-bottom: 1rem; font-size: 1.8rem;">How It Works</h2>
-    <p style="color: var(--text-secondary); text-align: center; max-width: 500px; margin: 0 auto 3rem;">RentIt makes renting items as simple as ordering food online.</p>
-
-    <div style="display: flex; gap: 2rem; flex-wrap: wrap; justify-content: center;">
-      
-      <div class="item-card" style="flex: 1; min-width: 260px; max-width: 340px; padding: 2rem; border-radius: var(--radius-lg); position: relative;">
-        <span style="font-size: 4rem; font-weight: 700; color: rgba(37,99,235,0.08); position: absolute; top: 12px; right: 20px; font-family: var(--font-display);">01</span>
-        <div style="font-size: 2rem; color: var(--primary); margin-bottom: 1.25rem;"><i class="fa-solid fa-magnifying-glass-location"></i></div>
-        <h3 style="font-family: var(--font-display); font-size: 1.2rem; margin-bottom: 0.75rem;">Search Nearby</h3>
-        <p style="color: var(--text-secondary); font-size: 0.9rem;">Find tools, electronics, or gear located within 1km using our integrated Leaflet map panel search.</p>
+  <!-- Features Scrolling Row -->
+  <div class="scroll-wrapper">
+    <div class="features-section">
+      <div class="feature-item">
+        <div class="feature-icon-wrapper"><i class="fa-solid fa-boxes-stacked"></i></div>
+        <div class="feature-text">Free Up Space</div>
       </div>
-
-      <div class="item-card" style="flex: 1; min-width: 260px; max-width: 340px; padding: 2rem; border-radius: var(--radius-lg); position: relative;">
-        <span style="font-size: 4rem; font-weight: 700; color: rgba(249,115,22,0.08); position: absolute; top: 12px; right: 20px; font-family: var(--font-display);">02</span>
-        <div style="font-size: 2rem; color: var(--accent); margin-bottom: 1.25rem;"><i class="fa-solid fa-credit-card"></i></div>
-        <h3 style="font-family: var(--font-display); font-size: 1.2rem; margin-bottom: 0.75rem;">Secure Book & Pay</h3>
-        <p style="color: var(--text-secondary); font-size: 0.9rem;">Select your dates, pay safely using Razorpay (supporting UPI & cards), and coordinate handovers.</p>
+      <div class="feature-item">
+        <div class="feature-icon-wrapper"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+        <div class="feature-text">Earn Extra Income</div>
       </div>
-
-      <div class="item-card" style="flex: 1; min-width: 260px; max-width: 340px; padding: 2rem; border-radius: var(--radius-lg); position: relative;">
-        <span style="font-size: 4rem; font-weight: 700; color: rgba(22,163,74,0.08); position: absolute; top: 12px; right: 20px; font-family: var(--font-display);">03</span>
-        <div style="font-size: 2rem; color: var(--success); margin-bottom: 1.25rem;"><i class="fa-solid fa-circle-check"></i></div>
-        <h3 style="font-family: var(--font-display); font-size: 1.2rem; margin-bottom: 0.75rem;">Return & Rate</h3>
-        <p style="color: var(--text-secondary); font-size: 0.9rem;">Return the item to the owner after use, get your deposit refunded, and rate your experience.</p>
+      <div class="feature-item">
+        <div class="feature-icon-wrapper"><i class="fa-solid fa-calendar-check"></i></div>
+        <div class="feature-text">Flexible Rental Terms</div>
       </div>
-
-    </div>
-  </section>
-
-  <!-- AI features banner -->
-  <section style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); border-radius: var(--radius-lg); padding: 3.5rem; color: #fff; margin-bottom: 5rem; position: relative; box-shadow: var(--shadow-md);">
-    <div style="max-width: 600px;">
-      <span style="background-color: rgba(255,255,255,0.2); color: #fff; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 9999px; text-transform: uppercase; margin-bottom: 1rem; display: inline-block;">✦ Intelligent Portal</span>
-      <h2 style="font-family: var(--font-display); color: #fff; font-size: 2.2rem; margin-bottom: 1rem; letter-spacing: -0.01em;">Smart rentals powered by Gemini AI</h2>
-      <p style="font-size: 1rem; opacity: 0.9; margin-bottom: 2rem; line-height: 1.6;">
-        We integrate Google Gemini AI directly into our workflows to summarize reviews, moderate content, generate product descriptions, suggest local market prices, and parse search queries.
-      </p>
-    </div>
-    
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; margin-top: 1rem;">
-      <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: var(--radius-md); padding: 1.25rem;">
-        <h4 style="color: #fff; margin-bottom: 4px; font-family: var(--font-display); font-size: 1rem;">🤖 Smart Search</h4>
-        <p style="font-size: 0.8rem; opacity: 0.8; margin: 0;">Type searches in plain natural English and let AI build parameters.</p>
+      <div class="feature-item">
+        <div class="feature-icon-wrapper"><i class="fa-solid fa-users"></i></div>
+        <div class="feature-text">Wide Audience Reach</div>
       </div>
-      <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: var(--radius-md); padding: 1.25rem;">
-        <h4 style="color: #fff; margin-bottom: 4px; font-family: var(--font-display); font-size: 1rem;">✍️ Auto-Descriptions</h4>
-        <p style="font-size: 0.8rem; opacity: 0.8; margin: 0;">Upload photos and get listing descriptions generated instantly.</p>
-      </div>
-      <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: var(--radius-md); padding: 1.25rem;">
-        <h4 style="color: #fff; margin-bottom: 4px; font-family: var(--font-display); font-size: 1rem;">💰 Price Advisor</h4>
-        <p style="font-size: 0.8rem; opacity: 0.8; margin: 0;">Obtain fair pricing suggestion advice matching current market trends.</p>
+      <div class="feature-item">
+        <div class="feature-icon-wrapper"><i class="fa-solid fa-leaf"></i></div>
+        <div class="feature-text">Sustainable Sharing</div>
       </div>
     </div>
+  </div>
 
-    <div style="position: absolute; bottom: 16px; right: 20px; font-size: 0.75rem; opacity: 0.6; font-weight: 600;">
-      Powered by Google Gemini 1.5 Flash
+  <!-- Product Categories Section -->
+  <div>
+    <div class="section-indicator">
+      <div class="indicator-bar"><div class="indicator-inner"></div></div>
     </div>
-  </section>
+    <div class="section-title">
+      Browse Popular <span class="title-highlight">Categories</span>
+    </div>
+
+    <div class="categories-grid">
+      <a href="/items?category=electronics" class="category-card">
+        <div class="category-icon"><i class="fa-solid fa-laptop"></i></div>
+        <div class="category-label">Electronics</div>
+      </a>
+      <a href="/items?category=tools" class="category-card">
+        <div class="category-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+        <div class="category-label">Tools & Gear</div>
+      </a>
+      <a href="/items?category=vehicles" class="category-card">
+        <div class="category-icon"><i class="fa-solid fa-motorcycle"></i></div>
+        <div class="category-label">Vehicles</div>
+      </a>
+      <a href="/items?category=furniture" class="category-card">
+        <div class="category-icon"><i class="fa-solid fa-chair"></i></div>
+        <div class="category-label">Furniture</div>
+      </a>
+      <a href="/items?category=sports" class="category-card">
+        <div class="category-icon"><i class="fa-solid fa-bicycle"></i></div>
+        <div class="category-label">Sports Equipment</div>
+      </a>
+      <a href="/items?category=clothing" class="category-card">
+        <div class="category-icon"><i class="fa-solid fa-shirt"></i></div>
+        <div class="category-label">Clothing</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- P2P Direct Callout Banners -->
+  <div class="callout-banners">
+    <div class="callout-card product">
+      <div>
+        <h3>Need to list a product?</h3>
+        <p>List your appliances, electronics, cameras, or bikes and get direct payouts in real-time.</p>
+      </div>
+      <a href="<%= SELLER_APP_URL %>/auth/login" class="btn btn-outline" style="border-color:#fff; color:#fff; align-self:flex-start; padding:10px 24px; font-weight:700;">
+        <i class="fa-solid fa-plus"></i> List Your Product
+      </a>
+    </div>
+
+    <div class="callout-card service">
+      <div>
+        <h3>Offer local services?</h3>
+        <p>Rent out your expertise! Help others with moving, tutoring, repairs, or health consulting.</p>
+      </div>
+      <a href="/chat/direct/admin" class="btn btn-outline" style="border-color:#fff; color:#fff; align-self:flex-start; padding:10px 24px; font-weight:700;">
+        <i class="fa-solid fa-briefcase"></i> List Your Service
+      </a>
+    </div>
+  </div>
+
+  <!-- Frequently Asked Questions Section -->
+  <div class="faq-section">
+    <div class="faq-left">
+      <h2>Frequently Asked<br><span style="color:var(--primary);">Questions</span></h2>
+      <p style="color:var(--text-secondary); margin-top: 1rem; line-height: 1.5;">Quick answers to help you start renting, listing, and paying safely on RentIt.</p>
+    </div>
+
+    <div class="faq-right">
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-question">How does peer-to-peer renting work?<span class="faq-toggle">+</span></div>
+        <div class="faq-answer">
+          RentIt connects local item owners directly with renters.
+          You simply search for the items you need near your location, select the rental dates, make a secure direct transfer to the owner, and coordinate handovers.
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-question">Are payments safe and direct to owners?<span class="faq-toggle">+</span></div>
+        <div class="faq-answer">
+          Yes! We support secure direct Pay-to-Seller methods including UPI QR Code and bank transfers.
+          The transaction amount is routed directly to the owner's payout credentials without platform cuts.
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-question">How does RentIt verify users' identities?<span class="faq-toggle">+</span></div>
+        <div class="faq-answer">
+          To build community trust, all renters and sellers must submit their 12-digit Aadhaar number and copy of identity documents, which are audited and verified by administrators before renting is allowed.
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-question">How is Gemini AI used in RentIt?<span class="faq-toggle">+</span></div>
+        <div class="faq-answer">
+          RentIt utilizes Google Gemini AI to read item photos and draft automated descriptions, suggest appropriate local market rental rates, analyze reviews, and parse natural language search queries instantly.
+        </div>
+      </div>
+    </div>
+  </div>
 
 </div>
 
+<!-- Auto-slider and FAQ scripts -->
+<script>
+  // Simple Carousel Slide Loop
+  let currentSlide = 0;
+  const track = document.getElementById('bannerTrack');
+  const totalSlides = 3;
+
+  function rotateCarousel() {
+    currentSlide = (currentSlide + 1) % totalSlides;
+    if(track) {
+      track.style.transform = `translateX(-${currentSlide * 100}%)`;
+    }
+  }
+  
+  // Slide every 4 seconds
+  setInterval(rotateCarousel, 4000);
+
+  // FAQ toggle helper
+  function toggleFaq(item) {
+    // Toggle active class
+    const isActive = item.classList.contains('active');
+    
+    // Close other items
+    document.querySelectorAll('.faq-item').forEach(el => {
+      el.classList.remove('active');
+      el.querySelector('.faq-toggle').textContent = '+';
+    });
+
+    if (!isActive) {
+      item.classList.add('active');
+      item.querySelector('.faq-toggle').textContent = '-';
+    }
+  }
+</script>
+
 <%- include('../layouts/footer') %>
+

@@ -53,20 +53,22 @@
       currentPath.startsWith('/auth') ||
       currentPath === '/'
     );
+    const isLoginPage = currentPath && currentPath.startsWith('/auth') && currentPath !== '/auth/logout';
   %>
 
   <% if (!currentUser && (isAuthRoute || !isDashboardRoute)) { %>
     <!-- ============================
-         GUEST: Top Navbar (landing + auth pages only)
+         GUEST: Top Navbar
          ============================ -->
     <nav class="navbar">
       <a href="/" class="nav-brand">RentIt<span>.</span></a>
-      <ul class="nav-links">
-        <li><a href="/#how-it-works" class="nav-link">How it works</a></li>
-        <li><a href="/items" class="nav-link">Browse Items</a></li>
-        <li><a href="/auth/login" class="nav-link">User Login</a></li>
-        <li><a href="/auth/signup" class="btn btn-primary">Sign Up</a></li>
-      </ul>
+      <% if (!currentPath || !currentPath.startsWith('/auth')) { %>
+        <ul class="nav-links">
+          <li><a href="/#how-it-works" class="nav-link">How it works</a></li>
+          <li><a href="/items" class="nav-link">Browse Items</a></li>
+          <li><a href="/auth/login" class="btn btn-primary">Login</a></li>
+        </ul>
+      <% } %>
     </nav>
 
   <% } else if (currentUser && isDashboardRoute && currentUser.role === 'admin') { %>
@@ -110,16 +112,17 @@
          LOGGED-IN USER on PUBLIC PAGE: Slim top bar (no sidebar)
          ============================ -->
     <nav class="navbar" style="border-bottom: 1px solid var(--border); background: var(--surface);">
-      <a href="/" class="nav-brand">RentIt<span>.</span></a>
+      <% 
+        let brandHref = "/";
+        if (currentUser) {
+          if (currentUser.role === 'admin') brandHref = "/admin/dashboard";
+          else if (currentUser.role === 'seller') brandHref = "/seller/dashboard";
+          else if (currentUser.role === 'user') brandHref = "/user/home";
+        }
+      %>
+      <a href="<%= brandHref %>" class="nav-brand">RentIt<span>.</span></a>
       <ul class="nav-links" style="gap: 0.75rem;">
         <li><a href="/items" class="nav-link" style="font-size:0.9rem;">Browse</a></li>
-        <% if (currentUser.role === 'user') { %>
-          <li><a href="/user/home" class="nav-link" style="font-size:0.9rem;"><i class="fa-solid fa-gauge"></i> Dashboard</a></li>
-        <% } else if (currentUser.role === 'seller') { %>
-          <li><a href="/seller/dashboard" class="nav-link" style="font-size:0.9rem;"><i class="fa-solid fa-gauge"></i> Seller Portal</a></li>
-        <% } else if (currentUser.role === 'admin') { %>
-          <li><a href="/admin/dashboard" class="nav-link" style="font-size:0.9rem;"><i class="fa-solid fa-gauge"></i> Admin</a></li>
-        <% } %>
         <li>
           <form action="/auth/logout" method="POST" style="margin:0;">
             <button type="submit" class="btn btn-outline" style="font-size:0.82rem; padding: 6px 14px;">
@@ -130,8 +133,90 @@
       </ul>
     </nav>
 
+    <!-- ============================
+         Floating left sidebar toggle + mini drawer (non-dashboard pages)
+         ============================ -->
+    <button class="mini-sidebar-toggle" id="miniSidebarToggle" aria-label="Open navigation">
+      <i class="fa-solid fa-chevron-right" id="miniSidebarIcon"></i>
+    </button>
+
+    <div class="mini-sidebar-drawer" id="miniSidebarDrawer" aria-hidden="true">
+      <!-- User info strip -->
+      <div class="mini-drawer-user">
+        <div class="mini-drawer-avatar">
+          <% if (currentUser.avatar && currentUser.avatar.url) { %>
+            <img src="<%= currentUser.avatar.url %>" alt="Avatar">
+          <% } else { %>
+            <i class="fa-solid fa-user"></i>
+          <% } %>
+        </div>
+        <div>
+          <div class="mini-drawer-name"><%= currentUser.name %></div>
+          <div class="mini-drawer-role"
+            <% if (currentUser.role === 'user') { %>style="color:#4ADE80;"<% } %>
+            <% if (currentUser.role === 'seller') { %>style="color:#FB923C;"<% } %>
+            <% if (currentUser.role === 'admin') { %>style="color:#60A5FA;"<% } %>
+          ><%= currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1) %></div>
+        </div>
+      </div>
+
+      <ul class="mini-drawer-menu">
+        <% if (currentUser.role === 'user') { %>
+          <li><a href="/user/home" class="mini-drawer-link"><i class="fa-solid fa-house"></i> Home</a></li>
+          <li><a href="/items" class="mini-drawer-link"><i class="fa-solid fa-magnifying-glass"></i> Browse Items</a></li>
+          <li><a href="/user/bookings" class="mini-drawer-link"><i class="fa-solid fa-receipt"></i> My Bookings</a></li>
+          <li><a href="/user/profile" class="mini-drawer-link"><i class="fa-regular fa-user"></i> My Profile</a></li>
+        <% } else if (currentUser.role === 'seller') { %>
+          <li><a href="/seller/dashboard" class="mini-drawer-link"><i class="fa-solid fa-gauge"></i> Dashboard</a></li>
+          <li><a href="/items" class="mini-drawer-link"><i class="fa-solid fa-magnifying-glass"></i> Browse Items</a></li>
+        <% } else if (currentUser.role === 'admin') { %>
+          <li><a href="/admin/dashboard" class="mini-drawer-link"><i class="fa-solid fa-gauge"></i> Admin Panel</a></li>
+        <% } %>
+      </ul>
+
+      <div class="mini-drawer-footer">
+        <form action="/auth/logout" method="POST">
+          <button type="submit" class="mini-drawer-logout">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+          </button>
+        </form>
+      </div>
+    </div>
+    <!-- Overlay -->
+    <div class="mini-sidebar-overlay" id="miniSidebarOverlay"></div>
+
+    <script>
+    (function() {
+      const toggle  = document.getElementById('miniSidebarToggle');
+      const drawer  = document.getElementById('miniSidebarDrawer');
+      const overlay = document.getElementById('miniSidebarOverlay');
+      const icon    = document.getElementById('miniSidebarIcon');
+
+      function openDrawer() {
+        drawer.classList.add('open');
+        overlay.classList.add('visible');
+        toggle.classList.add('open');
+        document.body.classList.add('mini-sidebar-open');
+        icon.className = 'fa-solid fa-chevron-left';
+        drawer.setAttribute('aria-hidden', 'false');
+      }
+      function closeDrawer() {
+        drawer.classList.remove('open');
+        overlay.classList.remove('visible');
+        toggle.classList.remove('open');
+        document.body.classList.remove('mini-sidebar-open');
+        icon.className = 'fa-solid fa-chevron-right';
+        drawer.setAttribute('aria-hidden', 'true');
+      }
+
+      toggle.addEventListener('click', () => drawer.classList.contains('open') ? closeDrawer() : openDrawer());
+      overlay.addEventListener('click', closeDrawer);
+    })();
+    </script>
+
   <% } %>
 
+  <!-- Main page content wrapper (offsets for sidebar when on dashboard routes and logged in, or guest login pages) -->
   <!-- Main page content wrapper (offsets for sidebar when on dashboard routes and logged in) -->
   <% if (currentUser && isDashboardRoute) { %>
   <div class="sidebar-page-content" id="pageContent">

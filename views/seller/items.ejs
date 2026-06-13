@@ -1,23 +1,57 @@
 <%- include('../layouts/main') %>
 
-<div class="dashboard-layout">
+<div class="container">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2 style="font-family: var(--font-display);">My Listed Items</h2>
+    <a href="/seller/items/new" class="btn btn-primary"><i class="fa-solid fa-plus"></i> List New Item</a>
+  </div>
   
-  <aside class="dashboard-sidebar">
-    <ul class="dashboard-sidebar-menu">
-      <li><a href="/seller/dashboard" class="dashboard-sidebar-link"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
-      <li><a href="/seller/items" class="dashboard-sidebar-link active"><i class="fa-solid fa-list"></i> My Listings</a></li>
-      <li><a href="/seller/bookings" class="dashboard-sidebar-link"><i class="fa-regular fa-calendar-days"></i> Bookings Calendar</a></li>
-      <li><a href="/seller/profile" class="dashboard-sidebar-link"><i class="fa-solid fa-indian-rupee-sign"></i> Payout Details</a></li>
-      <li><a href="/seller/verify" class="dashboard-sidebar-link"><i class="fa-solid fa-user-shield"></i> Business Verification</a></li>
-    </ul>
-  </aside>
-
-  <main class="dashboard-main">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-      <h2 style="font-family: var(--font-display);">My Listed Items</h2>
-      <a href="/seller/items/new" class="btn btn-primary"><i class="fa-solid fa-plus"></i> List New Item</a>
+  <!-- Search and Category Filters -->
+  <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 2rem; display: flex; flex-direction: column; gap: 1rem;">
+    <!-- Search Bar -->
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <div style="position: relative; flex: 1;">
+        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 13px; color: var(--text-hint);"></i>
+        <input type="text" id="seller-search-input" class="form-control" placeholder="Search by title, description, price..." style="width: 100%; height: 42px; border-radius: 6px; padding-left: 40px; background: #ffffff;">
+      </div>
+      <button id="btn-seller-search" class="btn btn-primary" style="padding: 10px 20px; font-weight: 700; height: 42px; display: flex; align-items: center; gap: 6px; border: none; border-radius: 6px; background-color: var(--primary);">
+        <i class="fa-solid fa-magnifying-glass"></i> Search
+      </button>
+      <button id="btn-seller-reset" class="btn btn-outline" style="padding: 10px 20px; height: 42px; border-radius: 6px; font-weight: 600; cursor: pointer; background: #ffffff;">
+        Reset
+      </button>
     </div>
 
+    <!-- Category Filter Pills -->
+    <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none;">
+      <button class="seller-cat-pill active" data-category="all" style="background: var(--primary); color: #ffffff; border: 1px solid var(--primary); padding: 6px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s;">
+        All Categories
+      </button>
+      <button class="seller-cat-pill" data-category="electronics" style="background: #ffffff; color: var(--text-secondary); border: 1px solid var(--border); padding: 6px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s;">
+        Electronics
+      </button>
+      <button class="seller-cat-pill" data-category="tools" style="background: #ffffff; color: var(--text-secondary); border: 1px solid var(--border); padding: 6px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s;">
+        Tools & Gear
+      </button>
+      <button class="seller-cat-pill" data-category="vehicles" style="background: #ffffff; color: var(--text-secondary); border: 1px solid var(--border); padding: 6px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s;">
+        Vehicles
+      </button>
+      <button class="seller-cat-pill" data-category="furniture" style="background: #ffffff; color: var(--text-secondary); border: 1px solid var(--border); padding: 6px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s;">
+        Furniture
+      </button>
+      <button class="seller-cat-pill" data-category="sports" style="background: #ffffff; color: var(--text-secondary); border: 1px solid var(--border); padding: 6px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s;">
+        Sports
+      </button>
+      <button class="seller-cat-pill" data-category="clothing" style="background: #ffffff; color: var(--text-secondary); border: 1px solid var(--border); padding: 6px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s;">
+        Clothing
+      </button>
+      <button class="seller-cat-pill" data-category="other" style="background: #ffffff; color: var(--text-secondary); border: 1px solid var(--border); padding: 6px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s;">
+        Others
+      </button>
+    </div>
+  </div>
+
+  <div id="seller-listings-container">
     <% if (items.length === 0) { %>
       <div style="text-align: center; padding: 4rem 2rem; background-color: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
         <div style="font-size: 3rem; color: var(--text-hint); margin-bottom: 1.25rem;"><i class="fa-solid fa-boxes-packing"></i></div>
@@ -28,7 +62,7 @@
     <% } else { %>
       <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
         <% items.forEach(item => { %>
-          <div class="item-card">
+          <div class="item-card" data-category="<%= item.category %>">
             <div class="item-card-img-wrapper">
               <% if (item.images && item.images.length > 0) { %>
                 <img src="<%= item.images[0].url %>" class="item-card-img" alt="<%= item.title %>">
@@ -70,7 +104,111 @@
         <% }) %>
       </div>
     <% } %>
-  </main>
-</div>
+  </div> <!-- Close seller-listings-container -->
+</div> <!-- Close container -->
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('seller-search-input');
+    const searchBtn = document.getElementById('btn-seller-search');
+    const resetBtn = document.getElementById('btn-seller-reset');
+    const pills = document.querySelectorAll('.seller-cat-pill');
+    const cards = document.querySelectorAll('.item-card');
+
+    let currentCategory = 'all';
+
+    function filterListings() {
+      const query = searchInput.value.toLowerCase().trim();
+      let matchCount = 0;
+      
+      cards.forEach(card => {
+        const title = card.querySelector('.item-card-title').textContent.toLowerCase();
+        const category = card.getAttribute('data-category').toLowerCase();
+        const priceElement = card.querySelector('.item-card-content p');
+        const priceText = priceElement ? priceElement.textContent.toLowerCase() : '';
+        
+        const matchesCategory = (currentCategory === 'all' || category === currentCategory);
+        const matchesQuery = (!query || title.includes(query) || category.includes(query) || priceText.includes(query));
+
+        if (matchesCategory && matchesQuery) {
+          card.style.display = 'block';
+          matchCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+      
+      // Handle the no results notice
+      const existingNotice = document.getElementById('no-search-results-notice');
+      if (matchCount === 0 && cards.length > 0) {
+        if (!existingNotice) {
+          const notice = document.createElement('div');
+          notice.id = 'no-search-results-notice';
+          notice.style.textAlign = 'center';
+          notice.style.padding = '3rem';
+          notice.style.gridColumn = '1 / -1';
+          notice.style.color = 'var(--text-secondary)';
+          notice.innerHTML = `
+            <div style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--text-hint);"><i class="fa-solid fa-face-frown"></i></div>
+            <h4>No items match your criteria</h4>
+            <p style="font-size: 0.85rem;">Try typing a different keyword or reset filters.</p>
+          `;
+          const grid = document.querySelector('#seller-listings-container > div');
+          if (grid) grid.appendChild(notice);
+        }
+      } else {
+        if (existingNotice) existingNotice.remove();
+      }
+    }
+
+    // Pill click handler
+    pills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        pills.forEach(p => {
+          p.classList.remove('active');
+          p.style.background = '#ffffff';
+          p.style.color = 'var(--text-secondary)';
+          p.style.borderColor = 'var(--border)';
+        });
+        
+        pill.classList.add('active');
+        pill.style.background = 'var(--primary)';
+        pill.style.color = '#ffffff';
+        pill.style.borderColor = 'var(--primary)';
+
+        currentCategory = pill.getAttribute('data-category');
+        filterListings();
+      });
+    });
+
+    searchBtn.addEventListener('click', filterListings);
+    searchInput.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') {
+        filterListings();
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      currentCategory = 'all';
+      
+      pills.forEach(p => {
+        p.classList.remove('active');
+        p.style.background = '#ffffff';
+        p.style.color = 'var(--text-secondary)';
+        p.style.borderColor = 'var(--border)';
+      });
+      const firstPill = pills[0];
+      firstPill.classList.add('active');
+      firstPill.style.background = 'var(--primary)';
+      firstPill.style.color = '#ffffff';
+      firstPill.style.borderColor = 'var(--primary)';
+
+      cards.forEach(card => card.style.display = 'block');
+      const existingNotice = document.getElementById('no-search-results-notice');
+      if (existingNotice) existingNotice.remove();
+    });
+  });
+</script>
 
 <%- include('../layouts/footer') %>

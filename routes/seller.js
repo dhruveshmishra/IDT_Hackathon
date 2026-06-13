@@ -8,7 +8,7 @@ const Item = require('../models/Item');
 const Booking = require('../models/Booking');
 const User = require('../models/User');
 const cloudinary = require('../config/cloudinary');
-const { moderateContent } = require('../utils/geminiHelpers');
+const { moderateContent, assessDamage } = require('../utils/geminiHelpers');
 
 // Ensure all seller routes are guarded
 router.use(isLoggedIn);
@@ -58,12 +58,101 @@ router.get('/dashboard', async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(5);
 
+    // Calculate real 30 days daily earnings for chart
+    const dailyEarningsMap = {};
+    const chartLabels = [];
+    const chartData = [];
+    
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      dailyEarningsMap[key] = 0;
+      chartLabels.push(key);
+    }
+    
+    bookings.forEach(b => {
+      if (b.payment && b.payment.status === 'paid' && b.createdAt) {
+        const key = new Date(b.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        if (dailyEarningsMap[key] !== undefined) {
+          dailyEarningsMap[key] += (b.totalAmount - (b.deposit || 0));
+        }
+      }
+    });
+
+    chartLabels.forEach(label => {
+      chartData.push(dailyEarningsMap[label]);
+    });
+
+    // Calculate weekly earnings (last 12 weeks)
+    const weeklyEarningsMap = {};
+    const weeklyLabels = [];
+    const weeklyData = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i * 7);
+      const key = "Wk of " + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      weeklyEarningsMap[key] = 0;
+      weeklyLabels.push(key);
+    }
+    bookings.forEach(b => {
+      if (b.payment && b.payment.status === 'paid' && b.createdAt) {
+        const bDate = new Date(b.createdAt);
+        for (let i = 11; i >= 0; i--) {
+          const bucketDate = new Date();
+          bucketDate.setDate(bucketDate.getDate() - i * 7);
+          bucketDate.setHours(0,0,0,0);
+          const bucketEnd = new Date(bucketDate);
+          bucketEnd.setDate(bucketEnd.getDate() + 7);
+          if (bDate >= bucketDate && bDate < bucketEnd) {
+            const label = weeklyLabels[11 - i];
+            weeklyEarningsMap[label] += (b.totalAmount - (b.deposit || 0));
+            break;
+          }
+        }
+      }
+    });
+    weeklyLabels.forEach(label => {
+      weeklyData.push(weeklyEarningsMap[label]);
+    });
+
+    // Calculate monthly earnings (last 12 months)
+    const monthlyEarningsMap = {};
+    const monthlyLabels = [];
+    const monthlyData = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const key = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+      monthlyEarningsMap[key] = 0;
+      monthlyLabels.push(key);
+    }
+    bookings.forEach(b => {
+      if (b.payment && b.payment.status === 'paid' && b.createdAt) {
+        const key = new Date(b.createdAt).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+        if (monthlyEarningsMap[key] !== undefined) {
+          monthlyEarningsMap[key] += (b.totalAmount - (b.deposit || 0));
+        }
+      }
+    });
+    monthlyLabels.forEach(label => {
+      monthlyData.push(monthlyEarningsMap[label]);
+    });
+
+
+
     res.render('seller/dashboard', {
       itemsCount,
       activeBookings,
       earnings,
       avgRating,
-      recentBookings
+      recentBookings,
+      chartLabels,
+      chartData,
+      weeklyLabels,
+      weeklyData,
+      monthlyLabels,
+      monthlyData
     });
   } catch (err) {
     req.flash('error', err.message);
@@ -124,7 +213,7 @@ router.get('/items/new', (req, res) => {
 // POST /seller/items (Create Listing + AI content moderation check)
 router.post('/items', upload.array('images', 5), async (req, res) => {
   try {
-    const { title, description, category, pricePerDay, pricePerHour, deposit, address, lng, lat, tags } = req.body;
+    const { title, description, category, pricePerDay, pricePerHour, deposit, address, lng, lat, tags, quantity } = req.body;
     
     // AI Content Moderation Check
     let moderationStatus = 'active';
@@ -156,6 +245,7 @@ router.post('/items', upload.array('images', 5), async (req, res) => {
     }
 
     const tagList = tags ? tags.split(',').map(t => t.trim().toLowerCase()).filter(t => t.length > 0) : [];
+    const quantityVal = quantity !== undefined ? Number(quantity) : 1;
 
     const item = new Item({
       title,
@@ -173,7 +263,9 @@ router.post('/items', upload.array('images', 5), async (req, res) => {
       address,
       tags: tagList,
       status: moderationStatus,
-      flagged: isFlagged
+      flagged: isFlagged,
+      quantity: quantityVal,
+      isAvailable: quantityVal > 0
     });
 
     await item.save();
@@ -204,7 +296,7 @@ router.get('/items/:id/edit', isOwner, async (req, res) => {
 // PUT /seller/items/:id (Update Listing + Moderation)
 router.post('/items/:id', isOwner, upload.array('images', 5), async (req, res) => {
   try {
-    const { title, description, category, pricePerDay, pricePerHour, deposit, address, lng, lat, tags } = req.body;
+    const { title, description, category, pricePerDay, pricePerHour, deposit, address, lng, lat, tags, quantity } = req.body;
     const item = await Item.findById(req.params.id);
 
     let moderationStatus = 'active';
@@ -222,6 +314,8 @@ router.post('/items/:id', isOwner, upload.array('images', 5), async (req, res) =
       console.warn('AI Moderation failed during update:', aiErr.message);
     }
 
+    const quantityVal = quantity !== undefined ? Number(quantity) : 1;
+
     item.title = title;
     item.description = description;
     item.category = category;
@@ -236,6 +330,8 @@ router.post('/items/:id', isOwner, upload.array('images', 5), async (req, res) =
     item.tags = tags ? tags.split(',').map(t => t.trim().toLowerCase()).filter(t => t.length > 0) : [];
     item.status = moderationStatus;
     item.flagged = isFlagged;
+    item.quantity = quantityVal;
+    item.isAvailable = quantityVal > 0;
 
     // Process new images if uploaded
     if (req.files && req.files.length > 0) {
@@ -306,6 +402,26 @@ router.put('/bookings/:id', async (req, res) => {
       return res.redirect('back');
     }
 
+    if (status === 'confirmed' && booking.status !== 'confirmed') {
+      const item = await Item.findById(booking.item);
+      if (item) {
+        if (item.quantity > 0) {
+          item.quantity -= 1;
+        }
+        item.isAvailable = item.quantity > 0;
+        await item.save();
+      }
+    }
+
+    if (status === 'cancelled' && (booking.status === 'confirmed' || booking.status === 'active')) {
+      const item = await Item.findById(booking.item);
+      if (item) {
+        item.quantity += 1;
+        item.isAvailable = true;
+        await item.save();
+      }
+    }
+
     booking.status = status;
     await booking.save();
 
@@ -313,6 +429,91 @@ router.put('/bookings/:id', async (req, res) => {
     res.redirect('/seller/bookings');
   } catch (err) {
     req.flash('error', err.message);
+    res.redirect('back');
+  }
+});
+
+// POST /seller/bookings/:id/handover — Upload handover photo and mark active
+router.post('/bookings/:id/handover', upload.single('handoverImage'), async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking || !booking.seller.equals(req.user._id)) {
+      req.flash('error', 'Booking not found or access denied.');
+      return res.redirect('back');
+    }
+
+    if (!req.file) {
+      req.flash('error', 'Please upload a photo of the item during handover.');
+      return res.redirect('back');
+    }
+
+    const uploadResult = await uploadToCloudinary(req.file.buffer, 'rentapp_handover');
+    booking.dispute = booking.dispute || {};
+    booking.dispute.beforeImage = uploadResult.secure_url;
+    booking.dispute.status = 'pending';
+    booking.status = 'active';
+    await booking.save();
+
+    req.flash('success', 'Handover recorded successfully! Item is now marked as Active (Rented).');
+    res.redirect('/seller/bookings');
+  } catch (err) {
+    req.flash('error', 'Handover failed: ' + err.message);
+    res.redirect('back');
+  }
+});
+
+// POST /seller/bookings/:id/return — Upload return photo, run AI damage inspection, and mark completed
+router.post('/bookings/:id/return', upload.single('returnImage'), async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id).populate('item');
+    if (!booking || !booking.seller.equals(req.user._id)) {
+      req.flash('error', 'Booking not found or access denied.');
+      return res.redirect('back');
+    }
+
+    if (!req.file) {
+      req.flash('error', 'Please upload a photo of the item during return.');
+      return res.redirect('back');
+    }
+
+    const uploadResult = await uploadToCloudinary(req.file.buffer, 'rentapp_return');
+    booking.dispute = booking.dispute || {};
+    booking.dispute.afterImage = uploadResult.secure_url;
+    booking.dispute.status = 'pending';
+    booking.status = 'completed';
+
+    // Auto run Gemini AI damage assessment
+    try {
+      const assessment = await assessDamage(
+        booking.dispute.beforeImage,
+        booking.dispute.afterImage,
+        booking.item ? (booking.item.description || booking.item.title) : 'Rented Item'
+      );
+      
+      const damageLoc = (assessment.damageLocation || 'none').toUpperCase();
+      const severityStr = (assessment.severity || 'none').toUpperCase();
+      
+      booking.dispute.aiAnalysis = `Damage: ${assessment.description || 'No damage detected'}. Detected Location: ${damageLoc}. Severity: ${severityStr}. Reasoning: ${assessment.reasoning || 'No reasoning details provided.'}`;
+      booking.dispute.deductionAmount = 0;
+    } catch (aiErr) {
+      console.error('Auto Gemini assessment failed on return:', aiErr.message);
+      booking.dispute.aiAnalysis = 'Auto AI inspection failed during return: ' + aiErr.message;
+      booking.dispute.deductionAmount = 0;
+    }
+
+    // Restore item quantity when marked completed/returned
+    const item = await Item.findById(booking.item);
+    if (item) {
+      item.quantity += 1;
+      item.isAvailable = true;
+      await item.save();
+    }
+
+    await booking.save();
+    req.flash('success', 'Return recorded and AI Damage Inspection completed! Booking marked as Completed.');
+    res.redirect('/seller/bookings');
+  } catch (err) {
+    req.flash('error', 'Return recording failed: ' + err.message);
     res.redirect('back');
   }
 });
@@ -400,6 +601,80 @@ router.post('/aadhaar', upload.single('aadhaar'), async (req, res) => {
   } catch (err) {
     req.flash('error', err.message);
     res.redirect('/seller/profile');
+  }
+});
+
+// GET /seller/inspection — Run AI Damage Inspection
+router.get('/inspection', async (req, res) => {
+  try {
+    const bookings = await Booking.find({ 
+      seller: req.user._id,
+      status: { $in: ['confirmed', 'active', 'completed'] }
+    })
+      .populate('item')
+      .sort({ createdAt: -1 });
+
+    res.render('seller/damage-inspection', { bookings, activePage: 'inspection' });
+  } catch (err) {
+    req.flash('error', err.message);
+    res.redirect('/seller/dashboard');
+  }
+});
+
+// POST /seller/inspection — Run AI Damage Inspection
+router.post('/inspection', upload.fields([
+  { name: 'beforeImage', maxCount: 1 },
+  { name: 'afterImage', maxCount: 1 }
+]), async (req, res) => {
+  try {
+    const { itemTitle, bookingId } = req.body;
+
+    if (!req.files || !req.files['beforeImage'] || !req.files['afterImage']) {
+      return res.status(400).json({ success: false, error: 'Both before and after photos are required.' });
+    }
+
+    // Upload to Cloudinary using helper function
+    const beforeResult = await uploadToCloudinary(req.files['beforeImage'][0].buffer, 'rentapp_inspection');
+    const afterResult = await uploadToCloudinary(req.files['afterImage'][0].buffer, 'rentapp_inspection');
+
+    // Run AI damage analysis
+    const assessment = await assessDamage(
+      beforeResult.secure_url,
+      afterResult.secure_url,
+      itemTitle || 'Rented Item'
+    );
+
+    // If a bookingId was provided, save the result to that booking's dispute field
+    if (bookingId && bookingId !== 'custom') {
+      const booking = await Booking.findById(bookingId);
+      if (booking) {
+        const damageLoc = (assessment.damageLocation || 'none').toUpperCase();
+        const severityStr = (assessment.severity || 'none').toUpperCase();
+        booking.dispute = {
+          beforeImage: beforeResult.secure_url,
+          afterImage: afterResult.secure_url,
+          status: 'pending',
+          aiAnalysis: `Damage: ${assessment.description || 'No damage detected'}. Detected Location: ${damageLoc}. Severity: ${severityStr}. Reasoning: ${assessment.reasoning || 'No reasoning details provided.'}`,
+          deductionAmount: 0,
+          createdAt: new Date()
+        };
+        await booking.save();
+      }
+    }
+
+    res.json({
+      success: true,
+      beforeImage: beforeResult.secure_url,
+      afterImage: afterResult.secure_url,
+      description: assessment.description,
+      severity: assessment.severity,
+      damageLocation: assessment.damageLocation,
+      deductionAmount: 0,
+      reasoning: assessment.reasoning
+    });
+  } catch (err) {
+    console.error('AI Inspection Portal Error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

@@ -7,6 +7,7 @@ const Item = require('../models/Item');
 const Booking = require('../models/Booking');
 const Review = require('../models/Review');
 const cloudinary = require('../config/cloudinary');
+const { assessDamage } = require('../utils/geminiHelpers');
 
 // Helper to upload buffer to Cloudinary
 function uploadToCloudinary(fileBuffer, folderName = 'rentapp') {
@@ -28,10 +29,17 @@ router.use(isLoggedIn);
 // GET /user/home — show items near user, with distance
 router.get('/home', async (req, res) => {
   try {
-    const userLng = req.user.location && req.user.location.coordinates && req.user.location.coordinates[0]
-      ? req.user.location.coordinates[0] : 72.8777;
-    const userLat = req.user.location && req.user.location.coordinates && req.user.location.coordinates[1]
-      ? req.user.location.coordinates[1] : 19.0760;
+    // Allow query params to override stored location (e.g. from search form)
+    const distance = req.query.distance || '50'; // default 50km so seeded data always shows
+    const maxDistanceMeters = parseFloat(distance) * 1000;
+
+    // Prefer query-param coords, then user's stored location, then Mumbai fallback
+    const userLng = parseFloat(req.query.lng) ||
+      (req.user.location && req.user.location.coordinates && req.user.location.coordinates[0]) ||
+      72.8777;
+    const userLat = parseFloat(req.query.lat) ||
+      (req.user.location && req.user.location.coordinates && req.user.location.coordinates[1]) ||
+      19.0760;
 
     // $geoNear aggregation gives us the distance in metres for each item, sorted by price ascending
     let items = await Item.aggregate([
@@ -39,7 +47,7 @@ router.get('/home', async (req, res) => {
         $geoNear: {
           near: { type: 'Point', coordinates: [userLng, userLat] },
           distanceField: 'dist.calculated',   // metres
-          maxDistance: 5000,                  // 5 km
+          maxDistance: maxDistanceMeters,
           query: { isAvailable: true, status: 'active' },
           spherical: true
         }
@@ -50,13 +58,14 @@ router.get('/home', async (req, res) => {
 
     res.render('user/home', {
       items,
-      search: '',
-      smartSearch: '',
-      category: 'all',
-      maxPrice: '',
+      search: req.query.search || '',
+      smartSearch: req.query.smartSearch || '',
+      category: req.query.category || 'all',
+      subcategory: req.query.subcategory || '',
+      maxPrice: req.query.maxPrice || '',
       lng: userLng,
       lat: userLat,
-      distance: '5',
+      distance: distance,
       aiExplanation: ''
     });
   } catch (err) {
@@ -220,6 +229,81 @@ router.post('/review/:itemId', async (req, res) => {
   } catch (err) {
     req.flash('error', err.message);
     res.redirect('back');
+  }
+});
+
+// GET /user/inspection — Standalone AI Damage Inspection Portal
+router.get('/inspection', async (req, res) => {
+  try {
+    // Find renter's bookings that are confirmed, active, or completed to show in dropdown
+    const bookings = await Booking.find({ 
+      renter: req.user._id,
+      status: { $in: ['confirmed', 'active', 'completed'] }
+    })
+      .populate('item')
+      .sort({ createdAt: -1 });
+
+    res.render('user/damage-inspection', { bookings, activePage: 'inspection' });
+  } catch (err) {
+    req.flash('error', err.message);
+    res.redirect('/');
+  }
+});
+
+// POST /user/inspection — Run AI Damage Inspection
+router.post('/inspection', upload.fields([
+  { name: 'beforeImage', maxCount: 1 },
+  { name: 'afterImage', maxCount: 1 }
+]), async (req, res) => {
+  try {
+    const { itemTitle, bookingId } = req.body;
+
+    if (!req.files || !req.files['beforeImage'] || !req.files['afterImage']) {
+      return res.status(400).json({ success: false, error: 'Both before and after photos are required.' });
+    }
+
+    // Upload to Cloudinary using helper function
+    const beforeResult = await uploadToCloudinary(req.files['beforeImage'][0].buffer, 'rentapp_inspection');
+    const afterResult = await uploadToCloudinary(req.files['afterImage'][0].buffer, 'rentapp_inspection');
+
+    // Run AI damage analysis
+    const assessment = await assessDamage(
+      beforeResult.secure_url,
+      afterResult.secure_url,
+      itemTitle || 'Rented Item'
+    );
+
+    // If a bookingId was provided, save the result to that booking's dispute field
+    if (bookingId && bookingId !== 'custom') {
+      const booking = await Booking.findById(bookingId);
+      if (booking) {
+        const damageLoc = (assessment.damageLocation || 'none').toUpperCase();
+        const severityStr = (assessment.severity || 'none').toUpperCase();
+        booking.dispute = {
+          beforeImage: beforeResult.secure_url,
+          afterImage: afterResult.secure_url,
+          status: 'pending',
+          aiAnalysis: `Damage: ${assessment.description || 'No damage detected'}. Detected Location: ${damageLoc}. Severity: ${severityStr}. Reasoning: ${assessment.reasoning || 'No reasoning details provided.'}`,
+          deductionAmount: 0,
+          createdAt: new Date()
+        };
+        await booking.save();
+      }
+    }
+
+    res.json({
+      success: true,
+      beforeImage: beforeResult.secure_url,
+      afterImage: afterResult.secure_url,
+      description: assessment.description,
+      severity: assessment.severity,
+      damageLocation: assessment.damageLocation,
+      deductionAmount: 0,
+      reasoning: assessment.reasoning
+    });
+  } catch (err) {
+    console.error('AI Inspection Portal Error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

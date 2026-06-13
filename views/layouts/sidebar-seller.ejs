@@ -63,6 +63,21 @@
         <span class="sidebar-menu-label">Booking Calendar</span>
       </a>
     </li>
+    <li>
+      <a href="/seller/inspection" class="sidebar-menu-link <%= locals.activePage === 'inspection' ? 'active' : '' %>" data-label="AI Inspection">
+        <span class="sidebar-menu-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+        <span class="sidebar-menu-label">AI Inspection</span>
+      </a>
+    </li>
+
+    <li class="sidebar-section-label">Messages</li>
+    <li>
+      <a href="/seller/messages" class="sidebar-menu-link <%= locals.activePage === 'messages' ? 'active' : '' %>" data-label="Inbox" style="position:relative;">
+        <span class="sidebar-menu-icon"><i class="fa-regular fa-comment-dots"></i></span>
+        <span class="sidebar-menu-label">Inbox</span>
+        <span id="sidebar-unread-badge" style="display:none; position:absolute; top:6px; right:10px; background:#ef4444; color:#fff; font-size:0.65rem; font-weight:700; padding:1px 6px; border-radius:10px; min-width:18px; text-align:center; line-height:16px;"></span>
+      </a>
+    </li>
 
     <li class="sidebar-section-label">Account</li>
     <li>
@@ -96,22 +111,52 @@
 (function() {
   const nav     = document.getElementById('sidebarNav');
   const toggle  = document.getElementById('sidebarToggle');
-  const content = document.getElementById('pageContent');
   const overlay = document.getElementById('sidebarOverlay');
-
   const STORAGE_KEY = 'rentit_sidebar_collapsed';
-  const collapsed = localStorage.getItem(STORAGE_KEY) === 'true';
-  if (collapsed) {
-    nav.classList.add('collapsed');
-    if (content) content.classList.add('collapsed');
-  }
 
-  toggle.addEventListener('click', () => {
-    const isCollapsed = nav.classList.toggle('collapsed');
-    if (content) content.classList.toggle('collapsed', isCollapsed);
-    localStorage.setItem(STORAGE_KEY, isCollapsed);
+  // Collapse sidebar immediately (no flicker) — nav is already in DOM
+  const isInitiallyCollapsed = localStorage.getItem(STORAGE_KEY) !== 'false';
+  if (isInitiallyCollapsed) nav.classList.add('collapsed');
+
+  // #pageContent is rendered AFTER this sidebar script, so wait for full DOM
+  document.addEventListener('DOMContentLoaded', () => {
+    const content = document.getElementById('pageContent');
+
+    // Sync content margin with saved state
+    if (isInitiallyCollapsed && content) content.classList.add('collapsed');
+
+    toggle.addEventListener('click', () => {
+      const nowCollapsed = nav.classList.toggle('collapsed');
+      if (content) content.classList.toggle('collapsed', nowCollapsed);
+      localStorage.setItem(STORAGE_KEY, nowCollapsed);
+    });
+
+    // ── Unread message badge ──
+    const badge = document.getElementById('sidebar-unread-badge');
+    function updateBadge(n) {
+      if (!badge) return;
+      if (n > 0) { badge.textContent = n; badge.style.display = 'inline-flex'; }
+      else { badge.style.display = 'none'; }
+    }
+
+    // Fetch initial count
+    fetch('/seller/messages/unread-count')
+      .then(r => r.json())
+      .then(d => { if (d.success) updateBadge(d.count); })
+      .catch(() => {});
+
+    // Real-time increment via socket
+    if (window.io) {
+      const socket = io();
+      socket.emit('join-user-room', '<%= currentUser ? currentUser._id : "" %>');
+      socket.on('new-message-notify', () => {
+        const cur = parseInt(badge?.textContent || '0', 10);
+        updateBadge(cur + 1);
+      });
+    }
   });
 
+  // Mobile handlers (mobileBtn is already in DOM before this script)
   const mobileBtn = document.getElementById('mobileMenuBtn');
   if (mobileBtn) {
     mobileBtn.addEventListener('click', () => {

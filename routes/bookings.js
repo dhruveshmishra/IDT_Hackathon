@@ -1,10 +1,27 @@
 const express = require('express');
 const router = express.Router();
 const isLoggedIn = require('../middleware/isLoggedIn');
+const upload = require('../middleware/upload');
+const cloudinary = require('../config/cloudinary');
 const Booking = require('../models/Booking');
 const Item = require('../models/Item');
+const User = require('../models/User');
 const razorpay = require('../config/razorpay');
-const { findAlternativesMessage } = require('../utils/geminiHelpers');
+const { findAlternativesMessage, generateRentalAgreement, assessDamage } = require('../utils/geminiHelpers');
+
+// Helper to upload file buffer to Cloudinary
+function uploadToCloudinary(fileBuffer, folderName = 'rentapp_disputes') {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder: folderName },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+    uploadStream.end(fileBuffer);
+  });
+}
 
 // Ensure logged in for all booking routes
 router.use(isLoggedIn);
@@ -20,7 +37,7 @@ router.post('/', async (req, res) => {
       });
     }
 
-    const { item: itemId, startDate, endDate, totalDays, totalAmount, deposit } = req.body;
+    const { item: itemId, startDate, endDate, totalDays, totalAmount, deposit, paymentMethod } = req.body;
     
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -28,6 +45,23 @@ router.post('/', async (req, res) => {
     const item = await Item.findById(itemId);
     if (!item) {
       return res.status(404).json({ success: false, error: 'Item not found' });
+    }
+
+    // Seller verification gate — block payment if seller is not verified
+    const seller = await User.findById(item.owner);
+    if (!seller || !seller.isVerified) {
+      return res.status(403).json({
+        success: false,
+        error: 'This item belongs to an unverified seller. Payment is not allowed until the seller completes identity and business verification.'
+      });
+    }
+
+    // Check if item has stock available
+    if (item.quantity !== undefined && item.quantity <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'This item is out of stock / no longer available.'
+      });
     }
 
     // Booking Conflict Check
@@ -84,15 +118,24 @@ router.post('/', async (req, res) => {
 
     await booking.save();
 
-    // Create Razorpay Order
-    // totalAmount is in INR, Razorpay accepts amount in Paise
-    const orderOptions = {
-      amount: Math.round(Number(totalAmount) * 100),
-      currency: 'INR',
-      receipt: `booking_${booking._id}`
-    };
-
-    const order = await razorpay.orders.create(orderOptions);
+    // Create Razorpay or Mock Order
+    let order;
+    if (paymentMethod === 'p2p') {
+      order = {
+        id: 'order_mock_' + Math.random().toString(36).substring(2, 15),
+        amount: Math.round(Number(totalAmount) * 100),
+        currency: 'INR',
+        receipt: `booking_${booking._id}`,
+        status: 'created'
+      };
+    } else {
+      const orderOptions = {
+        amount: Math.round(Number(totalAmount) * 100),
+        currency: 'INR',
+        receipt: `booking_${booking._id}`
+      };
+      order = await razorpay.orders.create(orderOptions);
+    }
 
     // Save orderId to booking payment details
     booking.payment.orderId = order.id;
@@ -130,6 +173,12 @@ router.get('/:id', async (req, res) => {
       return res.redirect('/');
     }
 
+    // Payment validation check: only allow viewing receipt if payment status is 'paid'
+    if (req.user.role !== 'admin' && (!booking.payment || booking.payment.status !== 'paid')) {
+      req.flash('error', 'Receipt is not available for pending or failed payments.');
+      return res.redirect('/user/bookings');
+    }
+
     res.render('user/booking-show', { booking });
   } catch (err) {
     req.flash('error', err.message);
@@ -151,6 +200,15 @@ router.put('/:id/cancel', async (req, res) => {
       return res.redirect('back');
     }
 
+    if (booking.status === 'confirmed' || booking.status === 'active') {
+      const item = await Item.findById(booking.item);
+      if (item) {
+        item.quantity += 1;
+        item.isAvailable = true;
+        await item.save();
+      }
+    }
+
     booking.status = 'cancelled';
     await booking.save();
 
@@ -158,6 +216,83 @@ router.put('/:id/cancel', async (req, res) => {
     res.redirect('back');
   } catch (err) {
     req.flash('error', err.message);
+    res.redirect('back');
+  }
+});
+
+// GET /bookings/:id/agreement — Generate / view dynamic AI rental agreement
+router.get('/:id/agreement', async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id)
+      .populate('item')
+      .populate('renter')
+      .populate('seller');
+
+    if (!booking) {
+      req.flash('error', 'Booking not found.');
+      return res.redirect('back');
+    }
+
+    if (!booking.renter._id.equals(req.user._id) && !booking.seller._id.equals(req.user._id) && req.user.role !== 'admin') {
+      req.flash('error', 'Access denied.');
+      return res.redirect('back');
+    }
+
+    // Generate contract HTML if not cached already
+    if (!booking.agreementHtml) {
+      const contract = await generateRentalAgreement(booking, booking.item, booking.renter, booking.seller);
+      booking.agreementHtml = contract;
+      await booking.save();
+    }
+
+    res.render('user/booking-agreement', { booking, agreement: booking.agreementHtml });
+  } catch (err) {
+    req.flash('error', 'Failed to generate contract: ' + err.message);
+    res.redirect('back');
+  }
+});
+
+// POST /bookings/:id/dispute — AI Damage / Dispute Assessment
+router.post('/:id/dispute', upload.fields([
+  { name: 'beforeImage', maxCount: 1 },
+  { name: 'afterImage', maxCount: 1 }
+]), async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id).populate('item');
+    if (!booking) {
+      req.flash('error', 'Booking not found.');
+      return res.redirect('back');
+    }
+
+    if (!req.files || !req.files['beforeImage'] || !req.files['afterImage']) {
+      req.flash('error', 'Both before and after photos are required for AI damage assessment.');
+      return res.redirect('back');
+    }
+
+    // Upload images to Cloudinary
+    const beforeResult = await uploadToCloudinary(req.files['beforeImage'][0].buffer);
+    const afterResult = await uploadToCloudinary(req.files['afterImage'][0].buffer);
+
+    // Call Gemini Image Damage Assessor
+    const assessment = await assessDamage(beforeResult.secure_url, afterResult.secure_url, booking.item.description || booking.item.title);
+
+    const damageLoc = (assessment.damageLocation || 'none').toUpperCase();
+    const severityStr = (assessment.severity || 'none').toUpperCase();
+
+    booking.dispute = {
+      beforeImage: beforeResult.secure_url,
+      afterImage: afterResult.secure_url,
+      status: 'pending',
+      aiAnalysis: `Damage: ${assessment.description || 'No damage detected'}. Detected Location: ${damageLoc}. Severity: ${severityStr}. Reasoning: ${assessment.reasoning || 'No reasoning details provided.'}`,
+      deductionAmount: 0,
+      createdAt: new Date()
+    };
+    await booking.save();
+
+    req.flash('success', 'AI Dispute Assessment completed!');
+    res.redirect(`/bookings/${booking._id}`);
+  } catch (err) {
+    req.flash('error', 'Dispute assessment failed: ' + err.message);
     res.redirect('back');
   }
 });

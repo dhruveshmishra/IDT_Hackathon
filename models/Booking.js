@@ -15,6 +15,16 @@ const bookingSchema = new mongoose.Schema({
     paymentId:  String,
     status:     { type: String, enum: ['pending','paid','refunded'], default: 'pending' }
   },
+  paymentScreenshot: String, // URL of P2P transaction screenshot
+  agreementHtml: String, // Store generated rental contract EJS/HTML
+  dispute: {
+    beforeImage:     String,
+    afterImage:      String,
+    status:          { type: String, enum: ['none', 'pending', 'resolved'], default: 'none' },
+    aiAnalysis:      String,
+    deductionAmount: { type: Number, default: 0 },
+    createdAt:       Date
+  },
   createdAt: { type: Date, default: Date.now }
 });
 

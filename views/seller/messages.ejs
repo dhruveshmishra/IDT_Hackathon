@@ -1,0 +1,528 @@
+<%- include('../layouts/main') %>
+
+<style>
+  /* ── Seller Inbox Layout ── */
+  .inbox-wrap {
+    display: flex;
+    height: calc(100vh - 80px);
+    max-height: 780px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    margin: 1.5rem;
+    background: var(--surface);
+  }
+
+  /* ── Left: Thread List ── */
+  .inbox-sidebar {
+    width: 300px;
+    min-width: 300px;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+  }
+  .inbox-sidebar-header {
+    padding: 1rem 1.1rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .inbox-sidebar-header h3 {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    flex: 1;
+    margin: 0;
+  }
+  .inbox-total-badge {
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+  }
+  .inbox-search {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .inbox-search input {
+    width: 100%;
+    padding: 7px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 0.83rem;
+    background: var(--surface);
+    color: var(--text-primary);
+    outline: none;
+    transition: border 0.2s;
+  }
+  .inbox-search input:focus { border-color: var(--primary); }
+
+  .inbox-threads { flex: 1; overflow-y: auto; }
+  .inbox-empty {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--text-hint);
+    font-size: 0.88rem;
+  }
+
+  .thread-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.8rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    transition: background 0.15s;
+    position: relative;
+  }
+  .thread-item:hover { background: var(--surface); }
+  .thread-item.active { background: #eff6ff; }
+  .thread-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1.1rem;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .thread-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .thread-info { flex: 1; min-width: 0; }
+  .thread-name {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .thread-preview {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-top: 2px;
+  }
+  .thread-meta {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+    flex-shrink: 0;
+  }
+  .thread-time { font-size: 0.72rem; color: var(--text-hint); }
+  .thread-unread {
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ── Right: Chat Window ── */
+  .inbox-chat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .inbox-chat-placeholder {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    color: var(--text-hint);
+  }
+  .inbox-chat-placeholder i { font-size: 3rem; color: var(--border); }
+  .inbox-chat-placeholder p { font-size: 0.9rem; }
+
+  .inbox-chat-header {
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--surface);
+  }
+  .inbox-chat-header .chat-h-avatar {
+    width: 38px; height: 38px; border-radius: 50%; overflow: hidden;
+    background: var(--border); display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1rem; color: var(--text-secondary); flex-shrink: 0;
+  }
+  .inbox-chat-header .chat-h-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .inbox-chat-header-name { font-weight: 700; font-size: 0.95rem; font-family: var(--font-display); }
+  .inbox-chat-header-sub { font-size: 0.75rem; color: var(--text-secondary); }
+  .inbox-chat-header-item {
+    margin-left: auto;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 4px 10px;
+  }
+
+  .inbox-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    background: #f8fafc;
+  }
+  .msg-bubble {
+    max-width: 65%;
+    padding: 9px 14px;
+    border-radius: 18px;
+    font-size: 0.875rem;
+    line-height: 1.45;
+    word-break: break-word;
+  }
+  .msg-bubble.outgoing {
+    align-self: flex-end;
+    background: var(--primary);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .msg-bubble.incoming {
+    align-self: flex-start;
+    background: #fff;
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+  }
+  .msg-time {
+    font-size: 0.68rem;
+    color: var(--text-hint);
+    margin-top: 2px;
+    align-self: flex-end;
+  }
+  .msg-time.left { align-self: flex-start; }
+
+  .inbox-input-area {
+    padding: 0.85rem 1.25rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    gap: 0.75rem;
+    background: var(--surface);
+  }
+  .inbox-input-area textarea {
+    flex: 1;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    font-size: 0.875rem;
+    resize: none;
+    min-height: 42px;
+    max-height: 100px;
+    font-family: var(--font-body);
+    outline: none;
+    transition: border 0.2s;
+    background: var(--bg);
+    color: var(--text-primary);
+  }
+  .inbox-input-area textarea:focus { border-color: var(--primary); }
+  .inbox-send-btn {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.15s, background 0.15s;
+  }
+  .inbox-send-btn:hover { transform: scale(1.08); background: var(--primary-dark, #2563eb); }
+
+  .date-divider {
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--text-hint);
+    margin: 0.5rem 0;
+    position: relative;
+  }
+  .date-divider::before, .date-divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 35%;
+    height: 1px;
+    background: var(--border);
+  }
+  .date-divider::before { left: 0; }
+  .date-divider::after { right: 0; }
+</style>
+
+<div class="inbox-wrap">
+
+  <!-- ══ Left: Thread List ══ -->
+  <div class="inbox-sidebar">
+    <div class="inbox-sidebar-header">
+      <i class="fa-regular fa-comment-dots" style="color:var(--primary); font-size:1.1rem;"></i>
+      <h3>Messages</h3>
+      <% if (locals.totalUnread && totalUnread > 0) { %>
+        <span class="inbox-total-badge"><%= totalUnread %></span>
+      <% } %>
+    </div>
+
+    <div class="inbox-search">
+      <input type="text" id="thread-search" placeholder="Search conversations…">
+    </div>
+
+    <div class="inbox-threads" id="thread-list">
+      <% if (!threads || threads.length === 0) { %>
+        <div class="inbox-empty">
+          <i class="fa-regular fa-face-smile" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>
+          No messages yet.<br>Once users contact you, they'll appear here.
+        </div>
+      <% } else { %>
+        <% threads.forEach(t => { %>
+          <%
+            const renter = t.booking.renter;
+            const isActive = locals.activeBooking && activeBooking._id.toString() === t.booking._id.toString();
+            const preview = t.lastMsg ? t.lastMsg.text : '';
+            const ts = t.lastMsg ? new Date(t.lastMsg.createdAt) : null;
+            const timeStr = ts ? ts.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }) : '';
+          %>
+          <a href="/seller/messages/<%= t.booking._id %>" class="thread-item <%= isActive ? 'active' : '' %>" id="thread-<%= t.booking._id %>">
+            <div class="thread-avatar">
+              <% if (renter && renter.avatar && renter.avatar.url) { %>
+                <img src="<%= renter.avatar.url %>" alt="<%= renter.name %>">
+              <% } else { %>
+                <%= renter ? renter.name[0].toUpperCase() : '?' %>
+              <% } %>
+            </div>
+            <div class="thread-info">
+              <div class="thread-name"><%= renter ? renter.name : 'Unknown User' %></div>
+              <div class="thread-preview" style="<%= t.unread > 0 ? 'color:var(--text-primary);font-weight:600;' : '' %>">
+                <%= preview.length > 40 ? preview.slice(0,40) + '…' : preview %>
+              </div>
+            </div>
+            <div class="thread-meta">
+              <span class="thread-time"><%= timeStr %></span>
+              <% if (t.unread > 0) { %>
+                <span class="thread-unread" id="badge-<%= t.booking._id %>"><%= t.unread %></span>
+              <% } %>
+            </div>
+          </a>
+        <% }) %>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- ══ Right: Chat Window ══ -->
+  <div class="inbox-chat">
+
+    <% if (!locals.activeBooking) { %>
+      <!-- Placeholder when no thread selected -->
+      <div class="inbox-chat-placeholder">
+        <i class="fa-regular fa-comments"></i>
+        <p>Select a conversation to start chatting</p>
+      </div>
+
+    <% } else { %>
+      <!-- Active Chat Header -->
+      <div class="inbox-chat-header">
+        <div class="chat-h-avatar">
+          <% if (activeBooking.renter.avatar && activeBooking.renter.avatar.url) { %>
+            <img src="<%= activeBooking.renter.avatar.url %>" alt="avatar">
+          <% } else { %>
+            <%= activeBooking.renter.name[0].toUpperCase() %>
+          <% } %>
+        </div>
+        <div>
+          <div class="inbox-chat-header-name"><%= activeBooking.renter.name %></div>
+          <div class="inbox-chat-header-sub">
+            <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#4ADE80; margin-right:4px; vertical-align:middle;"></span>
+            Active now
+          </div>
+        </div>
+        <span class="inbox-chat-header-item">
+          <i class="fa-solid fa-tag" style="font-size:0.7rem;"></i>
+          <%= activeBooking.item ? activeBooking.item.title : 'Deleted listing' %>
+        </span>
+      </div>
+
+      <!-- Messages Thread -->
+      <div class="inbox-messages" id="inbox-messages">
+        <% if (messages && messages.length > 0) { %>
+          <% let lastDate = null; %>
+          <% messages.forEach(msg => {
+            const msgDate = new Date(msg.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+            const isOutgoing = msg.sender && (msg.sender._id || msg.sender).toString() === currentUser._id.toString();
+            const timeStr = new Date(msg.createdAt).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+          %>
+            <% if (msgDate !== lastDate) { lastDate = msgDate; %>
+              <div class="date-divider"><%= msgDate %></div>
+            <% } %>
+            <div class="msg-bubble <%= isOutgoing ? 'outgoing' : 'incoming' %>"><%= msg.text %></div>
+            <span class="msg-time <%= isOutgoing ? '' : 'left' %>"><%= timeStr %></span>
+          <% }) %>
+        <% } else { %>
+          <div style="text-align:center; color:var(--text-hint); font-size:0.85rem; margin-top:2rem;">
+            No messages yet — say hello! 👋
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Message Input -->
+      <form class="inbox-input-area" id="inbox-form">
+        <textarea id="inbox-input" placeholder="Type a message…" rows="1"
+          oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+        <button type="submit" class="inbox-send-btn" aria-label="Send">
+          <i class="fa-solid fa-paper-plane"></i>
+        </button>
+      </form>
+    <% } %>
+
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  // ── Thread search filter ──
+  const searchInput = document.getElementById('thread-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.toLowerCase();
+      document.querySelectorAll('.thread-item').forEach(el => {
+        const name = el.querySelector('.thread-name')?.textContent.toLowerCase() || '';
+        el.style.display = name.includes(q) ? '' : 'none';
+      });
+    });
+  }
+
+  const sellerId = '<%= currentUser._id %>';
+  const socket = io();
+
+  // Join personal notification room so badge updates in real-time
+  socket.emit('join-user-room', sellerId);
+
+  // Unread badge update when a new message arrives while on another page
+  socket.on('new-message-notify', (data) => {
+    const badge = document.getElementById('sidebar-unread-badge');
+    const threadBadge = document.getElementById(`badge-${data.bookingId}`);
+
+    // Update sidebar nav badge
+    if (badge) {
+      const current = parseInt(badge.textContent || '0', 10);
+      badge.textContent = current + 1;
+      badge.style.display = 'flex';
+    }
+
+    // Update thread list badge
+    if (threadBadge) {
+      threadBadge.textContent = parseInt(threadBadge.textContent || '0', 10) + 1;
+    } else {
+      // New badge on thread row
+      const row = document.getElementById(`thread-${data.bookingId}`);
+      if (row) {
+        const meta = row.querySelector('.thread-meta');
+        if (meta) {
+          const span = document.createElement('span');
+          span.className = 'thread-unread';
+          span.id = `badge-${data.bookingId}`;
+          span.textContent = '1';
+          meta.appendChild(span);
+        }
+      }
+    }
+  });
+
+  <% if (locals.activeBooking) { %>
+  // ── Active chat real-time ──
+  const bookingId = '<%= activeBooking._id %>';
+  const currentUserId = '<%= currentUser._id %>';
+  const receiverId = '<%= activeBooking.renter._id %>';
+  const msgContainer = document.getElementById('inbox-messages');
+  const form = document.getElementById('inbox-form');
+  const input = document.getElementById('inbox-input');
+
+  socket.emit('join-room', bookingId);
+
+  function scrollBottom() {
+    if (msgContainer) msgContainer.scrollTop = msgContainer.scrollHeight;
+  }
+  scrollBottom();
+
+  function appendBubble(text, outgoing, time) {
+    if (!msgContainer) return;
+    const bubble = document.createElement('div');
+    bubble.className = `msg-bubble ${outgoing ? 'outgoing' : 'incoming'}`;
+    bubble.textContent = text;
+    msgContainer.appendChild(bubble);
+
+    const ts = document.createElement('span');
+    ts.className = `msg-time ${outgoing ? '' : 'left'}`;
+    ts.textContent = time || new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+    msgContainer.appendChild(ts);
+    scrollBottom();
+  }
+
+  // ── Unified send function ──
+  function sendMessage() {
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+    socket.emit('send-message', { bookingId, senderId: currentUserId, receiverId, text });
+    appendBubble(text, true);
+    input.value = '';
+    input.style.height = 'auto';
+    input.focus();
+  }
+
+  // Send on form submit (button click)
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      sendMessage();
+    });
+  }
+
+  // Send on Enter key (Shift+Enter = newline)
+  if (input) {
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+  }
+
+  // Receive incoming messages via socket
+  socket.on('receive-message', (msg) => {
+    // Only append if it's from the other person (we already append our own immediately)
+    const msgSenderId = msg.sender?._id || msg.sender;
+    if (msgSenderId && msgSenderId.toString() !== currentUserId) {
+      const time = msg.createdAt
+        ? new Date(msg.createdAt).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' })
+        : '';
+      appendBubble(msg.text, false, time);
+    }
+  });
+  <% } %>
+
+  // ── Init sidebar badge from server total ──
+  <% if (locals.totalUnread && totalUnread > 0) { %>
+  const sidebarBadge = document.getElementById('sidebar-unread-badge');
+  if (sidebarBadge) {
+    sidebarBadge.textContent = '<%= totalUnread %>';
+    sidebarBadge.style.display = 'flex';
+  }
+  <% } %>
+
+});
+</script>
+
+<%- include('../layouts/footer') %>

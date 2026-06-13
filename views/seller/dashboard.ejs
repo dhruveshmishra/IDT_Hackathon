@@ -1,79 +1,170 @@
 <%- include('../layouts/main') %>
 
-<div class="dashboard-layout">
-  
-  <!-- Sidebar Navigation -->
-  <aside class="dashboard-sidebar">
-    <ul class="dashboard-sidebar-menu">
-      <li><a href="/seller/dashboard" class="dashboard-sidebar-link active"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
-      <li><a href="/seller/items" class="dashboard-sidebar-link"><i class="fa-solid fa-list"></i> My Listings</a></li>
-      <li><a href="/seller/bookings" class="dashboard-sidebar-link"><i class="fa-regular fa-calendar-days"></i> Bookings Calendar</a></li>
-      <li><a href="/seller/profile" class="dashboard-sidebar-link"><i class="fa-solid fa-indian-rupee-sign"></i> Payout Details</a></li>
-      <li><a href="/seller/verify" class="dashboard-sidebar-link"><i class="fa-solid fa-user-shield"></i> Business Verification</a></li>
-    </ul>
-  </aside>
+<!-- Custom Premium Theme Styles for Seller Dashboard -->
+<style>
+  /* Seller Stats Cards */
+  .seller-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+  .seller-stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 125px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.25s ease;
+  }
+  .seller-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary);
+  }
+  .seller-stat-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: transparent;
+    transition: background-color 0.2s;
+  }
+  .seller-stat-card:hover::after {
+    background: var(--primary);
+  }
+  .seller-stat-card.earnings:hover::after {
+    background: var(--success);
+  }
+  .seller-stat-card.rating:hover::after {
+    background: var(--warning);
+  }
+  .seller-stat-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+  }
+  .seller-stat-value {
+    font-size: 2rem;
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .seller-stat-icon {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    font-size: 1.5rem;
+    color: var(--text-hint);
+    opacity: 0.5;
+  }
 
+  /* Verification Block styling */
+  .verification-side-card {
+    flex: 1;
+    min-width: 280px;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+</style>
+
+<div style="padding: 0.5rem 0;">
+  
   <!-- Main Workspace -->
-  <main class="dashboard-main">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-      <h2 style="font-family: var(--font-display);">Seller Analytics Overview</h2>
-      <a href="/seller/items/new" class="btn btn-primary"><i class="fa-solid fa-plus"></i> List New Item</a>
+  <div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+      <h2 style="font-family: var(--font-display); font-size: 1.75rem;">Seller Analytics Overview</h2>
+      <a href="/seller/items/new" class="btn btn-primary" style="padding: 10px 20px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-plus"></i> List New Item
+      </a>
     </div>
 
     <!-- Stat cards -->
-    <div class="stat-grid">
-      <div class="stat-card">
-        <span class="stat-card-title">Total Earnings</span>
-        <span class="stat-card-value">₹<%= earnings %></span>
+    <div class="seller-stat-grid">
+      <div class="seller-stat-card earnings">
+        <span class="seller-stat-title">Total Earnings</span>
+        <span class="seller-stat-value" style="color: var(--success);">₹<%= earnings %></span>
+        <i class="fa-solid fa-wallet seller-stat-icon" style="color: var(--success);"></i>
       </div>
-      <div class="stat-card">
-        <span class="stat-card-title">Active Bookings</span>
-        <span class="stat-card-value"><%= activeBookings %></span>
+      <div class="seller-stat-card">
+        <span class="seller-stat-title">Active Bookings</span>
+        <span class="seller-stat-value"><%= activeBookings %></span>
+        <i class="fa-solid fa-calendar-check seller-stat-icon" style="color: var(--primary);"></i>
       </div>
-      <div class="stat-card">
-        <span class="stat-card-title">Listed Items</span>
-        <span class="stat-card-value"><%= itemsCount %></span>
+      <div class="seller-stat-card">
+        <span class="seller-stat-title">Listed Items</span>
+        <span class="seller-stat-value"><%= itemsCount %></span>
+        <i class="fa-solid fa-boxes-stacked seller-stat-icon" style="color: var(--accent);"></i>
       </div>
-      <div class="stat-card">
-        <span class="stat-card-title">Average Rating</span>
-        <span class="stat-card-value"><i class="fa-solid fa-star" style="color:#fbbf24;"></i> <%= avgRating > 0 ? avgRating.toFixed(1) : 'N/A' %></span>
+      <div class="seller-stat-card rating">
+        <span class="seller-stat-title">Average Rating</span>
+        <span class="seller-stat-value">
+          <i class="fa-solid fa-star" style="color:#fbbf24; font-size: 1.5rem;"></i> 
+          <%= avgRating > 0 ? avgRating.toFixed(1) : 'N/A' %>
+        </span>
+        <i class="fa-solid fa-star seller-stat-icon" style="color: #fbbf24;"></i>
       </div>
     </div>
 
-    <div style="display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 2rem;">
+    <div style="display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 2.5rem;">
       <!-- Chart section (60% width) -->
-      <div style="flex: 2; min-width: 350px; background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm);">
-        <h3 style="font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 1rem;">Earnings Analytics (Last 30 days)</h3>
+      <div style="flex: 2; min-width: 350px; background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.75rem; box-shadow: var(--shadow-sm);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 10px;">
+          <h3 id="chart-title-header" style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; margin: 0;">Earnings Analytics (Last 30 days)</h3>
+          <!-- Time Interval Switcher -->
+          <div style="display: flex; background: #f1f5f9; border-radius: 6px; padding: 3px; gap: 2px; border: 1px solid var(--border);">
+            <button class="interval-btn active" data-interval="daily" style="border: none; background: var(--primary); color: #ffffff; padding: 4px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; cursor: pointer; transition: all 0.2s;">Daily</button>
+            <button class="interval-btn" data-interval="weekly" style="border: none; background: transparent; color: var(--text-secondary); padding: 4px 12px; font-size: 0.75rem; font-weight: 600; border-radius: 4px; cursor: pointer; transition: all 0.2s;">Weekly</button>
+            <button class="interval-btn" data-interval="monthly" style="border: none; background: transparent; color: var(--text-secondary); padding: 4px 12px; font-size: 0.75rem; font-weight: 600; border-radius: 4px; cursor: pointer; transition: all 0.2s;">Monthly</button>
+          </div>
+        </div>
         <div style="height: 250px;">
           <canvas id="earnings-chart"></canvas>
         </div>
       </div>
       
       <!-- Payout quick status (40% width) -->
-      <div style="flex: 1; min-width: 250px; background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 1rem;">
-        <h3 style="font-family: var(--font-display); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">Verification Status</h3>
+      <div class="verification-side-card">
+        <h3 style="font-family: var(--font-display); font-size: 1.15rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; font-weight: 700; margin-bottom: 0.25rem;">Verification Status</h3>
         
         <% if (currentUser.isVerified) { %>
-          <div style="background-color: #dcfce7; border-left: 4px solid var(--success); padding: 12px; border-radius: var(--radius-sm); color: #15803d; font-size: 0.85rem; font-weight: 600;">
+          <div style="background-color: #dcfce7; border-left: 4px solid var(--success); padding: 14px; border-radius: var(--radius-sm); color: #166534; font-size: 0.85rem; font-weight: 700;">
             <i class="fa-solid fa-circle-check"></i> Account Verified
           </div>
         <% } else if (currentUser.sellerProfile && currentUser.sellerProfile.verificationDoc && currentUser.sellerProfile.verificationDoc.url) { %>
-          <div style="background-color: #fef3c7; border-left: 4px solid var(--warning); padding: 12px; border-radius: var(--radius-sm); color: #b45309; font-size: 0.85rem; font-weight: 600;">
+          <div style="background-color: #fef3c7; border-left: 4px solid var(--warning); padding: 14px; border-radius: var(--radius-sm); color: #b45309; font-size: 0.85rem; font-weight: 700;">
             <i class="fa-solid fa-clock"></i> Verification In Progress
           </div>
         <% } else { %>
-          <div style="background-color: #fee2e2; border-left: 4px solid var(--danger); padding: 12px; border-radius: var(--radius-sm); color: #b91c1c; font-size: 0.85rem; font-weight: 600;">
+          <div style="background-color: #fee2e2; border-left: 4px solid var(--danger); padding: 14px; border-radius: var(--radius-sm); color: #b91c1c; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.5rem;">
             <i class="fa-solid fa-triangle-exclamation"></i> Action Required: Verify Business
           </div>
-          <a href="/seller/verify" class="btn btn-accent" style="font-size: 0.85rem; text-align: center;">Upload Business Documents</a>
+          <a href="/seller/verify" class="btn btn-accent" style="font-size: 0.85rem; text-align: center; font-weight: 700;">Upload Business Documents</a>
         <% } %>
 
-        <div style="border-top: 1px solid var(--border); padding-top: 0.75rem; margin-top: auto;">
-          <h4 style="font-size: 0.9rem; margin-bottom: 6px;">Payout Account</h4>
-          <p style="font-size: 0.85rem; color: var(--text-secondary);">
-            UPI ID: <strong><%= (currentUser.sellerProfile.payoutDetails && currentUser.sellerProfile.payoutDetails.upi) ? currentUser.sellerProfile.payoutDetails.upi : 'Not Configured' %></strong>
+        <div style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: auto;">
+          <h4 style="font-size: 0.9rem; margin-bottom: 6px; font-weight: 700;">Payout Account</h4>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">
+            UPI ID: <strong style="font-family: monospace; color: var(--text-primary);"><%= (currentUser.sellerProfile.payoutDetails && currentUser.sellerProfile.payoutDetails.upi) ? currentUser.sellerProfile.payoutDetails.upi : 'Not Configured' %></strong>
           </p>
-          <a href="/seller/profile" style="font-size: 0.8rem; font-weight: 600; margin-top: 6px; display: inline-block;">Update settings &rarr;</a>
+          <a href="/seller/profile" style="font-size: 0.825rem; font-weight: 700; color: var(--primary); display: inline-block;">Update settings &rarr;</a>
         </div>
       </div>
     </div>
@@ -127,32 +218,32 @@
       </table>
     </div>
 
-  </main>
+  </div>
 </div>
+
 
 <!-- Chart.js configuration scripts -->
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const ctx = document.getElementById('earnings-chart').getContext('2d');
     
-    // Generating dummy but realistic chart bars representing dates
-    const labels = [];
-    const data = [];
-    for(let i=14; i>=0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      labels.push(d.toLocaleDateString(undefined, {month: 'short', day: 'numeric'}));
-      // Random mock earnings distribution for chart
-      data.push(i % 3 === 0 ? Math.floor(Math.random() * 2500) + 500 : 0);
-    }
+    // Datasets passed from EJS
+    const dailyLabels = <%- JSON.stringify(chartLabels) %>;
+    const dailyData = <%- JSON.stringify(chartData) %>;
 
-    new Chart(ctx, {
+    const weeklyLabels = <%- JSON.stringify(weeklyLabels) %>;
+    const weeklyData = <%- JSON.stringify(weeklyData) %>;
+
+    const monthlyLabels = <%- JSON.stringify(monthlyLabels) %>;
+    const monthlyData = <%- JSON.stringify(monthlyData) %>;
+
+    const chart = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: labels,
+        labels: dailyLabels,
         datasets: [{
-          label: 'Daily Revenue (INR)',
-          data: data,
+          label: 'Revenue (INR)',
+          data: dailyData,
           backgroundColor: '#2563eb',
           borderColor: '#1d4ed8',
           borderWidth: 1,
@@ -168,6 +259,46 @@
           }
         }
       }
+    });
+
+    // Segment switcher handler
+    const buttons = document.querySelectorAll('.interval-btn');
+    const headerTitle = document.getElementById('chart-title-header');
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Remove active styling from all buttons
+        buttons.forEach(b => {
+          b.classList.remove('active');
+          b.style.background = 'transparent';
+          b.style.color = 'var(--text-secondary)';
+          b.style.fontWeight = '600';
+        });
+
+        // Set active styling for clicked button
+        btn.classList.add('active');
+        btn.style.background = 'var(--primary)';
+        btn.style.color = '#ffffff';
+        btn.style.fontWeight = '700';
+
+        const interval = btn.getAttribute('data-interval');
+
+        if (interval === 'daily') {
+          headerTitle.textContent = 'Earnings Analytics (Last 30 days)';
+          chart.data.labels = dailyLabels;
+          chart.data.datasets[0].data = dailyData;
+        } else if (interval === 'weekly') {
+          headerTitle.textContent = 'Earnings Analytics (Last 12 weeks)';
+          chart.data.labels = weeklyLabels;
+          chart.data.datasets[0].data = weeklyData;
+        } else if (interval === 'monthly') {
+          headerTitle.textContent = 'Earnings Analytics (Last 12 months)';
+          chart.data.labels = monthlyLabels;
+          chart.data.datasets[0].data = monthlyData;
+        }
+
+        chart.update();
+      });
     });
   });
 </script>

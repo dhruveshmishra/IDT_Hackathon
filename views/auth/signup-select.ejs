@@ -1,0 +1,35 @@
+<%- include('../layouts/main') %>
+
+<div class="container" style="max-width: 900px; margin: 4rem auto; padding: 0 1.5rem; text-align: center;">
+  <h2 style="font-family: var(--font-display); font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; font-size: 2.2rem;">Join RentIt</h2>
+  <p style="color: var(--text-secondary); margin-bottom: 3rem; font-size: 1.05rem;">Choose how you want to get started with peer-to-peer renting.</p>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; justify-content: center; align-items: stretch;">
+    <!-- Renter Card -->
+    <div class="form-card" style="margin: 0; padding: 3rem 2rem; display: flex; flex-direction: column; justify-content: space-between; align-items: center; border-radius: 20px; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; border: 1px solid var(--border);" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='none'; this.style.boxShadow='var(--shadow-sm)';" onclick="window.location.href='/auth/signup?role=user'">
+      <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+        <div style="width: 80px; height: 80px; background: rgba(37,99,235,0.08); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+          <i class="fa-solid fa-circle-user" style="font-size: 2.5rem; color: var(--primary);"></i>
+        </div>
+        <h3 style="font-family: var(--font-display); font-weight: 700; color: #0f172a; font-size: 1.4rem; margin-bottom: 0.75rem;">Rent Products</h3>
+        <p style="color: var(--text-secondary); font-size: 0.925rem; line-height: 1.5; margin-bottom: 2rem;">Browse electronics, tools, appliances, or vehicles nearby. Sign up to rent securely from verified users.</p>
+      </div>
+      <a href="/auth/signup?role=user" class="btn btn-primary" style="width: 100%; text-decoration: none; padding: 12px; font-weight: 700; border-radius: 10px; text-align: center; box-sizing: border-box;">Sign Up to Rent</a>
+    </div>
+
+    <!-- Seller Card -->
+    <div class="form-card" style="margin: 0; padding: 3rem 2rem; display: flex; flex-direction: column; justify-content: space-between; align-items: center; border-radius: 20px; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; border: 1px solid var(--border); border-top: 4px solid var(--accent);" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='none'; this.style.boxShadow='var(--shadow-sm)';" onclick="window.location.href='/auth/signup?role=seller'">
+      <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+        <div style="width: 80px; height: 80px; background: rgba(251,146,60,0.08); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+          <i class="fa-solid fa-store" style="font-size: 2.5rem; color: var(--accent);"></i>
+        </div>
+        <h3 style="font-family: var(--font-display); font-weight: 700; color: #0f172a; font-size: 1.4rem; margin-bottom: 0.75rem;">List &amp; Earn</h3>
+        <p style="color: var(--text-secondary); font-size: 0.925rem; line-height: 1.5; margin-bottom: 2rem;">Have spare electronics, cameras, cars, or tools? Register as a seller to list items and start earning passive income.</p>
+      </div>
+      <a href="/auth/signup?role=seller" class="btn" style="width: 100%; background-color: var(--accent); color: #fff; text-decoration: none; padding: 12px; font-weight: 700; border-radius: 10px; text-align: center; box-sizing: border-box;">Sign Up as Seller</a>
+    </div>
+  </div>
+
+</div>
+
+<%- include('../layouts/footer') %>

@@ -89,31 +89,44 @@
             </div>
           </div>
 
-          <div class="form-group">
+          <div class="form-group" style="margin-bottom: 1.5rem; position: relative;">
             <label for="address">
-              <i class="fa-solid fa-location-dot"></i> Your Address
+              <i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> Your Address
               <span style="font-size:0.78rem; font-weight:400; color: var(--text-hint);">(visible to sellers & admins)</span>
             </label>
-            <input type="text" name="address" id="address" class="form-control"
-              value="<%= currentUser.address || '' %>"
-              placeholder="Flat 4B, Andheri West, Mumbai 400053">
+            <div style="display: flex; gap: 8px; position: relative;">
+              <div style="flex: 1; position: relative;">
+                <input type="text" name="address" id="address" class="form-control"
+                  value="<%= currentUser.address || '' %>"
+                  placeholder="Start typing your address... e.g. Andheri West, Mumbai"
+                  autocomplete="off" style="padding-right: 36px;">
+                <i class="fa-solid fa-magnifying-glass" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); color:var(--text-hint); pointer-events:none;"></i>
+                <!-- Autocomplete dropdown -->
+                <div id="address-suggestions" style="
+                  display:none; position:absolute; top:100%; left:0; right:0;
+                  background:#fff; border:1px solid var(--border); border-top:none;
+                  border-radius:0 0 var(--radius-md) var(--radius-md);
+                  box-shadow:var(--shadow-md); z-index:9999; max-height:200px; overflow-y:auto;">
+                </div>
+              </div>
+              <button type="button" id="use-my-loc-btn" class="btn btn-outline" style="flex-shrink:0; padding:10px 14px;" title="Use my current location">
+                <i class="fa-solid fa-location-crosshairs"></i> My Location
+              </button>
+            </div>
             <span class="form-hint">This helps sellers coordinate item pickup/delivery.</span>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div class="form-group">
-              <label for="lng">Longitude</label>
-              <input type="number" name="lng" id="lng" class="form-control" step="any"
-                value="<%= currentUser.location && currentUser.location.coordinates ? currentUser.location.coordinates[0] : '' %>"
-                placeholder="72.8777">
-            </div>
-            <div class="form-group">
-              <label for="lat">Latitude</label>
-              <input type="number" name="lat" id="lat" class="form-control" step="any"
-                value="<%= currentUser.location && currentUser.location.coordinates ? currentUser.location.coordinates[1] : '' %>"
-                placeholder="19.0760">
+          <!-- Map -->
+          <div style="height:250px; margin-bottom:1.5rem; border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; position:relative;">
+            <div id="location-picker-map" style="width:100%; height:100%;"></div>
+            <div style="position:absolute; bottom:8px; right:8px; background:rgba(255,255,255,0.9); border-radius:6px; padding:4px 8px; font-size:0.72rem; color:var(--text-secondary); pointer-events:none; box-shadow:var(--shadow-sm); z-index: 1000;">
+              <i class="fa-solid fa-hand-pointer"></i> Click map or drag pin to set location
             </div>
           </div>
+
+          <!-- Hidden coordinates -->
+          <input type="hidden" name="lng" id="lng" value="<%= currentUser.location && currentUser.location.coordinates ? currentUser.location.coordinates[0] : '' %>">
+          <input type="hidden" name="lat" id="lat" value="<%= currentUser.location && currentUser.location.coordinates ? currentUser.location.coordinates[1] : '' %>">
 
           <button type="submit" class="btn btn-primary" id="saveProfileBtn">
             <i class="fa-solid fa-floppy-disk"></i> Save Changes
@@ -208,6 +221,152 @@
       if (el) el.innerHTML = '<i class="fa-solid fa-check-circle" style="color:var(--success);"></i> ' + input.files[0].name;
     }
   }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const addressInput = document.getElementById('address');
+    const suggestionBox = document.getElementById('address-suggestions');
+    const latInput = document.getElementById('lat');
+    const lngInput = document.getElementById('lng');
+    const useMyLocBtn = document.getElementById('use-my-loc-btn');
+
+    // ── Leaflet map setup ──
+    const savedLat = parseFloat(latInput.value) || 19.0760;
+    const savedLng = parseFloat(lngInput.value) || 72.8777;
+
+    const map = L.map('location-picker-map').setView([savedLat, savedLng], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    const marker = L.marker([savedLat, savedLng], { draggable: true }).addTo(map);
+
+    function setCoords(lat, lng) {
+      latInput.value = lat;
+      lngInput.value = lng;
+    }
+
+    // ── Reverse geocode (pin → address) ──
+    async function reverseGeocode(lat, lng) {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+          { headers: { 'Accept-Language': 'en', 'User-Agent': 'RentItApp/1.0' } }
+        );
+        const data = await res.json();
+        if (data && data.display_name) {
+          addressInput.value = data.display_name;
+        }
+      } catch (e) { /* silent */ }
+    }
+
+    marker.on('dragend', (e) => {
+      const { lat, lng } = marker.getLatLng();
+      setCoords(lat, lng);
+      reverseGeocode(lat, lng);
+    });
+
+    map.on('click', (e) => {
+      marker.setLatLng(e.latlng);
+      setCoords(e.latlng.lat, e.latlng.lng);
+      reverseGeocode(e.latlng.lat, e.latlng.lng);
+    });
+
+    // ── Address autocomplete (forward geocode) ──
+    let searchTimer = null;
+
+    addressInput.addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      const q = addressInput.value.trim();
+      if (q.length < 3) {
+        suggestionBox.style.display = 'none';
+        return;
+      }
+      searchTimer = setTimeout(() => searchAddress(q), 350);
+    });
+
+    async function searchAddress(query) {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=in`,
+          { headers: { 'Accept-Language': 'en', 'User-Agent': 'RentItApp/1.0' } }
+        );
+        const data = await res.json();
+        renderSuggestions(data);
+      } catch (e) {
+        suggestionBox.style.display = 'none';
+      }
+    }
+
+    function renderSuggestions(list) {
+      suggestionBox.innerHTML = '';
+      if (!list || list.length === 0) {
+        suggestionBox.style.display = 'none';
+        return;
+      }
+
+      list.forEach(item => {
+        const div = document.createElement('div');
+        div.style.padding = '10px 12px';
+        div.style.cursor = 'pointer';
+        div.style.borderBottom = '1px solid var(--border)';
+        div.style.fontSize = '0.88rem';
+        div.innerHTML = `<i class="fa-solid fa-location-dot" style="color:var(--primary); margin-right:8px;"></i> ${item.display_name}`;
+        
+        div.addEventListener('mouseover', () => {
+          div.style.background = '#f8fafc';
+        });
+        div.addEventListener('mouseout', () => {
+          div.style.background = 'transparent';
+        });
+
+        div.addEventListener('click', () => {
+          const lat = parseFloat(item.lat);
+          const lon = parseFloat(item.lon);
+          addressInput.value = item.display_name;
+          setCoords(lat, lon);
+          marker.setLatLng([lat, lon]);
+          map.setView([lat, lon], 15);
+          suggestionBox.style.display = 'none';
+        });
+        suggestionBox.appendChild(div);
+      });
+
+      suggestionBox.style.display = 'block';
+    }
+
+    // Hide dropdown on click outside
+    document.addEventListener('click', (e) => {
+      if (!addressInput.contains(e.target) && !suggestionBox.contains(e.target)) {
+        suggestionBox.style.display = 'none';
+      }
+    });
+
+    // ── My Location ──
+    useMyLocBtn.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser.');
+        return;
+      }
+      useMyLocBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+      useMyLocBtn.disabled = true;
+
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setCoords(lat, lng);
+        marker.setLatLng([lat, lng]);
+        map.setView([lat, lng], 15);
+        reverseGeocode(lat, lng);
+        
+        useMyLocBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> My Location';
+        useMyLocBtn.disabled = false;
+      }, (err) => {
+        alert('Could not get your location: ' + err.message);
+        useMyLocBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> My Location';
+        useMyLocBtn.disabled = false;
+      }, { enableHighAccuracy: true });
+    });
+  });
 </script>
 
 <%- include('../layouts/footer') %>

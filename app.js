@@ -17,32 +17,56 @@ const path = require('path');
 require('./config/db');
 require('./config/passport');
 
-// Port details loaded from env variables
-const USER_PORT = process.env.USER_PORT || 3000;
-const ADMIN_PORT = process.env.ADMIN_PORT || 3001;
-const SELLER_PORT = process.env.SELLER_PORT || 3002;
+// Port & deployment mode
+const APP_MODE = process.env.APP_MODE || 'all'; // 'user' | 'seller' | 'admin' | 'all'
+const PORT = process.env.PORT;                   // Railway injects PORT automatically
+const USER_PORT = PORT && APP_MODE === 'user'   ? PORT : (process.env.USER_PORT   || 3000);
+const ADMIN_PORT  = PORT && APP_MODE === 'admin'  ? PORT : (process.env.ADMIN_PORT  || 3001);
+const SELLER_PORT = PORT && APP_MODE === 'seller' ? PORT : (process.env.SELLER_PORT || 3002);
+
+// Public-facing URLs (used in email links & EJS templates)
+const USER_APP_URL   = process.env.USER_APP_URL   || `http://localhost:${USER_PORT}`;
+const SELLER_APP_URL = process.env.SELLER_APP_URL || `http://localhost:${SELLER_PORT}`;
+
+// Export for use in other modules (admin.js email links etc.)
+module.exports = { USER_APP_URL, SELLER_APP_URL };
 
 // Database details
 const localMongoUrl = process.env.LOCAL_MONGO_URL || 'mongodb://127.0.0.1:27017/rentapp';
+const sessionMongoUrl = process.env.MONGO_URL || localMongoUrl;
 
 // ----------------------------------------------------
-// Shared session configuration
+// Isolated Session Configurations (to prevent cookie collisions on different localhost ports)
 // ----------------------------------------------------
-const sessionMiddleware = session({
-  secret: process.env.SESSION_SECRET || 'rentit_default_secret_key',
+const userSession = session({
+  name: 'rentit.user.sid',
+  secret: process.env.SESSION_SECRET || 'rentit_user_secret_key',
   resave: false,
   saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: localMongoUrl
-  }),
-  cookie: { 
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-    httpOnly: true
-  }
+  store: MongoStore.create({ mongoUrl: sessionMongoUrl }),
+  cookie: { maxAge: 7 * 24 * 60 * 60 * 1000, httpOnly: true }
+});
+
+const adminSession = session({
+  name: 'rentit.admin.sid',
+  secret: process.env.SESSION_SECRET || 'rentit_admin_secret_key',
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({ mongoUrl: sessionMongoUrl }),
+  cookie: { maxAge: 7 * 24 * 60 * 60 * 1000, httpOnly: true }
+});
+
+const sellerSession = session({
+  name: 'rentit.seller.sid',
+  secret: process.env.SESSION_SECRET || 'rentit_seller_secret_key',
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({ mongoUrl: sessionMongoUrl }),
+  cookie: { maxAge: 7 * 24 * 60 * 60 * 1000, httpOnly: true }
 });
 
 // Helper function to apply core middleware to Express sub-apps
-function applyBaseMiddleware(appInstance) {
+function applyBaseMiddleware(appInstance, sessionMiddleware) {
   appInstance.set('view engine', 'ejs');
   appInstance.set('views', path.join(__dirname, 'views'));
   
@@ -59,12 +83,15 @@ function applyBaseMiddleware(appInstance) {
   appInstance.use(passport.initialize());
   appInstance.use(passport.session());
 
-  // Global locals
+  // Global locals (available in all EJS templates)
   appInstance.use((req, res, next) => {
     res.locals.currentUser = req.user;
-    res.locals.currentPath = req.path;
+    res.locals.currentPath = req.originalUrl.split('?')[0]; // full path, no query string
     res.locals.success = req.flash('success');
     res.locals.error = req.flash('error');
+    // Expose public URLs so EJS templates never need hardcoded localhost
+    res.locals.USER_APP_URL   = USER_APP_URL;
+    res.locals.SELLER_APP_URL = SELLER_APP_URL;
     next();
   });
 }
@@ -73,7 +100,7 @@ function applyBaseMiddleware(appInstance) {
 // PORT 3000: User Marketplace (Renter App)
 // ----------------------------------------------------
 const userApp = express();
-applyBaseMiddleware(userApp);
+applyBaseMiddleware(userApp, userSession);
 
 userApp.use('/auth', require('./routes/auth'));
 userApp.use('/user', require('./routes/user'));
@@ -83,7 +110,15 @@ userApp.use('/payments', require('./routes/payments'));
 userApp.use('/chat', require('./routes/chat'));
 userApp.use('/ai', require('./routes/ai'));
 
-userApp.get('/', async (req, res) => {
+userApp.get('/', (req, res, next) => {
+  res.set('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0');
+  next();
+}, async (req, res) => {
+  if (req.isAuthenticated()) {
+    return req.logout((err) => {
+      res.redirect('/');
+    });
+  }
   try {
     const Item = require('./models/Item');
     const items = await Item.find({ status: 'active', isAvailable: true }).limit(4);
@@ -97,8 +132,7 @@ userApp.get('/', async (req, res) => {
 // PORT 3001: Admin Portal App
 // ----------------------------------------------------
 const adminApp = express();
-applyBaseMiddleware(adminApp);
-
+applyBaseMiddleware(adminApp, adminSession);
 // Port-specific login auth guard
 adminApp.use((req, res, next) => {
   const publicPaths = ['/auth/login', '/auth/signup', '/auth/logout', '/auth/role-select'];
@@ -111,7 +145,7 @@ adminApp.use((req, res, next) => {
   }
   if (req.user.role !== 'admin') {
     req.flash('error', 'Access denied: Admin credentials required.');
-    return res.redirect(`http://localhost:${USER_PORT}/auth/login`);
+    return res.redirect(`${USER_APP_URL}/auth/login`);
   }
   next();
 });
@@ -128,7 +162,7 @@ adminApp.get('/', (req, res) => {
 // PORT 3002: Seller Dashboard App
 // ----------------------------------------------------
 const sellerApp = express();
-applyBaseMiddleware(sellerApp);
+applyBaseMiddleware(sellerApp, sellerSession);
 
 // Port-specific login auth guard
 sellerApp.use((req, res, next) => {
@@ -142,7 +176,7 @@ sellerApp.use((req, res, next) => {
   }
   if (req.user.role !== 'seller') {
     req.flash('error', 'Access denied: Seller profile required.');
-    return res.redirect(`http://localhost:${USER_PORT}/auth/login`);
+    return res.redirect(`${USER_APP_URL}/auth/login`);
   }
   next();
 });
@@ -164,20 +198,30 @@ const userServer = http.createServer(userApp);
 const adminServer = http.createServer(adminApp);
 const sellerServer = http.createServer(sellerApp);
 
-// Mount Socket.io onto the User Server (Port 3000 / USER_PORT)
-const io = new Server(userServer);
+// Mount Socket.io onto ALL three servers so sellers/admins can also use real-time chat
+const io = new Server({ cors: { origin: '*' } });
+io.attach(userServer);
+io.attach(adminServer);
+io.attach(sellerServer);
+
 userApp.set('io', io);
+sellerApp.set('io', io);
+adminApp.set('io', io);
+
 require('./config/socketHandlers')(io);
 
-// Start listeners dynamically from env variables
-userServer.listen(USER_PORT, () => {
-  console.log(`User Marketplace App running on port ${USER_PORT}`);
-});
-
-adminServer.listen(ADMIN_PORT, () => {
-  console.log(`Admin Dashboard App running on port ${ADMIN_PORT}`);
-});
-
-sellerServer.listen(SELLER_PORT, () => {
-  console.log(`Seller Dashboard App running on port ${SELLER_PORT}`);
-});
+// -----------------------------------------------
+// Start the correct server(s) based on APP_MODE
+// -----------------------------------------------
+if (APP_MODE === 'user') {
+  userServer.listen(USER_PORT, () => console.log(`[USER]   Marketplace running on port ${USER_PORT}  → ${USER_APP_URL}`));
+} else if (APP_MODE === 'seller') {
+  sellerServer.listen(SELLER_PORT, () => console.log(`[SELLER] Dashboard running on port ${SELLER_PORT} → ${SELLER_APP_URL}`));
+} else if (APP_MODE === 'admin') {
+  adminServer.listen(ADMIN_PORT, () => console.log(`[ADMIN]  Portal running on port ${ADMIN_PORT}`));
+} else {
+  // APP_MODE=all  — local development (default)
+  userServer.listen(USER_PORT,     () => console.log(`[USER]   Marketplace running on port ${USER_PORT}`));
+  adminServer.listen(ADMIN_PORT,   () => console.log(`[ADMIN]  Portal running on port ${ADMIN_PORT}`));
+  sellerServer.listen(SELLER_PORT, () => console.log(`[SELLER] Dashboard running on port ${SELLER_PORT}`));
+}

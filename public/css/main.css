@@ -20,7 +20,7 @@
   --font:          'Inter', sans-serif;
   --font-display:  'Sora', sans-serif;
   --sidebar-width: 240px;
-  --sidebar-collapsed: 64px;
+  --sidebar-collapsed: 0px;
 }
 
 * {
@@ -106,13 +106,13 @@ a:hover {
   display: flex;
   flex-direction: column;
   z-index: 900;
-  transition: width 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s ease;
+  transition: left 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s ease;
   box-shadow: 4px 0 24px rgba(0,0,0,0.15);
-  overflow: hidden;
+  overflow: visible; /* Allow toggle button to overflow */
 }
 
 .sidebar-nav.collapsed {
-  width: var(--sidebar-collapsed);
+  left: calc(-1 * var(--sidebar-width));
 }
 
 /* Toggle button */
@@ -132,11 +132,23 @@ a:hover {
   z-index: 1100;
   color: #fff;
   font-size: 0.75rem;
-  transition: transform 0.3s ease, background 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
   box-shadow: var(--shadow-md);
 }
 .sidebar-toggle:hover { background: var(--primary-dark); }
-.sidebar-nav.collapsed .sidebar-toggle { transform: rotate(180deg); }
+
+.sidebar-nav.collapsed .sidebar-toggle {
+  position: fixed;
+  left: 0;
+  right: auto;
+  top: 50%;
+  transform: translateY(-50%) rotate(180deg);
+  width: 22px;
+  height: 52px;
+  border-radius: 0 8px 8px 0;
+  border: none;
+  box-shadow: 2px 2px 12px rgba(37,99,235,0.35);
+}
 
 /* Brand */
 .sidebar-brand {
@@ -413,6 +425,172 @@ a:hover {
   font-size: 1.1rem;
 }
 .mobile-brand span { color: var(--accent); }
+
+/* =============================================
+   MINI SIDEBAR TOGGLE (logged-in, non-dashboard pages)
+   ============================================= */
+
+/* The small pill/tab anchored to the left edge */
+.mini-sidebar-toggle {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1200;
+  width: 22px;
+  height: 52px;
+  background: var(--primary);
+  border: none;
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  font-size: 0.65rem;
+  box-shadow: 2px 2px 12px rgba(37,99,235,0.35);
+  transition: width 0.2s ease, background 0.2s ease, left 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.mini-sidebar-toggle:hover {
+  width: 26px;
+  background: var(--primary-dark);
+}
+.mini-sidebar-toggle.open {
+  left: 240px;
+}
+
+/* The slide-in drawer panel */
+.mini-sidebar-drawer {
+  position: fixed;
+  top: 0;
+  left: -240px;
+  width: 240px;
+  height: 100vh;
+  background: linear-gradient(180deg, #0F172A 0%, #1E293B 100%);
+  z-index: 1150;
+  display: flex;
+  flex-direction: column;
+  transition: left 0.3s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: 4px 0 24px rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+.mini-sidebar-drawer.open {
+  left: 0;
+}
+
+/* User strip at top of drawer */
+.mini-drawer-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 1.5rem 1.2rem 1.1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.mini-drawer-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #334155;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94A3B8;
+  font-size: 1rem;
+  border: 2px solid rgba(255,255,255,0.12);
+  overflow: hidden;
+}
+.mini-drawer-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.mini-drawer-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #F1F5F9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mini-drawer-role {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+/* Nav links inside drawer */
+.mini-drawer-menu {
+  list-style: none;
+  padding: 1rem 0.75rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.mini-drawer-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  color: #94A3B8;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.mini-drawer-link i {
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+  font-size: 0.9rem;
+}
+.mini-drawer-link:hover {
+  background: rgba(255,255,255,0.07);
+  color: #E2E8F0;
+}
+
+/* Footer logout */
+.mini-drawer-footer {
+  padding: 0.75rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.mini-drawer-logout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(220,38,38,0.15);
+  color: #FCA5A5;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.mini-drawer-logout:hover {
+  background: rgba(220,38,38,0.3);
+  color: #fff;
+}
+
+/* Dim overlay when drawer is open (disabled to prevent hover/dimming) */
+.mini-sidebar-overlay {
+  display: none !important;
+}
+
+body {
+  transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+body.mini-sidebar-open {
+  padding-left: 240px;
+}
+@media (max-width: 768px) {
+  body.mini-sidebar-open {
+    padding-left: 0;
+  }
+}
 
 /* =============================================
    BUTTONS

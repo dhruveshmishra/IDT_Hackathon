@@ -1,0 +1,31 @@
+<%- include('../layouts/main') %>
+
+<div class="container" style="max-width: 480px; margin: 5rem auto; padding: 0 1rem;">
+  <div style="background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 3rem 2.5rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.3); backdrop-filter: blur(12px); color: #fff;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; background: rgba(255, 90, 0, 0.1); border: 1px solid rgba(255, 90, 0, 0.3); border-radius: 12px; margin-bottom: 1rem;">
+        <i class="fa-solid fa-user-shield" style="font-size: 2rem; color: #ff5a00;"></i>
+      </div>
+      <h2 style="font-family: var(--font-display); font-weight: 800; font-size: 1.8rem; margin: 0 0 0.5rem; letter-spacing: -0.025em; color: #fff;">Admin Portal</h2>
+      <p style="color: #94a3b8; font-size: 0.9rem; margin: 0;">Sign in to access your administrative dashboard.</p>
+    </div>
+
+    <form action="/auth/login" method="POST">
+      <div class="form-group" style="text-align: left; margin-bottom: 1.25rem;">
+        <label for="email" style="font-weight: 600; margin-bottom: 8px; display: block; font-size: 0.85rem; color: #cbd5e1;">Admin Email Address</label>
+        <input type="email" name="email" id="email" class="form-control" placeholder="admin@rentit.com" required style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; height: 46px; padding: 0 14px; width: 100%; outline: none; box-sizing: border-box; color: #fff; transition: all 0.2s;" onfocus="this.style.borderColor='#ff5a00'; this.style.boxShadow='0 0 0 2px rgba(255,90,0,0.2)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.boxShadow='none'">
+      </div>
+      
+      <div class="form-group" style="text-align: left; margin-bottom: 2rem;">
+        <label for="password" style="font-weight: 600; margin-bottom: 8px; display: block; font-size: 0.85rem; color: #cbd5e1;">Password</label>
+        <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" required style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; height: 46px; padding: 0 14px; width: 100%; outline: none; box-sizing: border-box; color: #fff; transition: all 0.2s;" onfocus="this.style.borderColor='#ff5a00'; this.style.boxShadow='0 0 0 2px rgba(255,90,0,0.2)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.boxShadow='none'">
+      </div>
+
+      <button type="submit" style="background-color: #ff5a00; color: #fff; font-weight: 700; border: none; border-radius: 8px; height: 46px; width: 100%; cursor: pointer; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#e04f00'; this.style.transform='translateY(-1px)'" onmouseout="this.style.backgroundColor='#ff5a00'; this.style.transform='translateY(0)'">
+        <i class="fa-solid fa-lock-open"></i> Sign In to Dashboard
+      </button>
+    </form>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

@@ -51,10 +51,10 @@
         <textarea name="description" id="description" rows="5" class="form-control" placeholder="Describe the item condition, inclusions, and rental instructions..." required></textarea>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
         <div class="form-group">
           <label for="category">Category</label>
-          <select name="category" id="category" class="form-control" required>
+          <select name="category" id="category" class="form-control" required onchange="onCategoryChange(this.value)">
             <option value="">Select Category</option>
             <option value="electronics">Electronics</option>
             <option value="tools">Tools</option>
@@ -65,18 +65,36 @@
             <option value="other">Other</option>
           </select>
         </div>
+        <div class="form-group" id="subcategory-group" style="display: none;">
+          <label for="subcategory">Subcategory / Type</label>
+          <select name="subcategory" id="subcategory" class="form-control">
+            <!-- Populated via JS -->
+          </select>
+        </div>
         <div class="form-group">
           <label for="tags">Search Tags</label>
           <input type="text" name="tags" id="tags" class="form-control" placeholder="camera, dslr, nikon (comma separated)">
         </div>
       </div>
 
+      <!-- Vehicle Number — shown only when category = vehicles -->
+      <div id="vehicle-number-group" style="display:none; margin-bottom: 1.5rem; padding: 1rem 1.25rem; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: var(--radius-md);">
+        <label for="vehicleNumber" style="font-weight: 700; color: #0369a1;">
+          <i class="fa-solid fa-id-card" style="margin-right:6px;"></i>
+          Vehicle Registration Number <span style="color: #dc2626;">*</span>
+        </label>
+        <input type="text" name="vehicleNumber" id="vehicleNumber" class="form-control"
+          placeholder="e.g. MH12AB1234"
+          maxlength="15"
+          style="font-family: monospace; font-size: 1.1rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-top: 0.5rem;"
+          oninput="this.value = this.value.toUpperCase()">
+        <p style="font-size: 0.78rem; color: #0369a1; margin-top: 6px; margin-bottom: 0;">
+          <i class="fa-solid fa-circle-info"></i> Required for all vehicle listings. Renters will see this for identification.
+        </p>
+      </div>
+
       <!-- Pricing fields -->
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; align-items: flex-end;">
-        <div class="form-group">
-          <label for="pricePerHour">Price Per Hour (₹)</label>
-          <input type="number" name="pricePerHour" id="pricePerHour" class="form-control" placeholder="30" min="0" required>
-        </div>
         <div class="form-group">
           <label for="pricePerDay">Price Per Day (₹)</label>
           <input type="number" name="pricePerDay" id="pricePerDay" class="form-control" placeholder="250" min="0" required>
@@ -84,6 +102,10 @@
         <div class="form-group">
           <label for="deposit">Refundable Deposit (₹)</label>
           <input type="number" name="deposit" id="deposit" class="form-control" placeholder="1000" min="0">
+        </div>
+        <div class="form-group">
+          <label for="quantity">Quantity Available</label>
+          <input type="number" name="quantity" id="quantity" class="form-control" value="1" min="0" required>
         </div>
       </div>
 
@@ -97,21 +119,49 @@
         </div>
       </div>
 
-      <!-- Location coordinates pickers -->
+      <!-- Location section with address autocomplete -->
       <div class="form-group" style="margin-bottom: 2rem;">
-        <label>Item Location Details</label>
-        <div style="display: flex; gap: 8px; margin-bottom: 0.75rem;">
-          <input type="text" name="address" id="address" class="form-control" placeholder="Enter full pick up address..." style="flex:1;" required>
-          <button type="button" id="use-my-loc-btn" class="btn btn-outline" style="padding: 10px 14px;"><i class="fa-solid fa-location-dot"></i> My Location</button>
-        </div>
-        
-        <div style="height: 250px; margin-bottom: 1rem; border:1px solid var(--border); border-radius: var(--radius-md); overflow:hidden;">
-          <div id="location-picker-map" style="width:100%; height:100%;"></div>
+        <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+          <i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> Item Pickup Location
+        </label>
+
+        <!-- Address search row -->
+        <div style="display: flex; gap: 8px; margin-bottom: 0.75rem; position: relative;">
+          <div style="flex: 1; position: relative;">
+            <input type="text" name="address" id="address" class="form-control"
+              placeholder="Start typing an address… e.g. Andheri West, Mumbai"
+              value=""
+              autocomplete="off" required style="padding-right: 36px;">
+            <i class="fa-solid fa-magnifying-glass" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); color:var(--text-hint); pointer-events:none;"></i>
+            <!-- Autocomplete dropdown -->
+            <div id="address-suggestions" style="
+              display:none; position:absolute; top:100%; left:0; right:0;
+              background:#fff; border:1px solid var(--border); border-top:none;
+              border-radius:0 0 var(--radius-md) var(--radius-md);
+              box-shadow:var(--shadow-md); z-index:9999; max-height:240px; overflow-y:auto;">
+            </div>
+          </div>
+          <button type="button" id="use-my-loc-btn" class="btn btn-outline" style="flex-shrink:0; padding:10px 14px;" title="Use my current location">
+            <i class="fa-solid fa-location-crosshairs"></i> My Location
+          </button>
         </div>
 
-        <div style="display: flex; gap: 8px;">
-          <input type="number" step="any" name="lng" id="lng" class="form-control" placeholder="Longitude" required>
-          <input type="number" step="any" name="lat" id="lat" class="form-control" placeholder="Latitude" required>
+        <!-- Map -->
+        <div style="height:280px; margin-bottom:0.5rem; border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; position:relative;">
+          <div id="location-picker-map" style="width:100%; height:100%;"></div>
+          <div style="position:absolute; bottom:8px; right:8px; background:rgba(255,255,255,0.9); border-radius:6px; padding:4px 8px; font-size:0.72rem; color:var(--text-secondary); pointer-events:none; box-shadow:var(--shadow-sm);">
+            <i class="fa-solid fa-hand-pointer"></i> Click map or drag pin to set location
+          </div>
+        </div>
+
+        <!-- Hidden coords -->
+        <input type="hidden" name="lng" id="lng" value="">
+        <input type="hidden" name="lat" id="lat" value="">
+
+        <!-- Location status indicator -->
+        <div id="location-status" style="display:flex; align-items:center; gap:8px; margin-top:0.5rem; padding:8px 12px; border-radius:6px; background:#fff7ed; border:1px solid #fdba74; font-size:0.8rem; color:#c2410c; font-weight:600;">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span id="location-status-text">📍 Pickup location not set — please click on the map or search an address</span>
         </div>
       </div>
 
@@ -126,37 +176,212 @@
 <script>
   let aiDescriptionData = null;
 
+  const subcategoriesMap = {
+    electronics: [
+      { value: 'mobile', label: 'Mobile / Smartphone' },
+      { value: 'laptop', label: 'Laptop & Computers' },
+      { value: 'camera', label: 'DSLR Cameras' },
+      { value: 'tv', label: 'LED TVs' },
+      { value: 'audio', label: 'Audio Systems' },
+      { value: 'appliances', label: 'Home Appliances (AC, Geyser, Refrigerator)' },
+      { value: 'other', label: 'Other Electronic' }
+    ],
+    vehicles: [
+      { value: 'self_drive_car', label: 'Self Drive Car' },
+      { value: 'bikes_scooters', label: 'Bikes & Scooters' },
+      { value: 'outstation_cabs', label: 'Outstation Cabs' },
+      { value: 'luxury_cars', label: 'Luxury Cars' },
+      { value: 'segways', label: 'Segways' },
+      { value: 'golf_cart', label: 'Golf Cart' },
+      { value: 'other', label: 'Other Vehicle' }
+    ],
+    tools: [
+      { value: 'drills', label: 'Power Drills' },
+      { value: 'saws', label: 'Saws & Cutters' },
+      { value: 'hand_tools', label: 'Hand Tools' },
+      { value: 'generators', label: 'Generators' },
+      { value: 'ladders', label: 'Ladders' },
+      { value: 'other', label: 'Other Tool' }
+    ],
+    furniture: [
+      { value: 'sofa', label: 'Sofa & Couches' },
+      { value: 'bed', label: 'Beds & Mattresses' },
+      { value: 'table_chair', label: 'Tables & Chairs' },
+      { value: 'office', label: 'Office Furniture' },
+      { value: 'other', label: 'Other Furniture' }
+    ],
+    sports: [
+      { value: 'cycle', label: 'Bicycles' },
+      { value: 'gym', label: 'Gym Equipment' },
+      { value: 'adventure', label: 'Adventure Gear' },
+      { value: 'other', label: 'Other Sports Equipment' }
+    ],
+    clothing: [
+      { value: 'suits', label: 'Suits & Tuxedos' },
+      { value: 'ethnic', label: 'Ethnic Wear' },
+      { value: 'dresses', label: 'Dresses & Gowns' },
+      { value: 'other', label: 'Other Clothing' }
+    ]
+  };
+
+  // Show/hide vehicle number field based on selected category
+  function onCategoryChange(val) {
+    const group = document.getElementById('vehicle-number-group');
+    const input = document.getElementById('vehicleNumber');
+    if (val === 'vehicles') {
+      group.style.display = 'block';
+      input.setAttribute('required', 'required');
+    } else {
+      group.style.display = 'none';
+      input.removeAttribute('required');
+      input.value = '';
+    }
+
+    // Handle subcategory
+    const subGroup = document.getElementById('subcategory-group');
+    const subSelect = document.getElementById('subcategory');
+    subSelect.innerHTML = '';
+    if (subcategoriesMap[val]) {
+      subGroup.style.display = 'block';
+      subSelect.setAttribute('required', 'required');
+      subcategoriesMap[val].forEach(sub => {
+        const opt = document.createElement('option');
+        opt.value = sub.value;
+        opt.textContent = sub.label;
+        subSelect.appendChild(opt);
+      });
+    } else {
+      subGroup.style.display = 'none';
+      subSelect.removeAttribute('required');
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
+    // Form validation: vehicle number + location required
+    document.getElementById('new-item-form').addEventListener('submit', (e) => {
+      const category = document.getElementById('category').value;
+      const vehicleNumber = document.getElementById('vehicleNumber').value.trim();
+      if (category === 'vehicles' && !vehicleNumber) {
+        e.preventDefault();
+        alert('Please enter the Vehicle Registration Number before publishing.');
+        document.getElementById('vehicleNumber').focus();
+        return false;
+      }
+      // Block submit if location not explicitly selected
+      const lngVal = document.getElementById('lng').value;
+      const latVal = document.getElementById('lat').value;
+      if (!lngVal || !latVal) {
+        e.preventDefault();
+        alert('⚠️ Please select a specific pickup location for this item by clicking the map or searching an address.');
+        document.getElementById('address').scrollIntoView({ behavior: 'smooth' });
+        return false;
+      }
+    });
+
     const fileInput = document.getElementById('file-input');
     const thumbnailsContainer = document.getElementById('thumbnails-container');
     const aiGenerateBtn = document.getElementById('ai-generate-btn');
     const dropZone = document.getElementById('drop-zone');
+    const addressInput = document.getElementById('address');
+    const suggestionBox = document.getElementById('address-suggestions');
 
-    // Local coordinates picker leaflet map
-    let defaultLng = 72.8777;
-    let defaultLat = 19.0760;
-    
-    const map = L.map('location-picker-map').setView([defaultLat, defaultLng], 12);
+    // ── Leaflet map setup ──
+    const defaultLat = parseFloat('<%= (currentUser.location && currentUser.location.coordinates) ? currentUser.location.coordinates[1] : 19.0760 %>') || 19.0760;
+    const defaultLng = parseFloat('<%= (currentUser.location && currentUser.location.coordinates) ? currentUser.location.coordinates[0] : 72.8777 %>') || 72.8777;
+    const map = L.map('location-picker-map').setView([defaultLat, defaultLng], 14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
+      attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
     }).addTo(map);
 
     const marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
-    
-    function updateInputs(latVal, lngVal) {
-      document.getElementById('lat').value = latVal;
-      document.getElementById('lng').value = lngVal;
-    }
-    updateInputs(defaultLat, defaultLng);
 
-    marker.on('dragend', function(e) {
-      const position = marker.getLatLng();
-      updateInputs(position.lat, position.lng);
+    let locationExplicitlySet = false;
+
+    function setCoords(lat, lng) {
+      document.getElementById('lat').value = lat;
+      document.getElementById('lng').value = lng;
+      locationExplicitlySet = true;
+      // Update status indicator to green
+      const statusBox = document.getElementById('location-status');
+      const statusText = document.getElementById('location-status-text');
+      if (statusBox && statusText) {
+        statusBox.style.background = '#f0fdf4';
+        statusBox.style.borderColor = '#86efac';
+        statusBox.style.color = '#15803d';
+        statusText.innerHTML = '<i class="fa-solid fa-circle-check"></i> Pickup location set ✓';
+      }
+    }
+    // Do NOT auto-call setCoords on init — seller must explicitly pick
+
+    // ── Reverse geocode (pin → address) ──
+    async function reverseGeocode(lat, lng) {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+          { headers: { 'Accept-Language': 'en', 'User-Agent': 'RentItApp/1.0' } }
+        );
+        const data = await res.json();
+        if (data && data.display_name) addressInput.value = data.display_name;
+      } catch (e) { /* silent */ }
+    }
+
+    marker.on('dragend', (e) => {
+      const { lat, lng } = marker.getLatLng();
+      setCoords(lat, lng);
+      reverseGeocode(lat, lng);
     });
 
-    map.on('click', function(e) {
+    map.on('click', (e) => {
       marker.setLatLng(e.latlng);
-      updateInputs(e.latlng.lat, e.latlng.lng);
+      setCoords(e.latlng.lat, e.latlng.lng);
+      reverseGeocode(e.latlng.lat, e.latlng.lng);
+    });
+
+    // ── Address autocomplete (forward geocode) ──
+    let searchTimer = null;
+
+    addressInput.addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      const q = addressInput.value.trim();
+      if (q.length < 3) { suggestionBox.style.display = 'none'; return; }
+      searchTimer = setTimeout(() => searchAddress(q), 350);
+    });
+
+    async function searchAddress(q) {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6&addressdetails=1&countrycodes=in`,
+          { headers: { 'Accept-Language': 'en', 'User-Agent': 'RentItApp/1.0' } }
+        );
+        const results = await res.json();
+        suggestionBox.innerHTML = '';
+        if (!results.length) { suggestionBox.style.display = 'none'; return; }
+
+        results.forEach(r => {
+          const row = document.createElement('div');
+          row.style.cssText = 'padding:10px 14px; cursor:pointer; font-size:0.85rem; border-bottom:1px solid #f1f5f9; display:flex; align-items:flex-start; gap:8px; line-height:1.4; transition:background 0.1s;';
+          row.innerHTML = `<i class="fa-solid fa-location-dot" style="color:var(--primary);margin-top:3px;flex-shrink:0;"></i><span>${r.display_name}</span>`;
+          row.addEventListener('mouseenter', () => row.style.background = '#f8fafc');
+          row.addEventListener('mouseleave', () => row.style.background = '#fff');
+          row.addEventListener('click', () => {
+            const lat = parseFloat(r.lat), lng = parseFloat(r.lon);
+            addressInput.value = r.display_name;
+            setCoords(lat, lng);
+            map.flyTo([lat, lng], 15, { animate: true, duration: 0.8 });
+            marker.setLatLng([lat, lng]);
+            suggestionBox.style.display = 'none';
+          });
+          suggestionBox.appendChild(row);
+        });
+        suggestionBox.style.display = 'block';
+      } catch (e) { suggestionBox.style.display = 'none'; }
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!addressInput.contains(e.target) && !suggestionBox.contains(e.target)) {
+        suggestionBox.style.display = 'none';
+      }
     });
 
     // Capture location coords
@@ -168,7 +393,8 @@
           const lngVal = pos.coords.longitude;
           map.setView([latVal, lngVal], 15);
           marker.setLatLng([latVal, lngVal]);
-          updateInputs(latVal, lngVal);
+          setCoords(latVal, lngVal);
+          reverseGeocode(latVal, lngVal);
         });
       }
     });

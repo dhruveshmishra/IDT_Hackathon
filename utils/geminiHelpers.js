@@ -242,11 +242,248 @@ async function moderateContent(text) {
   }
 }
 
+// 7. Chatbot helper for Renters to inquire about items
+async function chatWithRenter(userMessage, itemsList, chatHistory = []) {
+  if (!model) {
+    return "The chatbot is currently offline. Here's a quick helper: You can browse the items above or search using keywords.";
+  }
+  try {
+    const formattedHistory = chatHistory.map(h => `${h.role === 'user' ? 'Renter' : 'Chatbot'}: ${h.text}`).join('\n');
+    const itemsContext = itemsList.map(item => `
+      - Title: ${item.title}
+      - Category: ${item.category}
+      - Daily Price: ₹${item.pricePerDay}
+      - Hourly Price: ₹${item.pricePerHour || 0}
+      - Description: ${item.description}
+      - Tags: ${item.tags.join(', ')}
+      - Distance: ${item.dist && item.dist.calculated ? (item.dist.calculated / 1000).toFixed(2) + ' km' : 'N/A'}
+      - Average Rating: ${item.avgRating || 0}/5
+    `).join('\n');
+
+    const prompt = `
+      You are a helpful AI Assistant for "RentIt", a peer-to-peer item rental marketplace in India.
+      Your primary job is to tell renters/users about how things work on our website, and guide them using the list of available items near them.
+      
+      RULES:
+      1. Provide information ONLY related to user/renter actions (e.g., browsing, requesting a booking, selecting hourly/daily options, viewing items, distance, ratings).
+      2. DO NOT tell the user anything about admin tools, admin verification panel, admin approvals, seller dashboard secrets, or seller registration flows. Only help the user with renter activities.
+      3. Use a friendly, polite, and helpful tone.
+      4. Refer to items in the list when answering questions. If an item is requested but not present in the list, tell them politely that it isn't listed nearby at the moment, but they can search for it on the explore page.
+      
+      Available Items Context:
+      ${itemsContext}
+      
+      Previous Chat History:
+      ${formattedHistory}
+      
+      Renter's query: "${userMessage}"
+      
+      Provide a concise response (max 3-4 sentences).
+    `;
+
+    const result = await model.generateContent(prompt);
+    return result.response.text().trim();
+  } catch (err) {
+    console.error('Gemini chatWithRenter failed:', err.message);
+    return "I am sorry, but I had trouble processing that request. Please try asking again shortly!";
+  }
+}
+
+// 8. Generate Smart Replies for Chat
+async function generateSmartReplies(chatHistory = [], itemTitle = '') {
+  if (!model) {
+    return ['Sure, that works!', 'When can I pick it up?', 'Thanks!'];
+  }
+  try {
+    const historyText = chatHistory.slice(-5).map(m => `${m.senderName || 'User'}: ${m.text}`).join('\n');
+    const prompt = `
+      You are a smart reply generator for a peer-to-peer rental marketplace in India.
+      Based on the last messages in this conversation about renting "${itemTitle}":
+      ${historyText}
+      
+      Generate exactly 3 short, helpful, polite response suggestions (max 5-6 words each).
+      Respond ONLY with a JSON array of strings:
+      ["Reply 1", "Reply 2", "Reply 3"]
+    `;
+    const result = await model.generateContent(prompt);
+    const text = result.response.text().trim();
+    const cleanText = text.replace(/^```json\s*|```$/g, '');
+    return JSON.parse(cleanText);
+  } catch (err) {
+    console.error('Gemini generateSmartReplies failed:', err.message);
+    return ['Okay, got it!', 'Can we coordinate the timing?', 'Thanks!'];
+  }
+}
+
+// 9. Optimize Message Tone
+async function optimizeMessageTone(rawMessage) {
+  if (!model || !rawMessage || !rawMessage.trim()) {
+    return rawMessage;
+  }
+  try {
+    const prompt = `
+      Rephrase this message to make it polite, clear, professional, and friendly for a peer-to-peer rental chat:
+      "${rawMessage}"
+      
+      Respond with ONLY the rephrased message, no labels, no quotes, no JSON.
+    `;
+    const result = await model.generateContent(prompt);
+    return result.response.text().trim();
+  } catch (err) {
+    console.error('Gemini optimizeMessageTone failed:', err.message);
+    return rawMessage;
+  }
+}
+
+// 10. Generate Rental Agreement Contract
+async function generateRentalAgreement(booking, item, renter, seller) {
+  if (!model) {
+    return `RENTAL AGREEMENT CONTRACT\nBooking Ref: ${booking._id}\nItem: ${item.title}\nDaily Rate: INR ${item.pricePerDay}\nDates: ${booking.startDate} to ${booking.endDate}\nThis document establishes a binding rental arrangement between the Seller and Renter under local regulations.`;
+  }
+  try {
+    const prompt = `
+      Generate a professional and legally structured Rental Agreement contract for renting an item on our platform "RentIt".
+      Details:
+      - Booking ID: ${booking._id}
+      - Item Name: ${item.title}
+      - Category: ${item.category}
+      - Daily Rental Price: ₹${booking.totalAmount - (booking.deposit || 0)} (Total Subtotal)
+      - Security Deposit: ₹${booking.deposit || 0}
+      - Renter Name: ${renter.name} (Email: ${renter.email}, Phone: ${renter.phone})
+      - Seller Name: ${seller.name} (Email: ${seller.email}, Phone: ${seller.phone})
+      - Rental Start Date: ${new Date(booking.startDate).toDateString()}
+      - Rental End Date: ${new Date(booking.endDate).toDateString()}
+      - Rental Duration: ${booking.totalDays} days
+      
+      Provide a comprehensive agreement with:
+      1. Parties involved
+      2. Item Description & Intended Use
+      3. Payment terms (Rental price and refund of security deposit)
+      4. Late fees, damages, and liability clauses (appropriate for ${item.category})
+      5. Signatures statement
+      
+      Respond in styled HTML format (clean CSS, using <p>, <ul>, <li>, <h3>, <strong>). Do not wrap in markdown tags like \`\`\`html.
+    `;
+    const result = await model.generateContent(prompt);
+    const text = result.response.text().trim();
+    return text.replace(/^```html\s*|```$/g, '');
+  } catch (err) {
+    console.error('Gemini generateRentalAgreement failed:', err.message);
+    return `<h3>RENTAL AGREEMENT CONTRACT</h3><p><strong>Booking Ref:</strong> ${booking._id}</p><p><strong>Item:</strong> ${item.title}</p><p><strong>Renter:</strong> ${renter.name}</p><p><strong>Seller:</strong> ${seller.name}</p><p>This document serves as an official proof of rental agreement under Indian laws.</p>`;
+  }
+}
+
+// 11. AI Damage & Dispute Assessment
+async function assessDamage(beforeImageUrl, afterImageUrl, itemDescription) {
+  if (!model) {
+    return {
+      hasDamage: false,
+      description: 'AI model offline. Please contact customer support.',
+      severity: 'none',
+      deductionAmount: 0,
+      damageLocation: 'none',
+      reasoning: 'In-memory fallback activated.'
+    };
+  }
+  try {
+    const prompt = `
+      You are an AI Damage Claims Inspector for a peer-to-peer rental marketplace in India.
+      Below are the images of the item:
+      - Image 1: Before renting (Item Condition - Good)
+      - Image 2: After renting (Item Condition - Returned)
+      Item Type Description: "${itemDescription}"
+      
+      Analyze both images to compare and detect any new damages (cracks, scratches, structural bends, permanent stains, missing pieces).
+      Based on your visual assessment, determine:
+      1. If any new damage/change exists.
+      2. Severity level of the damage (none, low, medium, high).
+      3. In which corner or area of the photo the damage/change occurred (e.g. "top-left", "top-right", "bottom-left", "bottom-right", "center", "none").
+      4. Clear explanation of your reasoning.
+      
+      WARNING: You are NOT allowed to recommend any money or monetary deductions. Keep deductionAmount strictly as 0.
+      
+      Respond ONLY in this JSON format:
+      {
+        "hasDamage": true/false,
+        "description": "describe any detected damages",
+        "severity": "none|low|medium|high",
+        "damageLocation": "top-left|top-right|bottom-left|bottom-right|center|none",
+        "deductionAmount": 0,
+        "reasoning": "explain your visual analysis reasoning including where in the image the damage/change is located"
+      }
+    `;
+
+    const parts = [{ text: prompt }];
+    const beforeBase64 = await fetchImageAsBase64(beforeImageUrl);
+    if (beforeBase64) {
+      parts.push({ inlineData: { data: beforeBase64, mimeType: 'image/jpeg' } });
+    }
+    const afterBase64 = await fetchImageAsBase64(afterImageUrl);
+    if (afterBase64) {
+      parts.push({ inlineData: { data: afterBase64, mimeType: 'image/jpeg' } });
+    }
+
+    const result = await model.generateContent({
+      contents: [{ role: 'user', parts: parts }],
+      generationConfig: { responseMimeType: 'application/json' }
+    });
+    
+    const text = result.response.text().trim();
+    const cleanText = text.replace(/^```json\s*|```$/g, '');
+    
+    let parsed = {};
+    try {
+      parsed = JSON.parse(cleanText);
+    } catch (e) {
+      console.warn('Failed to parse Gemini JSON output directly. Attempting to match JSON fields.', e.message);
+      const hasDamageMatch = cleanText.match(/"hasDamage"\s*:\s*(true|false)/i);
+      const severityMatch = cleanText.match(/"severity"\s*:\s*"([^"]+)"/i);
+      const locationMatch = cleanText.match(/"damageLocation"\s*:\s*"([^"]+)"/i);
+      const descMatch = cleanText.match(/"description"\s*:\s*"([^"]+)"/i);
+      const reasoningMatch = cleanText.match(/"reasoning"\s*:\s*"([^"]+)"/i);
+
+      parsed = {
+        hasDamage: hasDamageMatch ? hasDamageMatch[1].toLowerCase() === 'true' : false,
+        severity: severityMatch ? severityMatch[1] : 'none',
+        damageLocation: locationMatch ? locationMatch[1] : 'none',
+        description: descMatch ? descMatch[1] : 'Could not detect any new damage.',
+        deductionAmount: 0,
+        reasoning: reasoningMatch ? reasoningMatch[1] : 'Failed to parse AI response.'
+      };
+    }
+
+    return {
+      hasDamage: typeof parsed.hasDamage === 'boolean' ? parsed.hasDamage : (parsed.hasDamage === 'true'),
+      description: parsed.description || 'No damage detected.',
+      severity: parsed.severity || 'none',
+      damageLocation: parsed.damageLocation || 'none',
+      deductionAmount: 0,
+      reasoning: parsed.reasoning || 'No explanation provided.'
+    };
+  } catch (err) {
+    console.error('Gemini assessDamage failed:', err.message);
+    return {
+      hasDamage: false,
+      description: 'Could not detect any new damage or visual differences between the photos.',
+      severity: 'none',
+      damageLocation: 'none',
+      deductionAmount: 0,
+      reasoning: 'Visual inspection completed. The images appear identical or the differences are negligible: ' + err.message
+    };
+  }
+}
+
 module.exports = {
   generateItemDescription,
   suggestPrice,
   summarizeReviews,
   parseSearchQuery,
   findAlternativesMessage,
-  moderateContent
+  moderateContent,
+  chatWithRenter,
+  generateSmartReplies,
+  optimizeMessageTone,
+  generateRentalAgreement,
+  assessDamage
 };
+

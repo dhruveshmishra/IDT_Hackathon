@@ -1,19 +1,7 @@
 <%- include('../layouts/main') %>
 
-<div class="dashboard-layout">
-  
-  <aside class="dashboard-sidebar">
-    <ul class="dashboard-sidebar-menu">
-      <li><a href="/seller/dashboard" class="dashboard-sidebar-link"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
-      <li><a href="/seller/items" class="dashboard-sidebar-link"><i class="fa-solid fa-list"></i> My Listings</a></li>
-      <li><a href="/seller/bookings" class="dashboard-sidebar-link"><i class="fa-regular fa-calendar-days"></i> Bookings Calendar</a></li>
-      <li><a href="/seller/profile" class="dashboard-sidebar-link"><i class="fa-solid fa-indian-rupee-sign"></i> Payout Details</a></li>
-      <li><a href="/seller/verify" class="dashboard-sidebar-link active"><i class="fa-solid fa-user-shield"></i> Business Verification</a></li>
-    </ul>
-  </aside>
-
-  <main class="dashboard-main" style="max-width: 700px;">
-    <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 2.5rem; box-shadow: var(--shadow-sm);">
+<div class="container" style="max-width: 760px;">
+  <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 2.5rem; box-shadow: var(--shadow-sm);">
       <h3 style="font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
         <i class="fa-solid fa-shield-halved" style="color: var(--primary);"></i> Seller Verification Flow
       </h3>
@@ -48,7 +36,7 @@
         <button type="submit" class="btn btn-primary" style="width: 100%;"><i class="fa-solid fa-upload"></i> Submit Documents for Review</button>
       </form>
     </div>
-  </main>
+  </div>
 </div>
 
 <%- include('../layouts/footer') %>

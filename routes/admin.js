@@ -109,7 +109,7 @@ router.put('/sellers/:id/approve', async (req, res) => {
       to: seller.email,
       subject: 'RentIt — Your Seller Account is Approved!',
       text: `Congratulations ${seller.name}! Your seller account on RentIt has been approved by admin. You can now log in and start listing items.`,
-      html: `<p>Congratulations <strong>${seller.name}</strong>!</p><p>Your seller account on RentIt has been <strong>approved</strong> by our admin team. You can now log in at <a href="http://localhost:3002/auth/login">Seller Portal</a> and start earning.</p>`
+      html: `<p>Congratulations <strong>${seller.name}</strong>!</p><p>Your seller account on RentIt has been <strong>approved</strong> by our admin team. You can now log in at <a href="${process.env.SELLER_APP_URL || 'http://localhost:3002'}/auth/login">Seller Portal</a> and start earning.</p>`
     });
 
     req.flash('success', `${seller.name}'s seller login has been approved.`);
@@ -245,12 +245,19 @@ router.delete('/items/:id', async (req, res) => {
 // GET /admin/bookings
 router.get('/bookings', async (req, res) => {
   try {
-    const bookings = await Booking.find()
+    const { sellerId } = req.query;
+    const filter = {};
+    if (sellerId) {
+      filter.seller = sellerId;
+    }
+    const bookings = await Booking.find(filter)
       .populate('item')
       .populate('renter', 'name email')
       .populate('seller', 'name email')
       .sort({ createdAt: -1 });
-    res.render('admin/bookings', { bookings });
+
+    const sellers = await User.find({ role: 'seller' }).select('name email avatar');
+    res.render('admin/bookings', { bookings, sellers, selectedSellerId: sellerId });
   } catch (err) {
     req.flash('error', err.message);
     res.redirect('/admin/dashboard');

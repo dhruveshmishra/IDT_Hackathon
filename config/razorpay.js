@@ -16,6 +16,7 @@ if (keyId && keySecret) {
     console.error('Error initiating Razorpay:', err.message);
   }
 } else {
+  console.log('DEBUG Razorpay config check:', { keyId: !!keyId, keySecret: !!keySecret, envKeys: Object.keys(process.env).filter(k => k.includes('RAZORPAY')) });
   console.warn('Razorpay credentials missing. Running in mock payment mode.');
 }
 

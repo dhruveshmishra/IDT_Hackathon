@@ -1,11 +1,37 @@
 <%- include('../layouts/main') %>
 
+<style>
+  @media print {
+    /* Hide navigation elements, sidebars, buttons, and footers for a clean printed receipt */
+    header, footer, nav, .sidebar-nav, .sidebar-toggle, .btn, button, .no-print, .browse-breadcrumbs, #sidebarNav, .sidebar-brand {
+      display: none !important;
+    }
+    body {
+      background: #ffffff !important;
+      color: #000000 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    .container {
+      max-width: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    /* Remove shadow/border styles in print mode */
+    .receipt-card {
+      box-shadow: none !important;
+      border: none !important;
+      padding: 1rem 0 !important;
+    }
+  }
+</style>
+
 <div class="container" style="max-width: 800px;">
-  <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 2.5rem; box-shadow: var(--shadow-md);">
+  <div class="receipt-card" style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 2.5rem; box-shadow: var(--shadow-md);">
     
     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1.5rem;">
       <h2 style="font-family: var(--font-display);">Booking Transaction Invoice</h2>
-      <a href="/user/bookings" class="btn btn-outline">&larr; Back to History</a>
+      <a href="/user/bookings" class="btn btn-outline no-print">&larr; Back to History</a>
     </div>
 
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
@@ -28,8 +54,12 @@
         </p>
       </div>
       <div style="text-align:right;">
-        <span style="font-size:0.75rem; text-transform:uppercase; font-weight:700; padding:4px 8px; border-radius:4px; background-color:#eff6ff; color:var(--primary);">
-          <%= booking.status %>
+        <span style="font-size:0.75rem; text-transform:uppercase; font-weight:700; padding:4px 8px; border-radius:4px; background-color:#eff6ff; color:var(--primary); display:inline-block; margin-bottom:6px;">
+          Booking: <%= booking.status %>
+        </span>
+        <br/>
+        <span style="font-size:0.75rem; text-transform:uppercase; font-weight:700; padding:4px 8px; border-radius:4px; <%= booking.payment && booking.payment.status === 'paid' ? 'background-color:#dcfce7; color:#15803d;' : 'background-color:#fef3c7; color:#b45309;' %>">
+          Payment: <%= (booking.payment && booking.payment.status) ? booking.payment.status.toUpperCase() : 'PENDING' %>
         </span>
       </div>
     </div>
@@ -50,6 +80,125 @@
         <span>₹<%= booking.totalAmount %></span>
       </div>
     </div>
+
+    <!-- Uploaded P2P Transaction Screenshot -->
+    <% if (booking.paymentScreenshot) { %>
+      <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 2rem;">
+        <h4 style="font-family: var(--font-display); margin-bottom: 1rem;"><i class="fa-solid fa-receipt"></i> P2P Payment Screenshot</h4>
+        <div style="text-align: center; border: 1px solid var(--border); border-radius: 6px; padding: 10px; background: #f8fafc;">
+          <a href="<%= booking.paymentScreenshot %>" target="_blank" title="View full size image">
+            <img src="<%= booking.paymentScreenshot %>" style="max-width: 100%; max-height: 250px; object-fit: contain; border-radius: var(--radius-sm);">
+          </a>
+          <span style="font-size: 0.75rem; color: var(--text-hint); display: block; margin-top: 8px;">
+            <i class="fa-solid fa-up-right-from-square"></i> Click receipt image to open full size
+          </span>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- AI Dispute & Damage Assessment Section -->
+    <% if (['confirmed', 'active', 'completed'].includes(booking.status) || (booking.dispute && booking.dispute.status !== 'none')) { %>
+      <div style="background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: var(--radius-lg); padding: 1.75rem; margin-bottom: 2rem; box-shadow: var(--shadow-sm);">
+        <h4 style="font-family:var(--font-display); margin-bottom:0.75rem; color: #b45309; display: flex; align-items: center; gap: 8px; margin-top: 0; font-size:1.1rem;">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> AI Damage & Deposit Assessment
+        </h4>
+        
+        <% if (booking.dispute && booking.dispute.status !== 'none') { %>
+          <!-- Show Assessment result -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+            <div>
+              <span style="font-size:0.72rem; color: #b45309; font-weight:700; text-transform:uppercase; display:block; margin-bottom: 6px;">Condition Before Renting</span>
+              <img src="<%= booking.dispute.beforeImage %>" style="width: 100%; max-height: 180px; object-fit: contain; border: 1px solid #fcd34d; border-radius: var(--radius-md); background: #fff; padding:4px;">
+            </div>
+            <div>
+              <span style="font-size:0.72rem; color: #b45309; font-weight:700; text-transform:uppercase; display:block; margin-bottom: 6px;">Condition After Renting</span>
+              <img src="<%= booking.dispute.afterImage %>" style="width: 100%; max-height: 180px; object-fit: contain; border: 1px solid #fcd34d; border-radius: var(--radius-md); background: #fff; padding:4px;">
+            </div>
+          </div>
+          <div style="background: #ffffff; border: 1px solid #fde68a; border-radius: var(--radius-md); padding: 1.25rem; font-size: 0.9rem; color: #1e293b; box-shadow: var(--shadow-sm);">
+            <p style="margin: 0 0 8px; font-weight: 700; color: #b45309; display:flex; align-items:center; gap:6px;">
+              <i class="fa-solid fa-square-poll-vertical"></i> AI Inspection Report
+            </p>
+            <p style="margin: 0 0 12px; line-height: 1.5; color: #475569; white-space: pre-line;"><%= booking.dispute.aiAnalysis %></p>
+            
+            <% 
+              let locMatch = (booking.dispute.aiAnalysis || '').match(/Detected Location:\s*([A-Z-]+)/i);
+              let detectedLoc = locMatch ? locMatch[1] : 'NONE';
+            %>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed #fcd34d;">
+              <span style="font-weight: 700; color: #475569;">Damage/Change Corner Location:</span>
+              <span style="background-color: #eff6ff; border:1px solid #bfdbfe; color: #1e40af; font-size: 0.8rem; font-weight: 700; padding: 4px 12px; border-radius: 99px; display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase;">
+                <i class="fa-solid fa-crosshairs"></i> <%= detectedLoc %>
+              </span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 1.05rem;">
+              <span style="color:#475569;">Recommended Security Deduction:</span>
+              <span style="color: var(--danger);">₹0 (P2P direct negotiation recommended)</span>
+            </div>
+          </div>
+        <% } else { %>
+          <!-- Show Upload Form -->
+          <p style="font-size: 0.85rem; color: #78350f; margin-bottom: 1.25rem; margin-top: 0; line-height: 1.5;">
+            Report return condition or request damage assessment. Upload clear photos of the item's condition before renting and after return. Gemini AI will inspect differences and calculate security deposit deductions automatically.
+          </p>
+          <form action="/bookings/<%= booking._id %>/dispute" method="POST" enctype="multipart/form-data" class="no-print" onsubmit="window.showAILoader('Gemini AI is analyzing before & after photos for damage details...');">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem;">
+              
+              <!-- Before Image Slot -->
+              <div>
+                <label style="font-size: 0.78rem; font-weight: 700; color: #78350f; display: block; margin-bottom: 6px;">Photo BEFORE Renting <span style="color:var(--danger)">*</span></label>
+                <div id="before-dropzone" style="border: 2px dashed #d97706; border-radius: var(--radius-md); padding: 1rem; text-align: center; cursor: pointer; transition: all 0.2s; background: #fffdf5; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height: 110px;" onclick="document.getElementById('beforeImage').click();">
+                  <i class="fa-solid fa-camera-retro" id="before-icon" style="font-size: 1.5rem; color: #d97706; margin-bottom: 4px;"></i>
+                  <span id="before-text" style="font-size: 0.75rem; color: #92400e; font-weight: 600;">Select Photo</span>
+                  <img id="before-preview" src="" style="display:none; max-width: 100%; max-height: 90px; object-fit: contain; border-radius: var(--radius-sm);">
+                </div>
+                <input type="file" id="beforeImage" name="beforeImage" accept="image/*" required style="display: none;" onchange="handlePreview('beforeImage', 'before-preview', 'before-icon', 'before-text', 'before-dropzone');">
+              </div>
+
+              <!-- After Image Slot -->
+              <div>
+                <label style="font-size: 0.78rem; font-weight: 700; color: #78350f; display: block; margin-bottom: 6px;">Photo AFTER Renting <span style="color:var(--danger)">*</span></label>
+                <div id="after-dropzone" style="border: 2px dashed #d97706; border-radius: var(--radius-md); padding: 1rem; text-align: center; cursor: pointer; transition: all 0.2s; background: #fffdf5; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height: 110px;" onclick="document.getElementById('afterImage').click();">
+                  <i class="fa-solid fa-camera-retro" id="after-icon" style="font-size: 1.5rem; color: #d97706; margin-bottom: 4px;"></i>
+                  <span id="after-text" style="font-size: 0.75rem; color: #92400e; font-weight: 600;">Select Photo</span>
+                  <img id="after-preview" src="" style="display:none; max-width: 100%; max-height: 90px; object-fit: contain; border-radius: var(--radius-sm);">
+                </div>
+                <input type="file" id="afterImage" name="afterImage" accept="image/*" required style="display: none;" onchange="handlePreview('afterImage', 'after-preview', 'after-icon', 'after-text', 'after-dropzone');">
+              </div>
+
+            </div>
+            
+            <button type="submit" class="btn" style="background: #d97706; color: #ffffff; padding: 10px 20px; font-size: 0.88rem; font-weight: 700; width: 100%; border:none; box-shadow: var(--shadow-sm);">
+              <i class="fa-solid fa-microscope"></i> Run AI Damage Inspection
+            </button>
+          </form>
+
+          <script>
+            function handlePreview(inputId, previewId, iconId, textId, dropzoneId) {
+              const fileInput = document.getElementById(inputId);
+              const preview = document.getElementById(previewId);
+              const icon = document.getElementById(iconId);
+              const text = document.getElementById(textId);
+              const dropzone = document.getElementById(dropzoneId);
+
+              if (fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                  preview.src = e.target.result;
+                  preview.style.display = 'block';
+                  icon.style.display = 'none';
+                  text.style.display = 'none';
+                  dropzone.style.borderColor = '#16a34a';
+                  dropzone.style.background = '#f0fdf4';
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+              }
+            }
+          </script>
+        <% } %>
+      </div>
+    <% } %>
 
     <!-- Parties details -->
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:2rem;">
@@ -72,7 +221,17 @@
     </div>
 
     <!-- Actions -->
-    <div style="display:flex; justify-content:flex-end; gap:1rem; border-top:1px solid var(--border); padding-top:1.5rem;">
+    <div class="no-print" style="display:flex; justify-content:flex-end; gap:1rem; border-top:1px solid var(--border); padding-top:1.5rem;">
+      <% if (['confirmed', 'active'].includes(booking.status)) { %>
+        <a href="/bookings/<%= booking._id %>/agreement" class="btn btn-outline" style="border-color: #3b82f6; color: #3b82f6; display: inline-flex; align-items: center; gap: 6px; background: #ffffff;">
+          <i class="fa-solid fa-file-contract"></i> AI Rental Agreement
+        </a>
+      <% } %>
+      <% if (booking.payment && booking.payment.status === 'paid') { %>
+        <button onclick="window.print()" class="btn btn-outline" style="border-color: #ff5a00; color: #ff5a00; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; background: #ffffff;">
+          <i class="fa-solid fa-download"></i> Download Receipt
+        </button>
+      <% } %>
       <a href="/user/chat/<%= booking._id %>" class="btn btn-primary"><i class="fa-regular fa-comment-dots"></i> Message Center</a>
     </div>
 

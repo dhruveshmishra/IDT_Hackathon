@@ -52,10 +52,23 @@
         <!-- Filled dynamically on client init & socket messages -->
       </div>
 
+      <!-- AI Smart Replies Chips -->
+      <div id="ai-smart-replies-container" style="display: flex; gap: 8px; padding: 10px 1.25rem; background: #f8fafc; border-top: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; align-items: center;">
+        <span style="font-size: 0.75rem; font-weight: 700; color: #64748b; display: flex; align-items: center; gap: 4px; white-space: nowrap;"><i class="fa-solid fa-wand-magic-sparkles" style="color: #ff5a00;"></i> Smart Reply:</span>
+        <div id="ai-replies-chips" style="display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto;">
+          <!-- Loaded dynamically -->
+        </div>
+      </div>
+
       <!-- Message input block -->
-      <form id="chat-form" class="chat-input-area">
-        <textarea id="chat-input-msg" placeholder="Type your message here..." required></textarea>
-        <button type="submit" class="btn btn-primary" style="height: 44px; padding: 0 1.25rem;"><i class="fa-solid fa-paper-plane"></i></button>
+      <form id="chat-form" class="chat-input-area" style="position: relative; padding: 10px;">
+        <textarea id="chat-input-msg" placeholder="Type your message here..." required style="padding-right: 130px; width: 100%; min-height: 50px; border-radius: 8px; border: 1px solid var(--border); outline: none; padding: 10px; box-sizing: border-box; resize: none; font-size: 0.9rem; font-family: inherit;"></textarea>
+        <div style="position: absolute; right: 18px; bottom: 18px; display: flex; gap: 6px;">
+          <button type="button" id="improve-tone-btn" class="btn btn-outline" style="height: 34px; font-size: 0.78rem; border-color: #3b82f6; color: #3b82f6; font-weight: 700; background: #ffffff; padding: 0 10px; cursor: pointer; display: flex; align-items: center; gap: 4px; border-radius: 6px;" title="Improve Message Tone with AI">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> AI Tone
+          </button>
+          <button type="submit" class="btn btn-primary" style="height: 34px; padding: 0 12px; background-color: #ff5a00; border-color: #ff5a00; border-radius: 6px; color: #fff;"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
       </form>
 
     </div>
@@ -71,6 +84,9 @@
     const messagesContainer = document.getElementById('messages-container');
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input-msg');
+    const improveToneBtn = document.getElementById('improve-tone-btn');
+    
+    let allMessages = [];
 
     // Socket Connection
     const socket = io();
@@ -83,6 +99,7 @@
       if (data.success) {
         data.messages.forEach(msg => appendMessage(msg));
         scrollToBottom();
+        fetchSmartReplies();
       }
     } catch(err) {
       console.error('History fetch error:', err.message);
@@ -98,11 +115,71 @@
       
       bubble.textContent = msg.text;
       messagesContainer.appendChild(bubble);
+      
+      allMessages.push({
+        senderName: isOutgoing ? 'You' : 'Counterparty',
+        text: msg.text
+      });
+      
       scrollToBottom();
     }
 
     function scrollToBottom() {
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // Smart replies fetch
+    async function fetchSmartReplies() {
+      const chipsContainer = document.getElementById('ai-replies-chips');
+      chipsContainer.innerHTML = '<span style="font-size:0.75rem; color:#94a3b8;">Generating replies...</span>';
+      try {
+        const itemTitle = '<%= booking.item ? booking.item.title : "" %>';
+        const res = await fetch('/ai/chat/replies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            history: allMessages.slice(-5),
+            title: itemTitle
+          })
+        });
+        const data = await res.json();
+        if (data.success && data.replies) {
+          chipsContainer.innerHTML = '';
+          data.replies.forEach(reply => {
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.style.cssText = `
+              background: #ffffff;
+              border: 1px solid #ff5a00;
+              color: #ff5a00;
+              padding: 4px 10px;
+              border-radius: 12px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.2s;
+              white-space: nowrap;
+            `;
+            chip.onmouseover = () => {
+              chip.style.background = '#ff5a00';
+              chip.style.color = '#ffffff';
+            };
+            chip.onmouseout = () => {
+              chip.style.background = '#ffffff';
+              chip.style.color = '#ff5a00';
+            };
+            chip.textContent = reply;
+            chip.onclick = () => {
+              chatInput.value = reply;
+              chatInput.focus();
+            };
+            chipsContainer.appendChild(chip);
+          });
+        }
+      } catch (err) {
+        console.error('Smart replies error:', err.message);
+        chipsContainer.innerHTML = '';
+      }
     }
 
     // Submit send event
@@ -128,7 +205,32 @@
     // Handle incoming socket message
     socket.on('receive-message', (msg) => {
       appendMessage(msg);
+      fetchSmartReplies();
     });
+
+    // Improve tone handler
+    improveToneBtn.onclick = async () => {
+      const originalVal = chatInput.value.trim();
+      if (!originalVal) return;
+      improveToneBtn.disabled = true;
+      improveToneBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Improving...';
+      try {
+        const res = await fetch('/ai/chat/optimize-tone', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: originalVal })
+        });
+        const data = await res.json();
+        if (data.success && data.optimized) {
+          chatInput.value = data.optimized;
+        }
+      } catch (err) {
+        console.error('Improve tone error:', err.message);
+      } finally {
+        improveToneBtn.disabled = false;
+        improveToneBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> AI Tone';
+      }
+    };
   });
 </script>
 

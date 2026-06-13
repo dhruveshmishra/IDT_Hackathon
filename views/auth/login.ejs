@@ -1,24 +1,33 @@
 <%- include('../layouts/main') %>
 
-<div class="container">
-  <div class="form-card">
-    <h2 style="text-align: center; margin-bottom: 1.5rem; font-family: var(--font-display);">Welcome Back</h2>
-    <form action="/auth/login" method="POST">
-      <div class="form-group">
-        <label for="email">Email Address</label>
-        <input type="email" name="email" id="email" class="form-control" placeholder="name@example.com" required>
+<div class="container" style="max-width: 850px; margin: 3rem auto; padding: 0 1rem;">
+  <div class="p2p-modal-container" style="width: 100%; height: 520px; max-height: none; box-shadow: var(--shadow-md); border: 1px solid var(--border); margin: 0 auto; animation: none; display: block;">
+    <div class="p2p-modal-split" style="display: flex; height: 100%; width: 100%;">
+      <!-- Left side: Image of smiling girl with phone -->
+      <div class="p2p-modal-left" style="width: 48%; height: 100%; overflow: hidden; background: #f8fafc;">
+        <img src="/images/login_modal_girl.png" alt="Welcome to RentIt" style="width: 100%; height: 100%; object-fit: cover;">
       </div>
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" name="password" id="password" class="form-control" placeholder="Enter your password" required>
+      <!-- Right side: Form controls -->
+      <div class="p2p-modal-right" style="width: 52%; padding: 3rem 2.5rem; display: flex; flex-direction: column; justify-content: center; box-sizing: border-box;">
+        <h2 style="text-align: center; margin-bottom: 1.5rem; font-family: var(--font-display); font-weight: 700; color: #0f172a;">Welcome Back</h2>
+        
+        <form action="/auth/login" method="POST">
+          <div class="form-group" style="text-align: left;">
+            <label for="email" class="p2p-input-label" style="font-weight: 700; margin-bottom: 8px; display: block;">Email Address</label>
+            <input type="email" name="email" id="email" class="form-control" placeholder="name@example.com" required style="border-radius: 10px; height: 48px; border: 1px solid #cbd5e1; padding: 0 16px; width: 100%; outline: none; box-sizing: border-box;">
+          </div>
+          <div class="form-group" style="text-align: left; margin-bottom: 1.5rem;">
+            <label for="password" class="p2p-input-label" style="font-weight: 700; margin-bottom: 8px; display: block;">Password</label>
+            <input type="password" name="password" id="password" class="form-control" placeholder="Enter your password" required style="border-radius: 10px; height: 48px; border: 1px solid #cbd5e1; padding: 0 16px; width: 100%; outline: none; box-sizing: border-box;">
+          </div>
+          <button type="submit" class="p2p-continue-btn" style="margin-bottom: 1.5rem; background-color: #ff5a00; color: #fff; font-weight: 700; border: none; border-radius: 10px; height: 48px; width: 100%; cursor: pointer;">Sign In</button>
+        </form>
+        
+        <p style="text-align: center; font-size: 0.9rem; color: #64748b; margin: 0;">
+          New to RentIt? <a href="/auth/signup" class="orange-link" style="color: #ff5a00; font-weight: 600; text-decoration: none;">Sign Up</a>
+        </p>
       </div>
-      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
-        <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
-      </button>
-    </form>
-    <p style="text-align: center; margin-top: 1.5rem; color: var(--text-secondary); font-size: 0.9rem;">
-      New to RentIt? <a href="/auth/signup">Create an account</a>
-    </p>
+    </div>
   </div>
 </div>
 

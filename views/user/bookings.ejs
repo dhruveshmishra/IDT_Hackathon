@@ -61,6 +61,11 @@
             </div>
 
             <div style="display: flex; gap: 8px;">
+              <% if (booking.payment && booking.payment.status === 'paid') { %>
+                <a href="/bookings/<%= booking._id %>" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem; background-color: #ff5a00; border-color: #ff5a00; color: #fff;">
+                  <i class="fa-solid fa-file-invoice"></i> View Invoice
+                </a>
+              <% } %>
               <a href="/user/chat/<%= booking._id %>" class="btn btn-outline" style="padding: 6px 12px; font-size: 0.8rem;">
                 <i class="fa-regular fa-comment-dots"></i> Message Seller
               </a>

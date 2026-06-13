@@ -1,19 +1,7 @@
 <%- include('../layouts/main') %>
 
-<div class="dashboard-layout">
-  
-  <aside class="dashboard-sidebar">
-    <ul class="dashboard-sidebar-menu">
-      <li><a href="/seller/dashboard" class="dashboard-sidebar-link"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
-      <li><a href="/seller/items" class="dashboard-sidebar-link"><i class="fa-solid fa-list"></i> My Listings</a></li>
-      <li><a href="/seller/bookings" class="dashboard-sidebar-link active"><i class="fa-regular fa-calendar-days"></i> Bookings Calendar</a></li>
-      <li><a href="/seller/profile" class="dashboard-sidebar-link"><i class="fa-solid fa-indian-rupee-sign"></i> Payout Details</a></li>
-      <li><a href="/seller/verify" class="dashboard-sidebar-link"><i class="fa-solid fa-user-shield"></i> Business Verification</a></li>
-    </ul>
-  </aside>
-
-  <main class="dashboard-main">
-    <h2 style="font-family: var(--font-display); margin-bottom: 2rem;">Rental Operations Calendar</h2>
+<div class="container">
+  <h2 style="font-family: var(--font-display); margin-bottom: 2rem;">Rental Operations Calendar</h2>
 
     <!-- Monthly Calendar -->
     <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2.5rem;">
@@ -41,84 +29,76 @@
       </div>
     </div>
 
-    <!-- Booking List under calendar -->
-    <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm);">
-      <h3 style="font-family: var(--font-display); font-size: 1.15rem; margin-bottom: 1rem;">Incoming Booking Queries</h3>
+    <!-- Booking Lists Categorized -->
+    <div style="display: flex; flex-direction: column; gap: 2rem;">
       
-      <% if (bookings.length === 0) { %>
-        <p style="color: var(--text-hint); text-align: center; padding: 2rem;">No reservation requests found.</p>
-      <% } else { %>
-        <div style="display: flex; flex-direction: column; gap: 1rem;">
-          <% bookings.forEach(booking => { %>
-            <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-              
-              <div style="display: flex; gap: 1rem; align-items: center;">
-                <% if (booking.renter.avatar && booking.renter.avatar.url) { %>
-                  <img src="<%= booking.renter.avatar.url %>" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;">
-                <% } else { %>
-                  <div style="width: 44px; height: 44px; border-radius: 50%; background-color:#cbd5e1; display:flex; align-items:center; justify-content:center; font-weight:700;"><%= booking.renter.name[0] %></div>
-                <% } %>
-                <div>
-                  <h4 style="margin: 0 0 2px; font-size: 1rem; font-family: var(--font-display);"><%= booking.renter.name %></h4>
-                  <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary);">
-                    Wants to rent: <strong><%= booking.item ? booking.item.title : 'Deleted Item' %></strong>
-                  </p>
-                  <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary);">
-                    Dates: <%= new Date(booking.startDate).toLocaleDateString() %> - <%= new Date(booking.endDate).toLocaleDateString() %> (<%= booking.totalDays %> days)
-                  </p>
-                </div>
-              </div>
+      <!-- 1. PENDING REQUESTS -->
+      <% const pendingBookings = bookings.filter(b => b.status === 'pending'); %>
+      <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm);">
+        <h3 style="font-family: var(--font-display); font-size: 1.15rem; margin-bottom: 1rem; color: #d97706; display: flex; align-items: center; gap: 8px; margin-top: 0;">
+          <i class="fa-solid fa-clock-rotate-left"></i> Pending Reservation Requests (<%= pendingBookings.length %>)
+        </h3>
+        <% if (pendingBookings.length === 0) { %>
+          <p style="color: var(--text-hint); text-align: center; padding: 1.5rem; margin: 0; font-size: 0.9rem;">No pending requests awaiting approval.</p>
+        <% } else { %>
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <% pendingBookings.forEach(booking => { %>
+              <%- include('../partials/sellerBookingCard', { booking: booking }) %>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
 
-              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
-                <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; padding: 4px 8px; border-radius: var(--radius-sm);
-                  <%= booking.status === 'confirmed' ? 'background-color: #dcfce7; color: #16a34a;' : '' %>
-                  <%= booking.status === 'pending' ? 'background-color: #fef3c7; color: #d97706;' : '' %>
-                  <%= booking.status === 'active' ? 'background-color: #eff6ff; color: #2563eb;' : '' %>
-                  <%= booking.status === 'completed' ? 'background-color: #f1f5f9; color: #64748b;' : '' %>
-                  <%= booking.status === 'cancelled' ? 'background-color: #fee2e2; color: #dc2626;' : '' %>
-                ">
-                  <%= booking.status %>
-                </span>
-                
-                <div style="font-weight: 700; color: var(--text-primary); font-size: 1.1rem;">
-                  Total Amount: ₹<%= booking.totalAmount %>
-                </div>
+      <!-- 2. CONFIRMED & ACTIVE BOOKINGS -->
+      <% const activeBookings = bookings.filter(b => b.status === 'confirmed' || b.status === 'active'); %>
+      <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm);">
+        <h3 style="font-family: var(--font-display); font-size: 1.15rem; margin-bottom: 1rem; color: var(--primary); display: flex; align-items: center; gap: 8px; margin-top: 0;">
+          <i class="fa-solid fa-circle-check"></i> Confirmed Bookings (Items Rented Out) (<%= activeBookings.length %>)
+        </h3>
+        <% if (activeBookings.length === 0) { %>
+          <p style="color: var(--text-hint); text-align: center; padding: 1.5rem; margin: 0; font-size: 0.9rem;">No items currently rented or confirmed.</p>
+        <% } else { %>
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <% activeBookings.forEach(booking => { %>
+              <%- include('../partials/sellerBookingCard', { booking: booking }) %>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
 
-                <div style="display: flex; gap: 6px;">
-                  <a href="/user/chat/<%= booking._id %>" class="btn btn-outline" style="padding: 4px 10px; font-size: 0.75rem;"><i class="fa-regular fa-comment-dots"></i> Message</a>
-                  <% if (booking.status === 'pending') { %>
-                    <form action="/seller/bookings/<%= booking._id %>?_method=PUT" method="POST" style="display: inline;">
-                      <input type="hidden" name="status" value="confirmed">
-                      <button type="submit" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.75rem;">Confirm</button>
-                    </form>
-                    <form action="/seller/bookings/<%= booking._id %>?_method=PUT" method="POST" style="display: inline;">
-                      <input type="hidden" name="status" value="cancelled">
-                      <button type="submit" class="btn btn-danger" style="padding: 4px 10px; font-size: 0.75rem;">Reject</button>
-                    </form>
-                  <% } else if (booking.status === 'confirmed') { %>
-                    <form action="/seller/bookings/<%= booking._id %>?_method=PUT" method="POST" style="display: inline;">
-                      <input type="hidden" name="status" value="active">
-                      <button type="submit" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.75rem;">Handover Item</button>
-                    </form>
-                  <% } else if (booking.status === 'active') { %>
-                    <form action="/seller/bookings/<%= booking._id %>?_method=PUT" method="POST" style="display: inline;">
-                      <input type="hidden" name="status" value="completed">
-                      <button type="submit" class="btn btn-accent" style="padding: 4px 10px; font-size: 0.75rem;">Mark Returned</button>
-                    </form>
-                  <% } %>
-                </div>
-              </div>
+      <!-- 3. COMPLETED / RETURNED BOOKINGS -->
+      <% const completedBookings = bookings.filter(b => b.status === 'completed'); %>
+      <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm);">
+        <h3 style="font-family: var(--font-display); font-size: 1.15rem; margin-bottom: 1rem; color: var(--success); display: flex; align-items: center; gap: 8px; margin-top: 0;">
+          <i class="fa-solid fa-circle-arrow-down"></i> Items Taken Back (Completed Rentals) (<%= completedBookings.length %>)
+        </h3>
+        <% if (completedBookings.length === 0) { %>
+          <p style="color: var(--text-hint); text-align: center; padding: 1.5rem; margin: 0; font-size: 0.9rem;">No completed or returned rentals yet.</p>
+        <% } else { %>
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <% completedBookings.forEach(booking => { %>
+              <%- include('../partials/sellerBookingCard', { booking: booking }) %>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
 
-            </div>
-          <% }) %>
-        </div>
-      <% } %>
     </div>
 
-  </main>
 </div>
 
 <script>
+  function toggleActionForm(bookingId, actionType) {
+    const formDiv = document.getElementById(actionType + '-form-' + bookingId);
+    if (formDiv) {
+      if (formDiv.style.display === 'none') {
+        formDiv.style.display = 'block';
+      } else {
+        formDiv.style.display = 'none';
+      }
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     // Populate simple calendar cells for current month (June 2026)
     // June 1 2026 starts on Monday (Monday = cell index 2)

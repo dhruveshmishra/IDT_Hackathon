@@ -23,11 +23,19 @@ function uploadToCloudinary(fileBuffer, folderName = 'rentapp') {
 
 // GET Login
 router.get('/login', (req, res) => {
-  const isSellerPort = req.headers.host && req.headers.host.includes('3002');
-  if (isSellerPort) {
+  const host = req.headers.host || '';
+  const isSellerPort = host.includes('3002');
+  const isAdminPort = host.includes('3001');
+  const role = req.query.role;
+
+  if (isAdminPort || role === 'admin') {
+    res.render('auth/admin-login');
+  } else if (isSellerPort || role === 'seller') {
     res.render('auth/seller-login');
-  } else {
+  } else if (role === 'user') {
     res.render('auth/login');
+  } else {
+    res.render('auth/login-select');
   }
 });
 
@@ -74,18 +82,28 @@ router.post('/login', (req, res, next) => {
 
 // GET Signup
 router.get('/signup', (req, res) => {
-  const isSellerPort = req.headers.host && req.headers.host.includes('3002');
-  if (isSellerPort) {
-    res.render('auth/seller-signup');
+  const host = req.headers.host || '';
+  const isSellerPort = host.includes('3002');
+  const isAdminPort = host.includes('3001');
+  const role = req.query.role;
+  const phone = req.query.phone || '';
+
+  if (isAdminPort) {
+    req.flash('error', 'Admin registration is not allowed.');
+    return res.redirect('/auth/login');
+  }
+
+  if (isSellerPort || role === 'seller') {
+    res.render('auth/seller-signup', { phone });
   } else {
-    res.render('auth/signup', { preRole: 'user' });
+    res.render('auth/signup', { preRole: 'user', phone });
   }
 });
 
 // POST Signup — handles both user and seller, with Aadhaar upload
 router.post('/signup', upload.single('aadhaarDoc'), async (req, res, next) => {
   try {
-    const { name, email, password, phone, role, address, aadhaarNumber, businessName, businessAddress } = req.body;
+    const { name, email, password, phone, role, address, aadhaarNumber, businessName, businessAddress, bankName, bankHolderName, bankAccount, bankIfsc, upi } = req.body;
 
     // Validate role
     const selectedRole = ['user', 'seller'].includes(role) ? role : 'user';
@@ -129,21 +147,27 @@ router.post('/signup', upload.single('aadhaarDoc'), async (req, res, next) => {
         businessName: businessName || name,
         address: businessAddress || address || '',
         earnings: 0,
+        payoutDetails: {
+          upi: upi || '',
+          bankAccount: bankAccount || '',
+          bankName: bankName || '',
+          bankIfsc: bankIfsc || '',
+          bankHolderName: bankHolderName || '',
+          verified: false
+        }
       };
     }
 
     const newUser = new User(userData);
     await newUser.save();
 
-    // Welcome email
+    // Welcome email notifying that account registration has been received and is pending verification
     try {
-      const token = 'token_mock_' + Math.random().toString(36).substring(2, 15);
-      const verifyUrl = `${req.protocol}://${req.get('host')}/auth/verify-email/${token}`;
       await sendEmail({
         to: newUser.email,
-        subject: 'Welcome to RentIt — Verify Your Email',
-        text: `Hi ${newUser.name}, welcome to RentIt! Verify: ${verifyUrl}`,
-        html: `<p>Hi ${newUser.name},</p><p>Welcome to RentIt! <a href="${verifyUrl}">Verify Email Now</a></p>`
+        subject: 'Welcome to RentIt — Registration Received',
+        text: `Hi ${newUser.name}, welcome to RentIt! Your account is registered and is currently pending admin verification and approval. We will email you once your account has been verified and approved.`,
+        html: `<p>Hi ${newUser.name},</p><p>Welcome to RentIt!</p><p>Your account is registered and is currently <strong>pending admin verification/approval</strong>. We will email you as soon as your account has been verified and approved.</p>`
       });
     } catch (emailErr) {
       console.warn('Welcome email failed:', emailErr.message);
@@ -214,7 +238,8 @@ router.post('/logout', (req, res, next) => {
   req.logout((err) => {
     if (err) return next(err);
     req.flash('success', 'Logged out successfully');
-    res.redirect('/');
+    const userPort = process.env.USER_PORT || 3000;
+    res.redirect(`http://localhost:${userPort}/`);
   });
 });
 

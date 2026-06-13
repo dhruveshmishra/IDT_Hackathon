@@ -30,6 +30,7 @@
             <th>Phone</th>
             <th>Address</th>
             <th>Aadhaar</th>
+            <th>Payment Details</th>
             <th>Signed Up</th>
             <th>Actions</th>
           </tr>
@@ -71,6 +72,19 @@
                 <div style="font-size:0.75rem; color:var(--text-hint); margin-top:4px;">
                   XXXX XXXX <%= seller.aadhaarNumber.slice(-4) %>
                 </div>
+              <% } %>
+            </td>
+            <td>
+              <% if (seller.sellerProfile && seller.sellerProfile.payoutDetails) { %>
+                <div style="font-size:0.82rem; line-height:1.4; text-align:left;">
+                  <strong>UPI:</strong> <%= seller.sellerProfile.payoutDetails.upi || '—' %><br>
+                  <strong>Bank:</strong> <%= seller.sellerProfile.payoutDetails.bankName || '—' %><br>
+                  <strong>A/C:</strong> <%= seller.sellerProfile.payoutDetails.bankAccount || '—' %><br>
+                  <strong>IFSC:</strong> <%= seller.sellerProfile.payoutDetails.bankIfsc || '—' %><br>
+                  <strong>Holder:</strong> <%= seller.sellerProfile.payoutDetails.bankHolderName || '—' %>
+                </div>
+              <% } else { %>
+                <span class="badge badge-neutral">—</span>
               <% } %>
             </td>
             <td style="font-size:0.82rem; color:var(--text-secondary);">
@@ -128,6 +142,7 @@
             <th>Email</th>
             <th>Address</th>
             <th>Aadhaar</th>
+            <th>Payment Details</th>
             <th>Doc Verification</th>
             <th>Status</th>
             <th>Actions</th>
@@ -172,6 +187,19 @@
                 <div style="font-size:0.75rem; color:var(--text-hint); margin-top:4px;">
                   XXXX XXXX <%= seller.aadhaarNumber.slice(-4) %>
                 </div>
+              <% } %>
+            </td>
+            <td>
+              <% if (seller.sellerProfile && seller.sellerProfile.payoutDetails) { %>
+                <div style="font-size:0.82rem; line-height:1.4; text-align:left;">
+                  <strong>UPI:</strong> <%= seller.sellerProfile.payoutDetails.upi || '—' %><br>
+                  <strong>Bank:</strong> <%= seller.sellerProfile.payoutDetails.bankName || '—' %><br>
+                  <strong>A/C:</strong> <%= seller.sellerProfile.payoutDetails.bankAccount || '—' %><br>
+                  <strong>IFSC:</strong> <%= seller.sellerProfile.payoutDetails.bankIfsc || '—' %><br>
+                  <strong>Holder:</strong> <%= seller.sellerProfile.payoutDetails.bankHolderName || '—' %>
+                </div>
+              <% } else { %>
+                <span class="badge badge-neutral">—</span>
               <% } %>
             </td>
             <td>

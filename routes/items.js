@@ -2,14 +2,23 @@ const express = require('express');
 const router = express.Router();
 const Item = require('../models/Item');
 const Review = require('../models/Review');
+const Booking = require('../models/Booking');
 const redisClient = require('../config/redis');
 const { parseSearchQuery, summarizeReviews } = require('../utils/geminiHelpers');
 
 // GET /items (with text search, smart search, and filters)
 router.get('/', async (req, res) => {
   try {
-    let { search, smartSearch, category, maxPrice, lng, lat, distance = 5 } = req.query;
+    let { search, smartSearch, category, subcategory, maxPrice, lng, lat, distance = 50, sort } = req.query;
     let query = { status: 'active', isAvailable: true };
+
+    // Determine sort order
+    let sortQuery = { pricePerDay: 1 };
+    if (sort === 'price_desc') {
+      sortQuery = { pricePerDay: -1 };
+    } else if (sort === 'newest') {
+      sortQuery = { createdAt: -1 };
+    }
 
     // Smart Search via Gemini AI
     let aiExplanation = '';
@@ -49,14 +58,19 @@ router.get('/', async (req, res) => {
     if (category && category !== 'all' && category !== 'null') {
       query.category = category;
     }
+    
+    // Subcategory Filter
+    if (subcategory && subcategory !== 'all' && subcategory !== 'null') {
+      query.subcategory = subcategory;
+    }
 
     // Price Filter
     if (maxPrice) {
       query.pricePerDay = { $lte: Number(maxPrice) };
     }
 
-    // Fallback to logged-in user's coordinates if query parameters are missing
-    if (!lng && !lat && req.user && req.user.location && req.user.location.coordinates) {
+    // Fallback to logged-in user's coordinates if query parameters are missing (only for regular users, not sellers)
+    if (!lng && !lat && req.user && req.user.role === 'user' && req.user.location && req.user.location.coordinates) {
       lng = req.user.location.coordinates[0];
       lat = req.user.location.coordinates[1];
     }
@@ -86,8 +100,8 @@ router.get('/', async (req, res) => {
       const maxDistanceMeters = parseFloat(distance) * 1000;
 
       if (isTextSearching) {
-        // Run standard find with filters (compatible with text/regex filters) sorted by price
-        const found = await Item.find(query).populate('owner', 'name avatar isVerified').sort({ pricePerDay: 1 });
+        // Run standard find with filters (compatible with text/regex filters) sorted by query
+        const found = await Item.find(query).populate('owner', 'name avatar isVerified').sort(sortQuery);
         // Calculate distance manually and filter
         items = found.map(item => {
           const itemObj = item.toObject();
@@ -99,10 +113,16 @@ router.get('/', async (req, res) => {
           return itemObj;
         }).filter(item => item.dist && item.dist.calculated <= maxDistanceMeters);
         
-        // Ensure manual sort keeps price order intact after filtering
-        items.sort((a, b) => a.pricePerDay - b.pricePerDay);
+        // Ensure manual sort keeps requested order intact after filtering
+        if (sort === 'price_desc') {
+          items.sort((a, b) => b.pricePerDay - a.pricePerDay);
+        } else if (sort === 'newest') {
+          items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        } else {
+          items.sort((a, b) => a.pricePerDay - b.pricePerDay);
+        }
       } else {
-        // Run geoNear aggregation for purely spatial browsing, sorted by price
+        // Run geoNear aggregation for purely spatial browsing, sorted by requested order
         items = await Item.aggregate([
           {
             $geoNear: {
@@ -113,12 +133,12 @@ router.get('/', async (req, res) => {
               spherical: true
             }
           },
-          { $sort: { pricePerDay: 1 } }
+          { $sort: sortQuery }
         ]);
         items = await Item.populate(items, { path: 'owner', select: 'name avatar isVerified' });
       }
     } else {
-      items = await Item.find(query).populate('owner', 'name avatar isVerified').sort({ pricePerDay: 1 });
+      items = await Item.find(query).populate('owner', 'name avatar isVerified').sort(sortQuery);
     }
 
     res.render('user/home', {
@@ -126,10 +146,12 @@ router.get('/', async (req, res) => {
       search: search || '',
       smartSearch: smartSearch || '',
       category: category || 'all',
+      subcategory: subcategory || '',
       maxPrice: maxPrice || '',
       lng: lng || '',
       lat: lat || '',
       distance: distance || '5',
+      sort: sort || 'price_asc',
       aiExplanation
     });
 
@@ -219,9 +241,9 @@ router.get('/:id', async (req, res) => {
       }
     }
 
-    // Calculate distance from logged-in user to item location
+    // Calculate distance from logged-in user to item location (only for regular users, not sellers)
     let distanceKm = null;
-    if (req.user && req.user.location && req.user.location.coordinates &&
+    if (req.user && req.user.role === 'user' && req.user.location && req.user.location.coordinates &&
         item.location && item.location.coordinates) {
       const [uLng, uLat] = req.user.location.coordinates;
       const [iLng, iLat] = item.location.coordinates;
@@ -235,11 +257,18 @@ router.get('/:id', async (req, res) => {
       distanceKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
+    // Fetch active/confirmed bookings for date blocking in Flatpickr
+    const bookings = await Booking.find({
+      item: item._id,
+      status: { $in: ['confirmed', 'active'] }
+    }).select('startDate endDate');
+
     res.render('user/item-show', {
       item,
       reviews,
       reviewSummary: summary || 'No reviews available yet.',
-      distanceKm   // null if user not logged in or has no location
+      distanceKm,   // null if user not logged in or has no location
+      bookings
     });
 
   } catch (error) {

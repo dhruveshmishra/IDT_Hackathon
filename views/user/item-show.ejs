@@ -39,24 +39,32 @@
           <% } else { %>
             <span style="background-color: #fee2e2; color: #b91c1c; font-size: 0.75rem; font-weight: 600; padding: 4px 8px; border-radius: var(--radius-sm);">Rented Out</span>
           <% } %>
+          <% if (item.quantity && item.quantity > 0) { %>
+            <span style="background-color: <%= item.quantity <= 3 ? '#fee2e2' : '#dcfce7' %>; color: <%= item.quantity <= 3 ? '#b91c1c' : '#15803d' %>; font-size: 0.75rem; font-weight: 600; padding: 4px 8px; border-radius: var(--radius-sm); display: inline-flex; align-items: center; gap: 4px;">
+              <i class="fa-solid <%= item.quantity <= 3 ? 'fa-fire-flame-curved' : 'fa-box' %>"></i>
+              <%= item.quantity %> left in stock
+            </span>
+          <% } %>
         </div>
 
         <h1 style="font-size: 2.2rem; font-family: var(--font-display); margin-bottom: 0.75rem;"><%= item.title %></h1>
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 1rem;">
           <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;"><i class="fa-solid fa-location-dot"></i> <%= item.address || 'Local Area' %></p>
-          <% if (locals.distanceKm !== null && locals.distanceKm !== undefined) { %>
-            <%
-              const dk = locals.distanceKm;
-              let dBg, dColor, dIcon, dLabel;
-              if (dk < 0.1) { dBg='#dcfce7'; dColor='#15803d'; dIcon='fa-walking'; dLabel = Math.round(dk*1000)+'m away'; }
-              else if (dk <= 1) { dBg='#dcfce7'; dColor='#15803d'; dIcon='fa-walking'; dLabel = dk.toFixed(1)+' km away'; }
-              else if (dk <= 5) { dBg='#dbeafe'; dColor='#1d4ed8'; dIcon='fa-bicycle'; dLabel = dk.toFixed(1)+' km away'; }
-              else { dBg='#fef9c3'; dColor='#92400e'; dIcon='fa-car'; dLabel = dk.toFixed(1)+' km away'; }
-            %>
-            <span style="background: <%- dBg %>; color: <%- dColor %>; font-weight: 700; font-size: 0.8rem; padding: 4px 12px; border-radius: 99px; display: inline-flex; align-items: center; gap: 6px;">
-              <i class="fa-solid <%- dIcon %>"></i> <%- dLabel %>
-            </span>
-          <% } %>
+          <div id="distance-badge-container">
+            <% if (locals.distanceKm !== null && locals.distanceKm !== undefined) { %>
+              <%
+                const dk = locals.distanceKm;
+                let dBg, dColor, dIcon, dLabel;
+                if (dk < 0.1) { dBg='#dcfce7'; dColor='#15803d'; dIcon='fa-walking'; dLabel = Math.round(dk*1000)+'m away'; }
+                else if (dk <= 1) { dBg='#dcfce7'; dColor='#15803d'; dIcon='fa-walking'; dLabel = dk.toFixed(1)+' km away'; }
+                else if (dk <= 5) { dBg='#dbeafe'; dColor='#1d4ed8'; dIcon='fa-bicycle'; dLabel = dk.toFixed(1)+' km away'; }
+                else { dBg='#fef9c3'; dColor='#92400e'; dIcon='fa-car'; dLabel = dk.toFixed(1)+' km away'; }
+              %>
+              <span style="background: <%- dBg %>; color: <%- dColor %>; font-weight: 700; font-size: 0.8rem; padding: 4px 12px; border-radius: 99px; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa-solid <%- dIcon %>"></i> <%- dLabel %>
+              </span>
+            <% } %>
+          </div>
         </div>
         
         <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem; font-family: var(--font-display);">Description</h3>
@@ -204,6 +212,15 @@
             </div>
           </div>
 
+          <!-- Payment Option Selector -->
+          <div class="form-group" style="margin-top: 1rem; margin-bottom: 1.25rem;">
+            <label for="payment-method-select" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 6px;">Select Payment Option</label>
+            <select id="payment-method-select" name="paymentMethod" class="form-control" style="background:#ffffff; height: 42px; border-radius: 6px; font-weight: 600; border: 1px solid var(--border);">
+              <option value="online">Online Payment (Cards, UPI, Netbanking via Razorpay)</option>
+              <option value="p2p">Direct Bank/UPI Transfer (Screenshot upload fallback)</option>
+            </select>
+          </div>
+
           <input type="hidden" name="itemId" value="<%= item._id %>">
           <input type="hidden" name="startDate" id="start-date-input">
           <input type="hidden" name="endDate" id="end-date-input">
@@ -212,7 +229,7 @@
           <input type="hidden" name="deposit" value="<%= item.deposit %>">
 
           <% if (!currentUser) { %>
-            <a href="/auth/login" class="btn btn-primary" style="width: 100%;"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login to Book</a>
+            <button type="button" onclick="showP2PLoginModal()" class="btn btn-primary" style="width: 100%;"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login to Book</button>
           <% } else if (currentUser.role === 'user') { %>
             <% if (!currentUser.aadhaarVerified) { %>
               <div style="background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem; text-align: center; box-shadow: var(--shadow-sm);">
@@ -269,17 +286,178 @@
       <div style="background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm);">
         <div style="padding: 0.875rem 1rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
           <span style="font-weight: 600; font-size: 0.9rem;"><i class="fa-solid fa-map-location-dot" style="color: var(--primary);"></i> Location</span>
-          <% if (locals.distanceKm !== null && locals.distanceKm !== undefined) { %>
-            <span style="font-size: 0.82rem; color: var(--text-secondary);">
+          <span id="item-distance-label" style="font-size: 0.82rem; color: var(--text-secondary);">
+            <% if (locals.distanceKm !== null && locals.distanceKm !== undefined) { %>
               <i class="fa-solid fa-route"></i> <%= locals.distanceKm.toFixed(1) %> km from you
-            </span>
-          <% } %>
+            <% } %>
+          </span>
         </div>
         <div id="mini-map" style="width:100%; height:200px;"></div>
       </div>
 
     </div>
 
+  </div>
+</div>
+
+<!-- Direct P2P Payment Modal -->
+<div id="p2p-payment-modal" style="
+  display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+  background:rgba(15,23,42,0.65); backdrop-filter:blur(8px);
+  z-index:99999; justify-content:center; align-items:center; padding:1.5rem;
+">
+  <div style="
+    background:#ffffff; border:1px solid var(--border); border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-md); width:100%; max-width:480px; padding:2.25rem;
+    display:flex; flex-direction:column; gap:1.25rem; position:relative;
+  ">
+    <!-- Close Button -->
+    <button type="button" id="close-p2p-modal" style="
+      position:absolute; top:16px; right:16px; border:none; background:#f1f5f9;
+      width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+      font-size:0.9rem; color:var(--text-secondary); cursor:pointer; transition:all 0.2s;
+    " title="Cancel Checkout" onmouseover="this.style.background='#e2e8f0'; this.style.color='var(--text-primary)'" onmouseout="this.style.background='#f1f5f9'; this.style.color='var(--text-secondary)'">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <!-- Header -->
+    <div style="text-align:center; margin-top:0.5rem;">
+      <div style="width:48px; height:48px; background:var(--primary-light); color:var(--primary); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:0.75rem;">
+        <i class="fa-solid fa-shield-halved" style="font-size:1.5rem;"></i>
+      </div>
+      <h3 style="font-family:var(--font-display); font-size:1.35rem; margin:0 0 0.35rem 0;">
+        Secure Escrow Checkout
+      </h3>
+      <p style="color:var(--text-secondary); font-size:0.85rem; margin:0; line-height:1.4;">
+        Pay securely to the platform admin. Funds will be held in escrow until the rental starts.
+      </p>
+    </div>
+
+    <!-- Amount Card -->
+    <div style="background:linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border:1px solid #bfdbfe; border-radius:var(--radius-md); padding:1rem 1.25rem; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <span style="font-size:0.75rem; color:var(--primary-dark); font-weight:700; text-transform:uppercase; letter-spacing:0.05em; display:block; margin-bottom:2px;">Amount to Transfer</span>
+        <h2 style="font-size:1.85rem; font-family:var(--font-display); color:var(--text-primary); margin:0; font-weight:800;">₹<span id="p2p-amount">0</span></h2>
+      </div>
+      <div style="background:#ffffff; color:var(--success); border-radius:99px; padding:6px 12px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:6px; box-shadow:var(--shadow-sm);">
+        <i class="fa-solid fa-circle-check"></i> Escrow Protection
+      </div>
+    </div>
+
+    <!-- Payout Tabs -->
+    <div style="display:flex; gap:6px; background:#f1f5f9; padding:4px; border-radius:var(--radius-md);">
+      <button type="button" id="tab-upi-btn" style="flex:1; border:none; background:#ffffff; color:var(--text-primary); font-weight:700; padding:8px 12px; font-size:0.8rem; border-radius:var(--radius-sm); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s; box-shadow:var(--shadow-sm);">
+        <i class="fa-solid fa-qrcode"></i> UPI Payment
+      </button>
+      <button type="button" id="tab-bank-btn" style="flex:1; border:none; background:transparent; color:var(--text-secondary); font-weight:700; padding:8px 12px; font-size:0.8rem; border-radius:var(--radius-sm); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
+        <i class="fa-solid fa-building-columns"></i> Bank Transfer
+      </button>
+    </div>
+
+    <!-- UPI Tab Content -->
+    <div id="upi-tab-content" style="display:flex; flex-direction:column; align-items:center; gap:1rem;">
+      <div style="background:#ffffff; border:1px solid var(--border); padding:0.75rem; border-radius:var(--radius-md); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; position:relative;">
+        <img id="upi-qr-image" src="" alt="UPI QR Code" style="width:160px; height:160px; display:block;">
+      </div>
+      <p style="font-size:0.78rem; color:var(--text-secondary); text-align:center; margin:0; line-height:1.45; max-width:360px;">
+        Scan the QR code above with any UPI app (GPay, PhonePe, Paytm, BHIM) to make a instant payment.
+      </p>
+      
+      <div style="width:100%; display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid var(--border); padding:10px 14px; border-radius:var(--radius-md);">
+        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; margin-right:8px;">
+          <span style="font-size:0.65rem; color:var(--text-hint); display:block; text-transform:uppercase; font-weight:700; letter-spacing:0.04em;">Admin UPI ID</span>
+          <span id="p2p-upi-id" style="font-family:monospace; font-size:0.85rem; font-weight:700; color:var(--text-primary);"></span>
+        </div>
+        <button type="button" id="copy-upi-btn" class="btn btn-outline btn-sm" style="padding:6px 10px; font-size:0.75rem; flex-shrink:0; background:#ffffff;">
+          <i class="fa-regular fa-copy"></i> <span>Copy</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bank Tab Content -->
+    <div id="bank-tab-content" style="display:none; flex-direction:column; gap:0.75rem;">
+      <div style="background:#f8fafc; border:1px solid var(--border); border-radius:var(--radius-md); padding:1.25rem; display:flex; flex-direction:column; gap:0.75rem;">
+        
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; flex-direction:column;">
+            <span style="font-size:0.68rem; color:var(--text-hint); text-transform:uppercase; font-weight:700;">Account Holder</span>
+            <strong style="color:var(--text-primary); font-size:0.85rem;" id="p2p-bank-name"></strong>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e2e8f0; padding-top:0.75rem;">
+          <div style="display:flex; flex-direction:column;">
+            <span style="font-size:0.68rem; color:var(--text-hint); text-transform:uppercase; font-weight:700;">Account Number</span>
+            <strong style="color:var(--text-primary); font-family:monospace; font-size:0.9rem;" id="p2p-bank-acc"></strong>
+          </div>
+          <button type="button" id="copy-bank-acc-btn" class="btn btn-outline btn-sm" style="padding:4px 8px; font-size:0.7rem; background:#ffffff;">
+            <i class="fa-regular fa-copy"></i> <span>Copy</span>
+          </button>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e2e8f0; padding-top:0.75rem;">
+          <div style="display:flex; flex-direction:column;">
+            <span style="font-size:0.68rem; color:var(--text-hint); text-transform:uppercase; font-weight:700;">IFSC Code</span>
+            <strong style="color:var(--text-primary); font-family:monospace; font-size:0.9rem;" id="p2p-bank-ifsc">ICIC0000104</strong>
+          </div>
+          <button type="button" id="copy-bank-ifsc-btn" class="btn btn-outline btn-sm" style="padding:4px 8px; font-size:0.7rem; background:#ffffff;">
+            <i class="fa-regular fa-copy"></i> <span>Copy</span>
+          </button>
+        </div>
+
+      </div>
+      <p style="font-size:0.78rem; color:var(--text-secondary); margin:0; line-height:1.45; text-align:center;">
+        Transfer via IMPS, NEFT, or RTGS to the admin's account above.
+      </p>
+    </div>
+
+    <!-- Screenshot Upload Form -->
+    <div style="border-top:1px dashed var(--border); padding-top:1.25rem; display:flex; flex-direction:column; gap:0.75rem;">
+      <label style="font-size:0.85rem; font-weight:700; color:var(--text-primary); display:flex; justify-content:space-between; align-items:center;">
+        <span>Step 2: Upload Payment Proof</span>
+        <span style="font-size:0.7rem; color:var(--danger); font-weight:600;">* Required</span>
+      </label>
+
+      <!-- Drag & Drop Upload Zone -->
+      <div id="p2p-upload-zone" style="
+        border: 2px dashed #cbd5e1; border-radius: var(--radius-md); padding: 1.25rem;
+        text-align: center; cursor: pointer; transition: all 0.2s ease; background: #f8fafc;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+      ">
+        <i class="fa-solid fa-cloud-arrow-up" id="p2p-upload-icon" style="font-size: 1.75rem; color: var(--text-hint); transition: color 0.2s;"></i>
+        <p id="p2p-upload-text" style="font-size: 0.825rem; color: var(--text-secondary); font-weight: 500; margin: 0;">
+          Click to upload or drag & drop screenshot
+        </p>
+        <p id="p2p-upload-subtext" style="font-size: 0.7rem; color: var(--text-hint); margin: 0;">
+          Supports PNG, JPG, JPEG
+        </p>
+        
+        <!-- Preview Container -->
+        <div id="p2p-preview-container" style="display: none; position: relative; margin-top: 4px; width: 100%; max-width: 120px;">
+          <img id="p2p-screenshot-preview" src="" style="width: 100%; height: auto; max-height: 80px; object-fit: contain; border-radius: var(--radius-sm); border: 1px solid var(--border);" alt="Preview">
+          <button type="button" id="p2p-remove-file-btn" style="
+            position: absolute; top: -6px; right: -6px; background: var(--danger); color: white;
+            border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm);
+          ">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <input type="file" id="p2p-screenshot-input" accept="image/*" style="display: none;" required>
+
+      <button type="button" id="p2p-submit-btn" class="btn btn-primary" style="width: 100%; padding: 10px 16px; font-size: 0.9rem; font-weight: 700; margin-top: 0.25rem;">
+        Confirm & Submit Booking
+      </button>
+
+      <div style="background:#fffbeb; border:1px solid #fef3c7; border-radius:var(--radius-sm); padding:8px 12px; display:flex; gap:8px; align-items:flex-start; margin-top:0.25rem;">
+        <i class="fa-solid fa-circle-info" style="color:#b45309; font-size:0.85rem; margin-top:1px; flex-shrink:0;"></i>
+        <span style="font-size:0.72rem; color:#b45309; line-height:1.35;">
+          Admin verifies transaction screenshots manually. Uploading an invalid, blank, or fake receipt will result in immediate cancellation of your booking.
+        </span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -291,6 +469,7 @@
     const itemDeposit = <%= item.deposit %>;
     const itemId = '<%= item._id %>';
     const sellerId = '<%= item.owner._id %>';
+    const bookedRanges = <%- JSON.stringify((typeof bookings !== 'undefined' && bookings) ? bookings.map(b => ({ from: b.startDate, to: b.endDate })) : []) %>;
 
     // Image gallery thumbnail borders
     const thumbs = document.querySelectorAll('.gallery-thumbnail');
@@ -375,15 +554,19 @@
     dailyPickerInstance = flatpickr("#date-range", {
       mode: "range",
       minDate: "today",
-      dateFormat: "Y-m-d",
+      enableTime: true,
+      dateFormat: "Y-m-d H:i",
+      disable: bookedRanges,
       onClose: function(selectedDates) {
         if (selectedDates.length === 2) {
           const start = selectedDates[0];
           const end = selectedDates[1];
           const diffTime = Math.abs(end - start);
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+          const diffHours = diffTime / (1000 * 60 * 60);
+          let diffDays = parseFloat((diffHours / 24).toFixed(1));
+          if (diffDays < 1.0) diffDays = 1.0;
 
-          const subtotal = diffDays * itemPrice;
+          const subtotal = Math.round(diffDays * itemPrice);
           const total = subtotal + itemDeposit;
 
           document.getElementById('breakdown-label').innerHTML = `₹${itemPrice} x <span id="days-count">${diffDays}</span> days`;
@@ -409,6 +592,7 @@
       enableTime: true,
       minDate: "today",
       dateFormat: "Y-m-d H:i",
+      disable: bookedRanges,
       onClose: function(selectedDates) {
         calculateHourlyPrice(selectedDates);
       }
@@ -465,7 +649,8 @@
               endDate: document.getElementById('end-date-input').value,
               totalDays: document.getElementById('total-days-input').value,
               totalAmount: document.getElementById('total-amount-input').value,
-              deposit: itemDeposit
+              deposit: itemDeposit,
+              paymentMethod: document.getElementById('payment-method-select').value
             })
           });
 
@@ -487,27 +672,194 @@
           const bookingId = data.bookingId;
 
           if (order.id.startsWith('order_mock_')) {
-            // Running in sandbox mock checkout mode
-            const confirmMock = confirm(`[Mock Checkout Sandbox]\nOrder ID: ${order.id}\nAmount: ₹${order.amount/100}\nClick OK to simulate successful payment.`);
-            if (confirmMock) {
-              const verifyRes = await fetch('/payments/verify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  bookingId: bookingId,
-                  razorpay_order_id: order.id,
-                  razorpay_payment_id: 'pay_mock_' + Math.random().toString(36).substring(2, 12),
-                  razorpay_signature: 'signature_mock_hash_123897'
-                })
-              });
-              const verifyData = await verifyRes.json();
-              if (verifyData.success) {
-                alert('Mock payment successful!');
-                window.location.href = '/user/bookings';
-              } else {
-                alert('Mock verification failed: ' + verifyData.error);
+            const adminName = 'RentIt Platform Admin';
+            const finalUpi = '9016032781@fam';
+            const finalBank = '123456789012';
+            const finalIfsc = 'ICIC0000104';
+            const totalAmountVal = document.getElementById('total-amount-input').value;
+
+            // Populate P2P modal fields
+            document.getElementById('p2p-amount').textContent = totalAmountVal;
+            document.getElementById('p2p-upi-id').textContent = finalUpi;
+            document.getElementById('p2p-bank-name').textContent = adminName;
+            document.getElementById('p2p-bank-acc').textContent = finalBank;
+            document.getElementById('p2p-bank-ifsc').textContent = finalIfsc;
+
+            // Generate UPI QR Code
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
+              `upi://pay?pa=${finalUpi}&pn=${encodeURIComponent(adminName)}&am=${totalAmountVal}&cu=INR&tn=RentIt_Booking_${bookingId}`
+            )}`;
+            document.getElementById('upi-qr-image').src = qrUrl;
+
+            // Show P2P Modal
+            const p2pModal = document.getElementById('p2p-payment-modal');
+            p2pModal.style.display = 'flex';
+
+            // Reset inputs
+            const screenshotInput = document.getElementById('p2p-screenshot-input');
+            const uploadZone = document.getElementById('p2p-upload-zone');
+            const uploadIcon = document.getElementById('p2p-upload-icon');
+            const uploadText = document.getElementById('p2p-upload-text');
+            const uploadSubtext = document.getElementById('p2p-upload-subtext');
+            const previewContainer = document.getElementById('p2p-preview-container');
+            const screenshotPreview = document.getElementById('p2p-screenshot-preview');
+            const removeFileBtn = document.getElementById('p2p-remove-file-btn');
+
+            function resetUploadZone() {
+              screenshotInput.value = '';
+              previewContainer.style.display = 'none';
+              screenshotPreview.src = '';
+              uploadIcon.style.display = 'block';
+              uploadText.style.display = 'block';
+              uploadSubtext.style.display = 'block';
+              uploadZone.style.borderColor = '#cbd5e1';
+              uploadZone.style.background = '#f8fafc';
+            }
+            resetUploadZone();
+
+            // Setup drag & drop handlers
+            uploadZone.onclick = () => screenshotInput.click();
+            
+            uploadZone.ondragover = (e) => {
+              e.preventDefault();
+              uploadZone.style.borderColor = 'var(--primary)';
+              uploadZone.style.background = 'var(--primary-light)';
+            };
+
+            uploadZone.ondragleave = () => {
+              if (screenshotInput.files.length === 0) {
+                uploadZone.style.borderColor = '#cbd5e1';
+                uploadZone.style.background = '#f8fafc';
+              }
+            };
+
+            uploadZone.ondrop = (e) => {
+              e.preventDefault();
+              if (e.dataTransfer.files.length > 0) {
+                screenshotInput.files = e.dataTransfer.files;
+                handleFileSelect();
+              }
+            };
+
+            screenshotInput.onchange = () => {
+              handleFileSelect();
+            };
+
+            function handleFileSelect() {
+              if (screenshotInput.files && screenshotInput.files[0]) {
+                const file = screenshotInput.files[0];
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                  screenshotPreview.src = e.target.result;
+                  previewContainer.style.display = 'block';
+                  uploadIcon.style.display = 'none';
+                  uploadText.style.display = 'none';
+                  uploadSubtext.style.display = 'none';
+                  uploadZone.style.borderColor = 'var(--success)';
+                  uploadZone.style.background = '#f0fdf4';
+                };
+                reader.readAsDataURL(file);
               }
             }
+
+            removeFileBtn.onclick = (e) => {
+              e.stopPropagation(); // prevent opening file selector
+              resetUploadZone();
+            };
+
+            // Tab toggling logic
+            const tabUpiBtn = document.getElementById('tab-upi-btn');
+            const tabBankBtn = document.getElementById('tab-bank-btn');
+            const upiContent = document.getElementById('upi-tab-content');
+            const bankContent = document.getElementById('bank-tab-content');
+
+            tabUpiBtn.onclick = () => {
+              tabUpiBtn.style.background = '#ffffff';
+              tabUpiBtn.style.color = 'var(--text-primary)';
+              tabUpiBtn.style.boxShadow = 'var(--shadow-sm)';
+              tabBankBtn.style.background = 'transparent';
+              tabBankBtn.style.color = 'var(--text-secondary)';
+              tabBankBtn.style.boxShadow = 'none';
+              upiContent.style.display = 'flex';
+              bankContent.style.display = 'none';
+            };
+
+            tabBankBtn.onclick = () => {
+              tabBankBtn.style.background = '#ffffff';
+              tabBankBtn.style.color = 'var(--text-primary)';
+              tabBankBtn.style.boxShadow = 'var(--shadow-sm)';
+              tabUpiBtn.style.background = 'transparent';
+              tabUpiBtn.style.color = 'var(--text-secondary)';
+              tabUpiBtn.style.boxShadow = 'none';
+              bankContent.style.display = 'flex';
+              upiContent.style.display = 'none';
+            };
+
+            // Setup utility for sleek copy animation feedback
+            function setupCopyButton(btnId, textToCopy) {
+              const btn = document.getElementById(btnId);
+              if (!btn) return;
+              btn.onclick = (e) => {
+                e.stopPropagation();
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                  const origHTML = btn.innerHTML;
+                  btn.innerHTML = '<i class="fa-solid fa-check" style="color:var(--success)"></i> Copied!';
+                  btn.style.borderColor = 'var(--success)';
+                  setTimeout(() => {
+                    btn.innerHTML = origHTML;
+                    btn.style.borderColor = '';
+                  }, 2000);
+                });
+              };
+            }
+
+            // Bind copy actions
+            setupCopyButton('copy-upi-btn', finalUpi);
+            setupCopyButton('copy-bank-acc-btn', finalBank);
+            setupCopyButton('copy-bank-ifsc-btn', finalIfsc);
+
+            // Close modal button
+            document.getElementById('close-p2p-modal').onclick = () => {
+              p2pModal.style.display = 'none';
+            };
+
+            // Submit Screenshot verification
+            document.getElementById('p2p-submit-btn').onclick = async () => {
+              if (screenshotInput.files.length === 0) {
+                alert('Please upload or drag & drop a screenshot of your payment receipt.');
+                return;
+              }
+
+              window.showAILoader('Uploading and verifying payment...');
+              p2pModal.style.display = 'none';
+
+              try {
+                const formData = new FormData();
+                formData.append('bookingId', bookingId);
+                formData.append('razorpay_order_id', order.id);
+                formData.append('screenshot', screenshotInput.files[0]);
+
+                const verifyRes = await fetch('/payments/verify', {
+                  method: 'POST',
+                  body: formData
+                });
+
+                const verifyData = await verifyRes.json();
+                window.hideAILoader();
+
+                if (verifyData.success) {
+                  alert('Direct payment notification and screenshot sent to admin! Your booking is confirmed.');
+                  window.location.href = '/user/bookings';
+                } else {
+                  alert('Verification failed: ' + verifyData.error);
+                  p2pModal.style.display = 'flex';
+                }
+              } catch (verifyErr) {
+                window.hideAILoader();
+                alert('Verification check failed: ' + verifyErr.message);
+                p2pModal.style.display = 'flex';
+              }
+            };
           } else {
             // Live Razorpay payment instance checkout
             const options = {
@@ -517,6 +869,15 @@
               order_id: order.id,
               name: 'RentIt Marketplace',
               description: `Booking for <%= item.title %>`,
+              callback_url: window.location.origin + '/payments/verify?bookingId=' + bookingId + '&redirect=true',
+              prefill: {
+                name: '<%= currentUser ? currentUser.name : "" %>',
+                email: '<%= currentUser ? currentUser.email : "" %>',
+                contact: '<%= currentUser ? currentUser.phone : "" %>'
+              },
+              theme: {
+                color: '#2563EB'
+              },
               handler: async function(response) {
                 window.showAILoader('Verifying transaction...');
                 const verifyRes = await fetch('/payments/verify', {
@@ -571,26 +932,83 @@
       L.marker([itemLat, itemLng], { icon: itemIcon }).addTo(miniMap)
         .bindPopup(`<b><%= item.title %></b><br>₹<%= item.pricePerDay %>/day`);
 
-      // User location pin (blue) + dotted line
-      <% if (currentUser && currentUser.location && currentUser.location.coordinates && currentUser.location.coordinates[0]) { %>
-        const userLng = <%= currentUser.location.coordinates[0] %>;
-        const userLat = <%= currentUser.location.coordinates[1] %>;
+      // Resolve user location to show on map
+      let userLat = null;
+      let userLng = null;
 
+      // 1. Try localStorage coordinates first
+      const storedLat = localStorage.getItem('user_lat');
+      const storedLng = localStorage.getItem('user_lng');
+      if (storedLat && storedLng) {
+        userLat = parseFloat(storedLat);
+        userLng = parseFloat(storedLng);
+      } 
+      // 2. Try logged-in user profile coordinates if they are a regular renter (not a seller)
+      <% if (currentUser && currentUser.role === 'user' && currentUser.location && currentUser.location.coordinates && currentUser.location.coordinates[0]) { %>
+        else {
+          userLng = <%= currentUser.location.coordinates[0] %>;
+          userLat = <%= currentUser.location.coordinates[1] %>;
+        }
+      <% } %>
+
+      function drawUserLocation(lat, lng) {
         const userIcon = L.divIcon({
           html: `<div style="background:var(--primary);width:12px;height:12px;border:3px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.3);"></div>`,
           className: 'custom-div-icon', iconSize: [12,12], iconAnchor: [6,6]
         });
-        L.marker([userLat, userLng], { icon: userIcon }).addTo(miniMap)
+        L.marker([lat, lng], { icon: userIcon }).addTo(miniMap)
           .bindPopup('<b>Your Location</b>');
 
         // Draw dashed distance line
-        L.polyline([[userLat, userLng], [itemLat, itemLng]], {
+        L.polyline([[lat, lng], [itemLat, itemLng]], {
           color: '#2563EB', weight: 2, dashArray: '6,6', opacity: 0.7
         }).addTo(miniMap);
 
         // Fit map to show both pins
-        miniMap.fitBounds([[userLat, userLng], [itemLat, itemLng]], { padding: [30, 30] });
-      <% } %>
+        miniMap.fitBounds([[lat, lng], [itemLat, itemLng]], { padding: [30, 30] });
+
+        // Update distance label
+        const R = 6371; // km
+        const dLat = (itemLat - lat) * Math.PI / 180;
+        const dLng = (itemLng - lng) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat * Math.PI / 180) * Math.cos(itemLat * Math.PI / 180) *
+                  Math.sin(dLng/2) * Math.sin(dLng/2);
+        const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        const lbl = document.getElementById('item-distance-label');
+        if (lbl) lbl.innerHTML = `<i class="fa-solid fa-route"></i> ${dist.toFixed(1)} km from you`;
+
+        // Update top distance badge
+        const badgeContainer = document.getElementById('distance-badge-container');
+        if (badgeContainer) {
+          let dBg = '#fef9c3', dColor = '#92400e', dIcon = 'fa-car', dLabel = dist.toFixed(1) + ' km away';
+          if (dist < 0.1) { dBg='#dcfce7'; dColor='#15803d'; dIcon='fa-walking'; dLabel = Math.round(dist*1000)+'m away'; }
+          else if (dist <= 1) { dBg='#dcfce7'; dColor='#15803d'; dIcon='fa-walking'; dLabel = dist.toFixed(1)+' km away'; }
+          else if (dist <= 5) { dBg='#dbeafe'; dColor='#1d4ed8'; dIcon='fa-bicycle'; dLabel = dist.toFixed(1)+' km away'; }
+          
+          badgeContainer.innerHTML = `
+            <span style="background: ${dBg}; color: ${dColor}; font-weight: 700; font-size: 0.8rem; padding: 4px 12px; border-radius: 99px; display: inline-flex; align-items: center; gap: 6px;">
+              <i class="fa-solid ${dIcon}"></i> ${dLabel}
+            </span>
+          `;
+        }
+      }
+
+      if (userLat && userLng) {
+        drawUserLocation(userLat, userLng);
+      } else {
+        // Fallback to client-side geolocation query
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition((pos) => {
+            const uLat = pos.coords.latitude;
+            const uLng = pos.coords.longitude;
+            localStorage.setItem('user_lat', uLat.toFixed(6));
+            localStorage.setItem('user_lng', uLng.toFixed(6));
+            drawUserLocation(uLat, uLng);
+          });
+        }
+      }
     <% } %>
 
     // Handle quick start-chat action

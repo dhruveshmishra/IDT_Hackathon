@@ -4,6 +4,8 @@ const itemSchema = new mongoose.Schema({
   title:       { type: String, required: true, trim: true },
   description: { type: String, required: true },
   category:    { type: String, enum: ['electronics','tools','vehicles','furniture','sports','clothing','other'], required: true },
+  subcategory: { type: String, trim: true },
+  vehicleNumber: { type: String, trim: true, uppercase: true },  // Required only for vehicles
   pricePerDay: { type: Number, required: true, min: 0 },
   pricePerHour: { type: Number, default: 0 },
   deposit:     { type: Number, default: 0 },
@@ -15,6 +17,7 @@ const itemSchema = new mongoose.Schema({
   },
   address:      String,
   isAvailable:  { type: Boolean, default: true },
+  quantity:     { type: Number, default: 1, min: 0 },
   tags:         [String],
   aiGenerated:  { type: Boolean, default: false },
   flagged:      { type: Boolean, default: false },

@@ -1,0 +1,125 @@
+<div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; background-color: var(--surface); box-shadow: var(--shadow-xs);">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <!-- Renter & Item details -->
+    <div style="display: flex; gap: 1rem; align-items: center;">
+      <% if (booking.renter && booking.renter.avatar && booking.renter.avatar.url) { %>
+        <img src="<%= booking.renter.avatar.url %>" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;">
+      <% } else { %>
+        <div style="width: 44px; height: 44px; border-radius: 50%; background-color:#cbd5e1; display:flex; align-items:center; justify-content:center; font-weight:700;"><%= (booking.renter && booking.renter.name) ? booking.renter.name[0] : 'U' %></div>
+      <% } %>
+      <div>
+        <h4 style="margin: 0 0 2px; font-size: 1rem; font-family: var(--font-display);"><%= booking.renter ? booking.renter.name : 'Unknown Renter' %></h4>
+        <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary);">
+          Rented: <strong><%= booking.item ? booking.item.title : 'Deleted Item' %></strong>
+        </p>
+        <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary);">
+          Dates: <%= new Date(booking.startDate).toLocaleDateString() %> - <%= new Date(booking.endDate).toLocaleDateString() %> (<%= booking.totalDays %> days)
+        </p>
+      </div>
+    </div>
+
+    <!-- Status & Operations -->
+    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+      <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; padding: 2px 8px; border-radius: var(--radius-sm);
+        <%= booking.status === 'confirmed' ? 'background-color: #dcfce7; color: #16a34a;' : '' %>
+        <%= booking.status === 'pending' ? 'background-color: #fef3c7; color: #d97706;' : '' %>
+        <%= booking.status === 'active' ? 'background-color: #eff6ff; color: #2563eb;' : '' %>
+        <%= booking.status === 'completed' ? 'background-color: #f1f5f9; color: #64748b;' : '' %>
+        <%= booking.status === 'cancelled' ? 'background-color: #fee2e2; color: #dc2626;' : '' %>
+      ">
+        <%= booking.status %>
+      </span>
+      
+      <div style="font-weight: 700; color: var(--text-primary); font-size: 1.1rem;">
+        Total Amount: ₹<%= booking.totalAmount %>
+      </div>
+
+      <div style="display: flex; gap: 6px; align-items: center;">
+        <a href="/seller/messages/<%= booking._id %>" class="btn btn-outline" style="padding: 4px 10px; font-size: 0.75rem;"><i class="fa-regular fa-comment-dots"></i> Message</a>
+        
+        <% if (booking.status === 'pending') { %>
+          <span style="font-size: 0.8rem; color: var(--text-secondary); font-style: italic; background: #f8fafc; padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border);">
+            <i class="fa-solid fa-hourglass-start" style="color: var(--warning);"></i> Awaiting payment approval
+          </span>
+        <% } else if (booking.status === 'confirmed') { %>
+          <button onclick="toggleActionForm('<%= booking._id %>', 'handover')" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.75rem; border: none; background: var(--primary);">
+            <i class="fa-solid fa-camera"></i> Handover Item
+          </button>
+        <% } else if (booking.status === 'active') { %>
+          <button onclick="toggleActionForm('<%= booking._id %>', 'return')" class="btn btn-accent" style="padding: 4px 10px; font-size: 0.75rem; border: none; background: var(--accent); color:#fff;">
+            <i class="fa-solid fa-camera"></i> Mark Returned
+          </button>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inline Action Forms for Uploading Photos -->
+  
+  <!-- Handover Photo Form -->
+  <% if (booking.status === 'confirmed') { %>
+    <div id="handover-form-<%= booking._id %>" style="display: none; border-top: 1px dashed var(--border); padding-top: 1rem; background: #f8fafc; border-radius: 6px; padding: 1rem; border: 1px solid var(--border); margin-top: 0.5rem;">
+      <h5 style="margin: 0 0 10px; font-family: var(--font-display); font-size: 0.88rem; color: var(--primary);">
+        <i class="fa-solid fa-camera"></i> Upload Handover Condition Photo
+      </h5>
+      <form action="/seller/bookings/<%= booking._id %>/handover" method="POST" enctype="multipart/form-data" onsubmit="window.showAILoader('Uploading Handover Photo...');">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <input type="file" name="handoverImage" accept="image/*" required style="font-size: 0.85rem;">
+          <p style="margin: 0; font-size: 0.75rem; color: var(--text-secondary);">Upload a photo showing the item's condition at the time of handing it over to the user.</p>
+          <div style="display: flex; gap: 6px; margin-top: 4px;">
+            <button type="submit" class="btn btn-primary" style="padding: 5px 12px; font-size: 0.8rem; background: var(--primary); border: none;">Confirm Handover</button>
+            <button type="button" onclick="toggleActionForm('<%= booking._id %>', 'handover')" class="btn btn-outline" style="padding: 5px 12px; font-size: 0.8rem;">Cancel</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  <% } %>
+
+  <!-- Return Photo Form -->
+  <% if (booking.status === 'active') { %>
+    <div id="return-form-<%= booking._id %>" style="display: none; border-top: 1px dashed var(--border); padding-top: 1rem; background: #f8fafc; border-radius: 6px; padding: 1rem; border: 1px solid var(--border); margin-top: 0.5rem;">
+      <h5 style="margin: 0 0 10px; font-family: var(--font-display); font-size: 0.88rem; color: var(--accent);">
+        <i class="fa-solid fa-camera"></i> Upload Return Condition Photo
+      </h5>
+      <form action="/seller/bookings/<%= booking._id %>/return" method="POST" enctype="multipart/form-data" onsubmit="window.showAILoader('Gemini is inspecting item return photos for damage...');">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <input type="file" name="returnImage" accept="image/*" required style="font-size: 0.85rem;">
+          <p style="margin: 0; font-size: 0.75rem; color: var(--text-secondary);">Upload a photo showing the item's condition as it is returned by the user. Gemini AI will analyze it against the handover photo.</p>
+          <div style="display: flex; gap: 6px; margin-top: 4px;">
+            <button type="submit" class="btn btn-accent" style="padding: 5px 12px; font-size: 0.8rem; background: var(--accent); color:#fff; border: none;">Confirm Return & Inspect</button>
+            <button type="button" onclick="toggleActionForm('<%= booking._id %>', 'return')" class="btn btn-outline" style="padding: 5px 12px; font-size: 0.8rem;">Cancel</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  <% } %>
+
+  <!-- Completed Section: Show Photos and Gemini Analysis -->
+  <% if (booking.status === 'completed' && booking.dispute && booking.dispute.beforeImage) { %>
+    <div style="border-top: 1px dashed var(--border); padding-top: 1rem; display: flex; flex-direction: column; gap: 1rem; margin-top: 0.5rem;">
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div>
+          <span style="font-size: 0.7rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 4px;">Handover Condition</span>
+          <img src="<%= booking.dispute.beforeImage %>" style="width: 100%; max-height: 120px; object-fit: contain; border: 1px solid var(--border); border-radius: 6px; background: #f8fafc;">
+        </div>
+        <div>
+          <span style="font-size: 0.7rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 4px;">Return Condition</span>
+          <img src="<%= booking.dispute.afterImage %>" style="width: 100%; max-height: 120px; object-fit: contain; border: 1px solid var(--border); border-radius: 6px; background: #f8fafc;">
+        </div>
+      </div>
+
+      <% if (booking.dispute.aiAnalysis) { %>
+        <div style="background-color: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; font-size: 0.82rem; color: var(--text-primary);">
+          <strong style="color: var(--primary); display: flex; align-items: center; gap: 5px; margin-bottom: 4px;">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Gemini Inspection Report:
+          </strong>
+          <span style="line-height: 1.4; display: block; white-space: pre-line; color: var(--text-secondary);"><%= booking.dispute.aiAnalysis %></span>
+        </div>
+      <% } %>
+
+    </div>
+  <% } %>
+
+</div>

@@ -41,10 +41,10 @@
         <textarea name="description" id="description" rows="5" class="form-control" required><%= item.description %></textarea>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
         <div class="form-group">
           <label for="category">Category</label>
-          <select name="category" id="category" class="form-control" required>
+          <select name="category" id="category" class="form-control" required onchange="onCategoryChange(this.value)">
             <option value="electronics" <%= item.category === 'electronics' ? 'selected' : '' %>>Electronics</option>
             <option value="tools" <%= item.category === 'tools' ? 'selected' : '' %>>Tools</option>
             <option value="vehicles" <%= item.category === 'vehicles' ? 'selected' : '' %>>Vehicles</option>
@@ -52,6 +52,12 @@
             <option value="sports" <%= item.category === 'sports' ? 'selected' : '' %>>Sports</option>
             <option value="clothing" <%= item.category === 'clothing' ? 'selected' : '' %>>Clothing</option>
             <option value="other" <%= item.category === 'other' ? 'selected' : '' %>>Other</option>
+          </select>
+        </div>
+        <div class="form-group" id="subcategory-group" style="display: none;">
+          <label for="subcategory">Subcategory / Type</label>
+          <select name="subcategory" id="subcategory" class="form-control">
+            <!-- Populated via JS -->
           </select>
         </div>
         <div class="form-group">
@@ -62,10 +68,6 @@
 
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; align-items: flex-end;">
         <div class="form-group">
-          <label for="pricePerHour">Price Per Hour (₹)</label>
-          <input type="number" name="pricePerHour" id="pricePerHour" class="form-control" value="<%= item.pricePerHour || '' %>" min="0" required>
-        </div>
-        <div class="form-group">
           <label for="pricePerDay">Price Per Day (₹)</label>
           <input type="number" name="pricePerDay" id="pricePerDay" class="form-control" value="<%= item.pricePerDay %>" min="0" required>
         </div>
@@ -73,17 +75,53 @@
           <label for="deposit">Refundable Deposit (₹)</label>
           <input type="number" name="deposit" id="deposit" class="form-control" value="<%= item.deposit %>" min="0">
         </div>
+        <div class="form-group">
+          <label for="quantity">Quantity Available</label>
+          <input type="number" name="quantity" id="quantity" class="form-control" value="<%= item.quantity !== undefined ? item.quantity : 1 %>" min="0" required>
+        </div>
       </div>
 
+      <!-- Location with autocomplete + map -->
       <div class="form-group" style="margin-bottom: 2rem;">
-        <label>Location Details</label>
+        <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+          <i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> Item Pickup Location
+        </label>
+
+        <!-- Address search row -->
         <div style="display: flex; gap: 8px; margin-bottom: 0.75rem;">
-          <input type="text" name="address" id="address" class="form-control" value="<%= item.address %>" required>
+          <div style="flex: 1; position: relative;">
+            <input type="text" name="address" id="address" class="form-control"
+              value="<%= item.address %>"
+              placeholder="Start typing an address…"
+              autocomplete="off" required style="padding-right: 36px;">
+            <i class="fa-solid fa-magnifying-glass" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); color:var(--text-hint); pointer-events:none;"></i>
+            <div id="address-suggestions" style="
+              display:none; position:absolute; top:100%; left:0; right:0;
+              background:#fff; border:1px solid var(--border); border-top:none;
+              border-radius:0 0 var(--radius-md) var(--radius-md);
+              box-shadow:var(--shadow-md); z-index:9999; max-height:240px; overflow-y:auto;">
+            </div>
+          </div>
+          <button type="button" id="use-my-loc-btn" class="btn btn-outline" style="flex-shrink:0; padding:10px 14px;" title="Use my current location">
+            <i class="fa-solid fa-location-crosshairs"></i> My Location
+          </button>
         </div>
-        <div style="display: flex; gap: 8px;">
-          <input type="number" step="any" name="lng" id="lng" class="form-control" value="<%= item.location.coordinates[0] %>" required>
-          <input type="number" step="any" name="lat" id="lat" class="form-control" value="<%= item.location.coordinates[1] %>" required>
+
+        <!-- Map -->
+        <div style="height:280px; margin-bottom:0.5rem; border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; position:relative;">
+          <div id="location-picker-map" style="width:100%; height:100%;"></div>
+          <div style="position:absolute; bottom:8px; right:8px; background:rgba(255,255,255,0.9); border-radius:6px; padding:4px 8px; font-size:0.72rem; color:var(--text-secondary); pointer-events:none; box-shadow:var(--shadow-sm);">
+            <i class="fa-solid fa-hand-pointer"></i> Click map or drag pin to update location
+          </div>
         </div>
+
+        <!-- Hidden coords (pre-filled with existing values) -->
+        <input type="hidden" name="lng" id="lng" value="<%= item.location.coordinates[0] %>">
+        <input type="hidden" name="lat" id="lat" value="<%= item.location.coordinates[1] %>">
+
+        <p style="font-size:0.78rem; color:var(--text-hint); margin:0;">
+          <i class="fa-solid fa-circle-info"></i> Type for suggestions, or click/drag the pin — address auto-fills.
+        </p>
       </div>
 
       <div style="display: flex; justify-content: flex-end; gap: 1rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
@@ -94,5 +132,180 @@
     </form>
   </div>
 </div>
+
+<script>
+  const subcategoriesMap = {
+    electronics: [
+      { value: 'mobile', label: 'Mobile / Smartphone' },
+      { value: 'laptop', label: 'Laptop & Computers' },
+      { value: 'camera', label: 'DSLR Cameras' },
+      { value: 'tv', label: 'LED TVs' },
+      { value: 'audio', label: 'Audio Systems' },
+      { value: 'appliances', label: 'Home Appliances (AC, Geyser, Refrigerator)' },
+      { value: 'other', label: 'Other Electronic' }
+    ],
+    vehicles: [
+      { value: 'self_drive_car', label: 'Self Drive Car' },
+      { value: 'bikes_scooters', label: 'Bikes & Scooters' },
+      { value: 'outstation_cabs', label: 'Outstation Cabs' },
+      { value: 'luxury_cars', label: 'Luxury Cars' },
+      { value: 'segways', label: 'Segways' },
+      { value: 'golf_cart', label: 'Golf Cart' },
+      { value: 'other', label: 'Other Vehicle' }
+    ],
+    tools: [
+      { value: 'drills', label: 'Power Drills' },
+      { value: 'saws', label: 'Saws & Cutters' },
+      { value: 'hand_tools', label: 'Hand Tools' },
+      { value: 'generators', label: 'Generators' },
+      { value: 'ladders', label: 'Ladders' },
+      { value: 'other', label: 'Other Tool' }
+    ],
+    furniture: [
+      { value: 'sofa', label: 'Sofa & Couches' },
+      { value: 'bed', label: 'Beds & Mattresses' },
+      { value: 'table_chair', label: 'Tables & Chairs' },
+      { value: 'office', label: 'Office Furniture' },
+      { value: 'other', label: 'Other Furniture' }
+    ],
+    sports: [
+      { value: 'cycle', label: 'Bicycles' },
+      { value: 'gym', label: 'Gym Equipment' },
+      { value: 'adventure', label: 'Adventure Gear' },
+      { value: 'other', label: 'Other Sports Equipment' }
+    ],
+    clothing: [
+      { value: 'suits', label: 'Suits & Tuxedos' },
+      { value: 'ethnic', label: 'Ethnic Wear' },
+      { value: 'dresses', label: 'Dresses & Gowns' },
+      { value: 'other', label: 'Other Clothing' }
+    ]
+  };
+
+  function onCategoryChange(val, selectedVal = '') {
+    const subGroup = document.getElementById('subcategory-group');
+    const subSelect = document.getElementById('subcategory');
+    subSelect.innerHTML = '';
+    if (subcategoriesMap[val]) {
+      subGroup.style.display = 'block';
+      subSelect.setAttribute('required', 'required');
+      subcategoriesMap[val].forEach(sub => {
+        const opt = document.createElement('option');
+        opt.value = sub.value;
+        opt.textContent = sub.label;
+        if (sub.value === selectedVal) {
+          opt.selected = true;
+        }
+        subSelect.appendChild(opt);
+      });
+    } else {
+      subGroup.style.display = 'none';
+      subSelect.removeAttribute('required');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Populate subcategories and pre-select current item subcategory
+    onCategoryChange("<%= item.category %>", "<%= item.subcategory || '' %>");
+    const addressInput = document.getElementById('address');
+    const suggestionBox = document.getElementById('address-suggestions');
+
+    // Use saved coordinates (pre-filled in hidden inputs)
+    const savedLat = parseFloat(document.getElementById('lat').value) || 19.0760;
+    const savedLng = parseFloat(document.getElementById('lng').value) || 72.8777;
+
+    const map = L.map('location-picker-map').setView([savedLat, savedLng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    const marker = L.marker([savedLat, savedLng], { draggable: true }).addTo(map);
+
+    function setCoords(lat, lng) {
+      document.getElementById('lat').value = lat;
+      document.getElementById('lng').value = lng;
+    }
+
+    async function reverseGeocode(lat, lng) {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+          { headers: { 'Accept-Language': 'en', 'User-Agent': 'RentItApp/1.0' } }
+        );
+        const data = await res.json();
+        if (data && data.display_name) addressInput.value = data.display_name;
+      } catch (e) {}
+    }
+
+    marker.on('dragend', () => {
+      const { lat, lng } = marker.getLatLng();
+      setCoords(lat, lng);
+      reverseGeocode(lat, lng);
+    });
+
+    map.on('click', (e) => {
+      marker.setLatLng(e.latlng);
+      setCoords(e.latlng.lat, e.latlng.lng);
+      reverseGeocode(e.latlng.lat, e.latlng.lng);
+    });
+
+    // Address autocomplete
+    let searchTimer = null;
+    addressInput.addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      const q = addressInput.value.trim();
+      if (q.length < 3) { suggestionBox.style.display = 'none'; return; }
+      searchTimer = setTimeout(() => searchAddress(q), 350);
+    });
+
+    async function searchAddress(q) {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6&addressdetails=1&countrycodes=in`,
+          { headers: { 'Accept-Language': 'en', 'User-Agent': 'RentItApp/1.0' } }
+        );
+        const results = await res.json();
+        suggestionBox.innerHTML = '';
+        if (!results.length) { suggestionBox.style.display = 'none'; return; }
+
+        results.forEach(r => {
+          const row = document.createElement('div');
+          row.style.cssText = 'padding:10px 14px; cursor:pointer; font-size:0.85rem; border-bottom:1px solid #f1f5f9; display:flex; align-items:flex-start; gap:8px; line-height:1.4;';
+          row.innerHTML = `<i class="fa-solid fa-location-dot" style="color:var(--primary);margin-top:3px;flex-shrink:0;"></i><span>${r.display_name}</span>`;
+          row.addEventListener('mouseenter', () => row.style.background = '#f8fafc');
+          row.addEventListener('mouseleave', () => row.style.background = '#fff');
+          row.addEventListener('click', () => {
+            const lat = parseFloat(r.lat), lng = parseFloat(r.lon);
+            addressInput.value = r.display_name;
+            setCoords(lat, lng);
+            map.flyTo([lat, lng], 15, { animate: true, duration: 0.8 });
+            marker.setLatLng([lat, lng]);
+            suggestionBox.style.display = 'none';
+          });
+          suggestionBox.appendChild(row);
+        });
+        suggestionBox.style.display = 'block';
+      } catch (e) { suggestionBox.style.display = 'none'; }
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!addressInput.contains(e.target) && !suggestionBox.contains(e.target)) {
+        suggestionBox.style.display = 'none';
+      }
+    });
+
+    // My Location button
+    document.getElementById('use-my-loc-btn').addEventListener('click', () => {
+      if (!navigator.geolocation) return;
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const lat = pos.coords.latitude, lng = pos.coords.longitude;
+        map.flyTo([lat, lng], 15);
+        marker.setLatLng([lat, lng]);
+        setCoords(lat, lng);
+        reverseGeocode(lat, lng);
+      });
+    });
+  });
+</script>
 
 <%- include('../layouts/footer') %>

@@ -60,6 +60,35 @@
         </div>
       </div>
 
+      <!-- Payment Credentials -->
+      <div style="border-top: 1px solid var(--border); padding-top: 1.25rem; margin-top: 1rem;">
+        <p style="font-weight:600; font-size:0.9rem; margin-bottom:1rem; color: var(--text-secondary);">
+          <i class="fa-solid fa-credit-card"></i> Payout Details (Requires Admin Verification)
+        </p>
+        <div class="form-group">
+          <label for="bankName">Bank Name</label>
+          <input type="text" name="bankName" id="bankName" class="form-control" placeholder="e.g. State Bank of India" required>
+        </div>
+        <div class="form-group">
+          <label for="bankHolderName">Account Holder Name</label>
+          <input type="text" name="bankHolderName" id="bankHolderName" class="form-control" placeholder="Name as in bank records" required>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label for="bankAccount">Account Number</label>
+            <input type="text" name="bankAccount" id="bankAccount" class="form-control" placeholder="Account Number" required>
+          </div>
+          <div class="form-group">
+            <label for="bankIfsc">IFSC Code</label>
+            <input type="text" name="bankIfsc" id="bankIfsc" class="form-control" placeholder="IFSC Code" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="upi">UPI ID</label>
+          <input type="text" name="upi" id="upi" class="form-control" placeholder="e.g. username@upi" required>
+        </div>
+      </div>
+
       <!-- Aadhaar Section -->
       <div style="border-top: 1px solid var(--border); padding-top: 1.25rem; margin-top: 1rem;">
         <p style="font-weight:600; font-size:0.9rem; margin-bottom:1rem; color: var(--text-secondary);">
@@ -94,7 +123,7 @@
     </form>
 
     <p style="text-align: center; margin-top: 1.5rem; color: var(--text-secondary); font-size: 0.9rem;">
-      Already registered as a Seller? <a href="/auth/login" style="color: var(--accent); font-weight: 600;">Sign in</a>
+      Already registered as a Seller? <a href="<%= SELLER_APP_URL %>/auth/login" style="color: var(--accent); font-weight: 600;">Sign in</a>
     </p>
   </div>
 </div>

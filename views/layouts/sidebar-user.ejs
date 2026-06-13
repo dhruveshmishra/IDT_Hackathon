@@ -55,6 +55,12 @@
         <span class="sidebar-menu-label">My Bookings</span>
       </a>
     </li>
+    <li>
+      <a href="/user/inspection" class="sidebar-menu-link <%= locals.activePage === 'inspection' ? 'active' : '' %>" data-label="AI Inspection">
+        <span class="sidebar-menu-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+        <span class="sidebar-menu-label">AI Inspection</span>
+      </a>
+    </li>
 
     <li class="sidebar-section-label">Account</li>
     <li>
@@ -82,22 +88,28 @@
 (function() {
   const nav     = document.getElementById('sidebarNav');
   const toggle  = document.getElementById('sidebarToggle');
-  const content = document.getElementById('pageContent');
   const overlay = document.getElementById('sidebarOverlay');
-
   const STORAGE_KEY = 'rentit_sidebar_collapsed';
-  const collapsed = localStorage.getItem(STORAGE_KEY) === 'true';
-  if (collapsed) {
-    nav.classList.add('collapsed');
-    if (content) content.classList.add('collapsed');
-  }
 
-  toggle.addEventListener('click', () => {
-    const isCollapsed = nav.classList.toggle('collapsed');
-    if (content) content.classList.toggle('collapsed', isCollapsed);
-    localStorage.setItem(STORAGE_KEY, isCollapsed);
+  // Collapse sidebar immediately (no flicker) — nav is already in DOM
+  const isInitiallyCollapsed = localStorage.getItem(STORAGE_KEY) !== 'false';
+  if (isInitiallyCollapsed) nav.classList.add('collapsed');
+
+  // #pageContent is rendered AFTER this sidebar script, so wait for full DOM
+  document.addEventListener('DOMContentLoaded', () => {
+    const content = document.getElementById('pageContent');
+
+    // Sync content margin with saved state
+    if (isInitiallyCollapsed && content) content.classList.add('collapsed');
+
+    toggle.addEventListener('click', () => {
+      const nowCollapsed = nav.classList.toggle('collapsed');
+      if (content) content.classList.toggle('collapsed', nowCollapsed);
+      localStorage.setItem(STORAGE_KEY, nowCollapsed);
+    });
   });
 
+  // Mobile handlers (mobileBtn is already in DOM before this script)
   const mobileBtn = document.getElementById('mobileMenuBtn');
   if (mobileBtn) {
     mobileBtn.addEventListener('click', () => {

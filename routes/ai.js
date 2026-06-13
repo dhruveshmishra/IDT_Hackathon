@@ -7,10 +7,35 @@ const {
   summarizeReviews,
   parseSearchQuery,
   findAlternativesMessage,
-  moderateContent
+  moderateContent,
+  chatWithRenter,
+  generateSmartReplies,
+  optimizeMessageTone
 } = require('../utils/geminiHelpers');
 
 router.use(isLoggedIn);
+
+// POST /ai/chat/replies
+router.post('/chat/replies', async (req, res) => {
+  try {
+    const { history, title } = req.body;
+    const replies = await generateSmartReplies(history || [], title || '');
+    res.json({ success: true, replies });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /ai/chat/optimize-tone
+router.post('/chat/optimize-tone', async (req, res) => {
+  try {
+    const { text } = req.body;
+    const optimized = await optimizeMessageTone(text);
+    res.json({ success: true, optimized });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 // POST /ai/generate-description
 router.post('/generate-description', async (req, res) => {
@@ -73,6 +98,17 @@ router.post('/moderate', async (req, res) => {
     const { text } = req.body;
     const data = await moderateContent(text);
     res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /ai/chatbot
+router.post('/chatbot', async (req, res) => {
+  try {
+    const { message, items, history } = req.body;
+    const reply = await chatWithRenter(message, items || [], history || []);
+    res.json({ success: true, reply });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

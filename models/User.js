@@ -25,7 +25,14 @@ const userSchema = new mongoose.Schema({
     verificationDoc: { url: String, public_id: String },
     verifiedAt:      Date,
     earnings:        { type: Number, default: 0 },
-    payoutDetails:   { upi: String, bank: String }
+    payoutDetails: {
+      upi: String,
+      bankAccount: String,
+      bankName: String,
+      bankIfsc: String,
+      bankHolderName: String,
+      verified: { type: Boolean, default: false }
+    }
   },
   createdAt: { type: Date, default: Date.now }
 });
