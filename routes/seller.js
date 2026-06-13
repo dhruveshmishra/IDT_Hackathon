@@ -678,4 +678,116 @@ router.post('/inspection', upload.fields([
   }
 });
 
+// ─────────────────────────────────────────────
+// GET /seller/messages            — inbox list
+// GET /seller/messages/:bookingId — open thread
+// ─────────────────────────────────────────────
+const Message = (() => {
+  try { return require('../models/Message'); } catch(e) { return null; }
+})();
+
+router.get('/messages', async (req, res) => {
+  try {
+    const sellerId = req.user._id;
+
+    // All bookings that belong to seller's items, with populated renter + item
+    const bookings = await Booking.find()
+      .populate({ path: 'item', match: { seller: sellerId } })
+      .populate('renter', 'name avatar')
+      .sort({ updatedAt: -1 });
+
+    const sellerBookings = bookings.filter(b => b.item);
+
+    // Build thread list with last message and unread count
+    let threads = [];
+    let totalUnread = 0;
+
+    for (const booking of sellerBookings) {
+      let lastMsg = null;
+      let unread = 0;
+
+      if (Message) {
+        lastMsg = await Message.findOne({ booking: booking._id })
+          .sort({ createdAt: -1 }).select('text createdAt sender');
+        unread = await Message.countDocuments({
+          booking: booking._id,
+          sender: { $ne: sellerId },
+          readBy: { $ne: sellerId }
+        });
+      }
+
+      totalUnread += unread;
+      threads.push({ booking, lastMsg, unread });
+    }
+
+    res.render('seller/messages', { threads, activeBooking: null, messages: [], totalUnread });
+  } catch (err) {
+    req.flash('error', err.message);
+    res.redirect('/seller/dashboard');
+  }
+});
+
+router.get('/messages/:bookingId', async (req, res) => {
+  try {
+    const sellerId = req.user._id;
+
+    const bookings = await Booking.find()
+      .populate({ path: 'item', match: { seller: sellerId } })
+      .populate('renter', 'name avatar')
+      .sort({ updatedAt: -1 });
+
+    const sellerBookings = bookings.filter(b => b.item);
+
+    let threads = [];
+    let totalUnread = 0;
+
+    for (const booking of sellerBookings) {
+      let lastMsg = null;
+      let unread = 0;
+
+      if (Message) {
+        lastMsg = await Message.findOne({ booking: booking._id })
+          .sort({ createdAt: -1 }).select('text createdAt sender');
+        unread = await Message.countDocuments({
+          booking: booking._id,
+          sender: { $ne: sellerId },
+          readBy: { $ne: sellerId }
+        });
+      }
+
+      totalUnread += unread;
+      threads.push({ booking, lastMsg, unread });
+    }
+
+    // Active booking for open thread
+    const activeBooking = await Booking.findById(req.params.bookingId)
+      .populate('renter', 'name avatar _id')
+      .populate('item', 'title');
+
+    if (!activeBooking) {
+      req.flash('error', 'Conversation not found.');
+      return res.redirect('/seller/messages');
+    }
+
+    let messages = [];
+    if (Message) {
+      messages = await Message.find({ booking: req.params.bookingId })
+        .populate('sender', 'name')
+        .sort({ createdAt: 1 });
+
+      // Mark messages as read
+      await Message.updateMany(
+        { booking: req.params.bookingId, sender: { $ne: sellerId }, readBy: { $ne: sellerId } },
+        { $addToSet: { readBy: sellerId } }
+      );
+    }
+
+    res.render('seller/messages', { threads, activeBooking, messages, totalUnread });
+  } catch (err) {
+    req.flash('error', err.message);
+    res.redirect('/seller/messages');
+  }
+});
+
 module.exports = router;
+
