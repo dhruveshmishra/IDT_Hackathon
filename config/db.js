@@ -10,8 +10,7 @@ async function connectDB() {
     serverSelectionTimeoutMS: 5000,
     maxPoolSize: 10,
     minPoolSize: 2,
-    socketTimeoutMS: 45000,
-    keepAlive: true
+    socketTimeoutMS: 45000
   };
 
   try {
