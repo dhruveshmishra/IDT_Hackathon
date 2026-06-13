@@ -105,10 +105,10 @@ router.post('/signup', upload.single('aadhaarDoc'), async (req, res, next) => {
     // Validate role
     const selectedRole = ['user', 'seller'].includes(role) ? role : 'user';
 
-    // Check existing
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    // Check existing with the same role
+    const existingUser = await User.findOne({ email: email.toLowerCase(), role: selectedRole });
     if (existingUser) {
-      req.flash('error', 'Email is already registered.');
+      req.flash('error', `Email is already registered as a ${selectedRole}.`);
       return res.redirect('/auth/signup?role=' + selectedRole);
     }
 

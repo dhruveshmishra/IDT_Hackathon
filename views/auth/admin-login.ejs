@@ -11,6 +11,7 @@
     </div>
 
     <form action="/auth/login" method="POST">
+      <input type="hidden" name="role" value="admin">
       <div class="form-group" style="text-align: left; margin-bottom: 1.25rem;">
         <label for="email" style="font-weight: 600; margin-bottom: 8px; display: block; font-size: 0.85rem; color: #cbd5e1;">Admin Email Address</label>
         <input type="email" name="email" id="email" class="form-control" placeholder="admin@rentit.com" required style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; height: 46px; padding: 0 14px; width: 100%; outline: none; box-sizing: border-box; color: #fff; transition: all 0.2s;" onfocus="this.style.borderColor='#ff5a00'; this.style.boxShadow='0 0 0 2px rgba(255,90,0,0.2)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.boxShadow='none'">

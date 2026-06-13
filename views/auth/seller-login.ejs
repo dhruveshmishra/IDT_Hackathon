@@ -13,6 +13,7 @@
         <p style="text-align: center; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Log in to manage your listings, bookings, and earnings.</p>
         
         <form action="/auth/login" method="POST">
+          <input type="hidden" name="role" value="seller">
           <div class="form-group" style="text-align: left;">
             <label for="email" class="p2p-input-label" style="font-weight: 700; margin-bottom: 8px; display: block;">Seller Email Address</label>
             <input type="email" name="email" id="email" class="form-control" placeholder="seller@example.com" required style="border-radius: 10px; height: 48px; border: 1px solid #cbd5e1; padding: 0 16px; width: 100%; outline: none; box-sizing: border-box;">

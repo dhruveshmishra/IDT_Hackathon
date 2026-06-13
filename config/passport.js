@@ -5,10 +5,18 @@ const User = require('../models/User');
 
 passport.use(new LocalStrategy({
   usernameField: 'email',
-  passwordField: 'password'
-}, async (email, password, done) => {
+  passwordField: 'password',
+  passReqToCallback: true
+}, async (req, email, password, done) => {
   try {
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const appMode = req.app.locals.APP_MODE || 'user';
+    let targetRole = req.body.role || req.query.role || (appMode === 'all' ? 'user' : appMode);
+
+    if (!['user', 'seller', 'admin'].includes(targetRole)) {
+      targetRole = 'user';
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase(), role: targetRole });
     if (!user) {
       return done(null, false, { message: 'Incorrect email or password.' });
     }

@@ -31,4 +31,16 @@ async function connectDB() {
 
 connectDB();
 
+mongoose.connection.once('open', async () => {
+  try {
+    // Drop the old single-field unique index on email
+    await mongoose.connection.db.collection('users').dropIndex('email_1');
+    console.log('Successfully dropped legacy single-field unique email index');
+  } catch (err) {
+    if (err.codeName !== 'IndexNotFound' && err.message !== 'index not found with name [email_1]') {
+      console.warn('Could not drop index email_1:', err.message);
+    }
+  }
+});
+
 module.exports = mongoose.connection;

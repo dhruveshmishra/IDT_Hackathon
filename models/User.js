@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 
 const userSchema = new mongoose.Schema({
   name:             { type: String, required: true, trim: true },
-  email:            { type: String, required: true, unique: true, lowercase: true },
+  email:            { type: String, required: true, lowercase: true },
   password:         { type: String, required: true },
   phone:            { type: String },
   role:             { type: String, enum: ['admin', 'seller', 'user'], default: 'user' },
@@ -38,6 +38,7 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.index({ location: '2dsphere' });
+userSchema.index({ email: 1, role: 1 }, { unique: true });
 
 // Pre-save password hashing hook
 userSchema.pre('save', async function() {
