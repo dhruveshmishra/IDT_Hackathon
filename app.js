@@ -101,6 +101,7 @@ function applyBaseMiddleware(appInstance, sessionMiddleware) {
 // ----------------------------------------------------
 const userApp = express();
 applyBaseMiddleware(userApp, userSession);
+userApp.locals.APP_MODE = 'user'; // lets auth routes detect context on Railway
 
 userApp.use('/auth', require('./routes/auth'));
 userApp.use('/user', require('./routes/user'));
@@ -133,6 +134,7 @@ userApp.get('/', (req, res, next) => {
 // ----------------------------------------------------
 const adminApp = express();
 applyBaseMiddleware(adminApp, adminSession);
+adminApp.locals.APP_MODE = 'admin'; // lets auth routes detect context on Railway
 // Port-specific login auth guard
 adminApp.use((req, res, next) => {
   const publicPaths = ['/auth/login', '/auth/signup', '/auth/logout', '/auth/role-select'];
@@ -163,6 +165,7 @@ adminApp.get('/', (req, res) => {
 // ----------------------------------------------------
 const sellerApp = express();
 applyBaseMiddleware(sellerApp, sellerSession);
+sellerApp.locals.APP_MODE = 'seller'; // lets auth routes detect context on Railway
 
 // Port-specific login auth guard
 sellerApp.use((req, res, next) => {

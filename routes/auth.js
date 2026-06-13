@@ -23,14 +23,13 @@ function uploadToCloudinary(fileBuffer, folderName = 'rentapp') {
 
 // GET Login
 router.get('/login', (req, res) => {
-  const host = req.headers.host || '';
-  const isSellerPort = host.includes('3002');
-  const isAdminPort = host.includes('3001');
+  // Use app.locals.APP_MODE (set in app.js) — works on Railway where host has no port number
+  const appMode = req.app.locals.APP_MODE || 'user';
   const role = req.query.role;
 
-  if (isAdminPort || role === 'admin') {
+  if (appMode === 'admin' || role === 'admin') {
     res.render('auth/admin-login');
-  } else if (isSellerPort || role === 'seller') {
+  } else if (appMode === 'seller' || role === 'seller') {
     res.render('auth/seller-login');
   } else if (role === 'user') {
     res.render('auth/login');
@@ -65,16 +64,16 @@ router.post('/login', (req, res, next) => {
       if (loginErr) return next(loginErr);
 
       req.flash('success', `Welcome back, ${user.name}!`);
-      const userPort  = process.env.USER_PORT   || 3000;
-      const adminPort = process.env.ADMIN_PORT  || 3001;
-      const sellerPort= process.env.SELLER_PORT || 3002;
+      const userAppUrl   = process.env.USER_APP_URL   || `http://localhost:${process.env.USER_PORT   || 3000}`;
+      const adminAppUrl  = process.env.ADMIN_APP_URL  || `http://localhost:${process.env.ADMIN_PORT  || 3001}`;
+      const sellerAppUrl = process.env.SELLER_APP_URL || `http://localhost:${process.env.SELLER_PORT || 3002}`;
 
       if (user.role === 'admin') {
-        return res.redirect(`http://localhost:${adminPort}/admin/dashboard`);
+        return res.redirect(`${adminAppUrl}/admin/dashboard`);
       } else if (user.role === 'seller') {
-        return res.redirect(`http://localhost:${sellerPort}/seller/dashboard`);
+        return res.redirect(`${sellerAppUrl}/seller/dashboard`);
       } else {
-        return res.redirect(`http://localhost:${userPort}/user/home`);
+        return res.redirect(`${userAppUrl}/user/home`);
       }
     });
   })(req, res, next);
@@ -82,18 +81,16 @@ router.post('/login', (req, res, next) => {
 
 // GET Signup
 router.get('/signup', (req, res) => {
-  const host = req.headers.host || '';
-  const isSellerPort = host.includes('3002');
-  const isAdminPort = host.includes('3001');
+  const appMode = req.app.locals.APP_MODE || 'user';
   const role = req.query.role;
   const phone = req.query.phone || '';
 
-  if (isAdminPort) {
+  if (appMode === 'admin') {
     req.flash('error', 'Admin registration is not allowed.');
     return res.redirect('/auth/login');
   }
 
-  if (isSellerPort || role === 'seller') {
+  if (appMode === 'seller' || role === 'seller') {
     res.render('auth/seller-signup', { phone });
   } else {
     res.render('auth/signup', { preRole: 'user', phone });
@@ -183,8 +180,8 @@ router.post('/signup', upload.single('aadhaarDoc'), async (req, res, next) => {
     req.login(newUser, (err) => {
       if (err) return next(err);
       req.flash('success', 'Welcome to RentIt! Your account is ready.');
-      const userPort = process.env.USER_PORT || 3000;
-      res.redirect(`http://localhost:${userPort}/user/home`);
+      const userAppUrl = process.env.USER_APP_URL || `http://localhost:${process.env.USER_PORT || 3000}`;
+      res.redirect(`${userAppUrl}/user/home`);
     });
 
   } catch (error) {
@@ -225,8 +222,8 @@ router.post('/role-select', async (req, res) => {
     }
 
     req.flash('success', `Account configured as USER`);
-    const userPort = process.env.USER_PORT || 3000;
-    res.redirect(`http://localhost:${userPort}/user/home`);
+    const userAppUrl = process.env.USER_APP_URL || `http://localhost:${process.env.USER_PORT || 3000}`;
+    res.redirect(`${userAppUrl}/user/home`);
   } catch (error) {
     req.flash('error', error.message);
     res.redirect('/auth/role-select');
@@ -238,8 +235,8 @@ router.post('/logout', (req, res, next) => {
   req.logout((err) => {
     if (err) return next(err);
     req.flash('success', 'Logged out successfully');
-    const userPort = process.env.USER_PORT || 3000;
-    res.redirect(`http://localhost:${userPort}/`);
+    const userAppUrl = process.env.USER_APP_URL || `http://localhost:${process.env.USER_PORT || 3000}`;
+    res.redirect(`${userAppUrl}/`);
   });
 });
 
@@ -249,9 +246,9 @@ router.get('/verify-email/:token', async (req, res) => {
     req.user.isVerified = true;
     await req.user.save();
     req.flash('success', 'Email verified successfully.');
-    const userPort  = process.env.USER_PORT   || 3000;
-    const sellerPort= process.env.SELLER_PORT || 3002;
-    return res.redirect(req.user.role === 'seller' ? `http://localhost:${sellerPort}/seller/dashboard` : `http://localhost:${userPort}/user/home`);
+    const userAppUrl   = process.env.USER_APP_URL   || `http://localhost:${process.env.USER_PORT   || 3000}`;
+    const sellerAppUrl = process.env.SELLER_APP_URL || `http://localhost:${process.env.SELLER_PORT || 3002}`;
+    return res.redirect(req.user.role === 'seller' ? `${sellerAppUrl}/seller/dashboard` : `${userAppUrl}/user/home`);
   }
   res.render('auth/login', { message: 'Email verified. Please log in.' });
 });
