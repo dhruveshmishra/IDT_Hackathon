@@ -146,6 +146,27 @@ router.put('/sellers/:id/reject-approval', async (req, res) => {
   }
 });
 
+// DELETE /admin/sellers/:id — Delete seller account completely
+router.delete('/sellers/:id', async (req, res) => {
+  try {
+    const seller = await User.findById(req.params.id);
+    if (!seller) {
+      req.flash('error', 'Seller not found.');
+      return res.redirect('/admin/sellers');
+    }
+    
+    // Clean up their associated listings
+    await Item.deleteMany({ owner: seller._id });
+    
+    await User.findByIdAndDelete(seller._id);
+    req.flash('success', 'Seller account and their listings deleted successfully.');
+    res.redirect('/admin/sellers');
+  } catch (err) {
+    req.flash('error', err.message);
+    res.redirect('/admin/sellers');
+  }
+});
+
 // PUT /admin/sellers/:id/verify (Verify seller docs + email notification)
 router.put('/sellers/:id/verify', async (req, res) => {
   try {

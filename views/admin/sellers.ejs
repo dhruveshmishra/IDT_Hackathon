@@ -219,7 +219,7 @@
               <% } %>
             </td>
             <td>
-              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
                 <% if (!seller.isVerified && seller.sellerProfile && seller.sellerProfile.verificationDoc && seller.sellerProfile.verificationDoc.url) { %>
                   <form action="/admin/sellers/<%= seller._id %>/verify?_method=PUT" method="POST" style="display:inline;">
                     <button type="submit" class="btn btn-success btn-sm"><i class="fa-solid fa-file-shield"></i> Verify Docs</button>
@@ -233,6 +233,12 @@
                 <% } else { %>
                   <span style="color:var(--text-hint); font-size:0.82rem;">Awaiting docs</span>
                 <% } %>
+
+                <form action="/admin/sellers/<%= seller._id %>?_method=DELETE" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this seller? This will also remove all their item listings!');">
+                  <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="fa-solid fa-trash-can"></i> Delete
+                  </button>
+                </form>
               </div>
             </td>
           </tr>
