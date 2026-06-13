@@ -154,17 +154,15 @@ router.post('/signup', upload.single('aadhaarDoc'), async (req, res, next) => {
     const newUser = new User(userData);
     await newUser.save();
 
-    // Welcome email notifying that account registration has been received and is pending verification
-    try {
-      await sendEmail({
-        to: newUser.email,
-        subject: 'Welcome to RentIt — Registration Received',
-        text: `Hi ${newUser.name}, welcome to RentIt! Your account is registered and is currently pending admin verification and approval. We will email you once your account has been verified and approved.`,
-        html: `<p>Hi ${newUser.name},</p><p>Welcome to RentIt!</p><p>Your account is registered and is currently <strong>pending admin verification/approval</strong>. We will email you as soon as your account has been verified and approved.</p>`
-      });
-    } catch (emailErr) {
+    // Welcome email notifying that account registration has been received (sent in the background to avoid blocking the response)
+    sendEmail({
+      to: newUser.email,
+      subject: 'Welcome to RentIt — Registration Received',
+      text: `Hi ${newUser.name}, welcome to RentIt! Your account is registered and is currently pending admin verification and approval. We will email you once your account has been verified and approved.`,
+      html: `<p>Hi ${newUser.name},</p><p>Welcome to RentIt!</p><p>Your account is registered and is currently <strong>pending admin verification/approval</strong>. We will email you as soon as your account has been verified and approved.</p>`
+    }).catch((emailErr) => {
       console.warn('Welcome email failed:', emailErr.message);
-    }
+    });
 
     if (selectedRole === 'seller') {
       // Seller cannot log in yet — show message, don't log in
