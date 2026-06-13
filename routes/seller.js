@@ -690,9 +690,9 @@ router.get('/messages', async (req, res) => {
   try {
     const sellerId = req.user._id;
 
-    // All bookings that belong to seller's items, with populated renter + item
-    const bookings = await Booking.find()
-      .populate({ path: 'item', match: { seller: sellerId } })
+    // All bookings that belong to seller directly, with populated renter + item
+    const bookings = await Booking.find({ seller: sellerId })
+      .populate('item')
       .populate('renter', 'name avatar')
       .sort({ updatedAt: -1 });
 
@@ -731,8 +731,8 @@ router.get('/messages/:bookingId', async (req, res) => {
   try {
     const sellerId = req.user._id;
 
-    const bookings = await Booking.find()
-      .populate({ path: 'item', match: { seller: sellerId } })
+    const bookings = await Booking.find({ seller: sellerId })
+      .populate('item')
       .populate('renter', 'name avatar')
       .sort({ updatedAt: -1 });
 
