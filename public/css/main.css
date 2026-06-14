@@ -93,6 +93,57 @@ a:hover {
 }
 .nav-link:hover, .nav-link.active { color: var(--primary); }
 
+.mobile-nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  align-items: center;
+  justify-content: center;
+}
+.mobile-nav-toggle:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 768px) {
+  .mobile-nav-toggle {
+    display: flex;
+  }
+  .nav-links {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: var(--surface);
+    padding: 1.25rem 2rem;
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    gap: 1rem;
+    z-index: 999;
+    align-items: flex-start;
+  }
+  .nav-links.open {
+    display: flex;
+  }
+  .nav-links li {
+    width: 100%;
+  }
+  .nav-links li a.nav-link {
+    display: block;
+    padding: 6px 0;
+  }
+  .nav-links li .btn {
+    width: 100%;
+    margin-top: 4px;
+  }
+}
+
 /* =============================================
    LEFT SIDEBAR NAV (logged-in users/sellers/admin)
    ============================================= */
@@ -373,22 +424,24 @@ a:hover {
   z-index: 850;
 }
 @media (max-width: 768px) {
-  .sidebar-overlay.visible { display: block; }
+  .sidebar-overlay { display: none !important; }
   .sidebar-nav {
-    width: var(--sidebar-width) !important;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-  .sidebar-nav.mobile-open {
-    transform: translateX(0);
-    box-shadow: 8px 0 32px rgba(0,0,0,0.4);
+    display: none !important;
   }
   .sidebar-page-content,
   .sidebar-page-content.collapsed {
-    margin-left: 0;
+    margin-left: 0 !important;
   }
-  .mobile-menu-btn {
+  .mobile-nav-toggle {
     display: flex !important;
+  }
+  .mini-sidebar-toggle,
+  .mini-sidebar-drawer,
+  .mini-sidebar-overlay {
+    display: none !important;
+  }
+  body.mini-sidebar-open {
+    padding-left: 0 !important;
   }
 }
 
@@ -397,32 +450,26 @@ a:hover {
   display: none;
   position: sticky;
   top: 0;
-  z-index: 800;
-  background: #0F172A;
-  padding: 0.75rem 1rem;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.90);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 2rem;
+  justify-content: space-between;
   align-items: center;
-  gap: 1rem;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  box-shadow: var(--shadow-sm);
 }
 @media (max-width: 768px) {
   .mobile-topbar { display: flex; }
 }
-.mobile-menu-btn {
-  display: none;
-  background: none;
-  border: none;
-  color: #E2E8F0;
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: var(--radius-sm);
-}
-.mobile-menu-btn:hover { background: rgba(255,255,255,0.1); }
 .mobile-brand {
   font-family: var(--font-display);
+  font-size: 1.2rem;
   font-weight: 700;
-  color: #fff;
-  font-size: 1.1rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 .mobile-brand span { color: var(--accent); }
 
@@ -1245,3 +1292,97 @@ footer {
 }
 .data-table tr:last-child td { border-bottom: none; }
 .data-table tr:hover td { background: #f8fafc; }
+
+/* =============================================
+   MOBILE RESPONSIVENESS OVERRIDES
+   ============================================= */
+@media (max-width: 768px) {
+  /* Mobile Typography */
+  body {
+    font-size: 0.85rem;
+  }
+  h1 { font-size: 1.5rem !important; }
+  h2 { font-size: 1.25rem !important; }
+  h3 { font-size: 1.05rem !important; }
+  h4 { font-size: 0.9rem !important; }
+  
+  /* Buttons Sizing */
+  .btn, button, .p2p-continue-btn {
+    padding: 8px 14px !important;
+    font-size: 0.825rem !important;
+    border-radius: 8px !important;
+    height: auto !important;
+    min-height: 38px !important;
+  }
+  
+  /* Form Inputs Sizing */
+  .form-control, input, select, textarea {
+    font-size: 0.85rem !important;
+    height: 40px !important;
+    padding: 0 12px !important;
+    border-radius: 8px !important;
+  }
+  textarea {
+    height: auto !important;
+    min-height: 50px !important;
+    padding: 8px 12px !important;
+  }
+
+  /* Nav Links Dropdown styling */
+  .nav-links a {
+    font-size: 0.85rem !important;
+    padding: 8px 10px !important;
+  }
+  .mobile-topbar {
+    padding: 0.75rem 1.25rem !important;
+  }
+  .mobile-brand {
+    font-size: 1.1rem !important;
+  }
+
+  /* Inbox list & Chat typography */
+  .thread-name {
+    font-size: 0.825rem !important;
+  }
+  .thread-preview {
+    font-size: 0.75rem !important;
+  }
+  .msg-bubble {
+    font-size: 0.825rem !important;
+    padding: 8px 12px !important;
+  }
+  .inbox-chat-header-name {
+    font-size: 0.875rem !important;
+  }
+  .inbox-chat-header {
+    padding: 0.65rem 1rem !important;
+  }
+
+  .container {
+    padding: 1.25rem 1rem;
+  }
+  .form-card {
+    padding: 1.5rem 1.25rem;
+    margin: 1rem auto;
+  }
+  .profile-form-card {
+    padding: 1.25rem 1rem;
+  }
+  /* Make all tables scrollable on mobile */
+  div:has(> .data-table) {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .data-table {
+    min-width: 600px; /* prevent squishing of table columns on mobile */
+  }
+  /* Landing page tweaks */
+  .section-title {
+    font-size: 1.3rem;
+    margin-bottom: 1.3rem;
+  }
+  /* Signup form responsiveness */
+  #signupForm > div, #sellerSignupForm > div {
+    grid-template-columns: 1fr !important;
+  }
+}

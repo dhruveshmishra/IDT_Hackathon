@@ -717,7 +717,9 @@ router.get('/messages', async (req, res) => {
       }
 
       totalUnread += unread;
-      threads.push({ booking, lastMsg, unread });
+      if (lastMsg !== null) {
+        threads.push({ booking, lastMsg, unread });
+      }
     }
 
     res.render('seller/messages', { threads, activeBooking: null, messages: [], totalUnread });
@@ -764,7 +766,9 @@ router.get('/messages/:bookingId', async (req, res) => {
       }
 
       totalUnread += unread;
-      threads.push({ booking, lastMsg, unread });
+      if (lastMsg !== null || req.params.bookingId === booking._id.toString()) {
+        threads.push({ booking, lastMsg, unread });
+      }
     }
 
     // Active booking for open thread

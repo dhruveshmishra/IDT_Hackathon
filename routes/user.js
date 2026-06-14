@@ -341,7 +341,9 @@ router.get('/messages', async (req, res) => {
       }
 
       totalUnread += unread;
-      threads.push({ booking, lastMsg, unread });
+      if (lastMsg !== null) {
+        threads.push({ booking, lastMsg, unread });
+      }
     }
 
     res.render('user/messages', { threads, activeBooking: null, messages: [], totalUnread, activePage: 'messages' });
@@ -388,7 +390,9 @@ router.get('/messages/:bookingId', async (req, res) => {
       }
 
       totalUnread += unread;
-      threads.push({ booking, lastMsg, unread });
+      if (lastMsg !== null || req.params.bookingId === booking._id.toString()) {
+        threads.push({ booking, lastMsg, unread });
+      }
     }
 
     const activeBooking = await Booking.findById(req.params.bookingId)

@@ -261,6 +261,48 @@
   }
   .date-divider::before { left: 0; }
   .date-divider::after { right: 0; }
+
+  /* ── Mobile Responsive Adjustments ── */
+  @media (max-width: 768px) {
+    .inbox-wrap {
+      margin: 0;
+      border: none;
+      border-radius: 0;
+      height: calc(100vh - 56px);
+      max-height: none;
+      box-shadow: none;
+    }
+    .inbox-sidebar {
+      width: 100% !important;
+      min-width: 100% !important;
+    }
+    .inbox-chat {
+      width: 100% !important;
+      min-width: 100% !important;
+    }
+    .mobile-back-btn {
+      display: flex !important;
+    }
+    .chat-item-title,
+    .inbox-chat-header-sub {
+      display: none !important;
+    }
+    .inbox-chat-header-item {
+      padding: 0 !important;
+      border: none !important;
+      background: transparent !important;
+      margin-left: auto !important;
+    }
+    <% if (locals.activeBooking) { %>
+      .inbox-sidebar {
+        display: none !important;
+      }
+    <% } else { %>
+      .inbox-chat {
+        display: none !important;
+      }
+    <% } %>
+  }
 </style>
 
 <div class="inbox-wrap">
@@ -333,6 +375,9 @@
     <% } else { %>
       <!-- Active Chat Header -->
       <div class="inbox-chat-header">
+        <a href="/seller/messages" class="mobile-back-btn" style="display: none; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; color: var(--text-primary); font-size: 1.1rem; margin-right: 0.5rem; text-decoration: none;">
+          <i class="fa-solid fa-arrow-left"></i>
+        </a>
         <div class="chat-h-avatar">
           <% if (activeBooking.renter.avatar && activeBooking.renter.avatar.url) { %>
             <img src="<%= activeBooking.renter.avatar.url %>" alt="avatar">
@@ -347,17 +392,21 @@
             Active now
           </div>
         </div>
-        <span class="inbox-chat-header-item">
-          <i class="fa-solid fa-tag" style="font-size:0.7rem;"></i>
-          <%= activeBooking.item ? activeBooking.item.title : 'Deleted listing' %>
+        <span class="inbox-chat-header-item" style="display: flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 4px 10px; background: var(--bg); margin-left: auto;">
+          <% if (activeBooking.item && activeBooking.item.images && activeBooking.item.images.length > 0) { %>
+            <img src="<%= activeBooking.item.images[0].url %>" alt="item" style="width: 24px; height: 24px; border-radius: 4px; object-fit: cover;">
+          <% } else { %>
+            <i class="fa-solid fa-tag" style="font-size:0.7rem; color: var(--text-secondary);"></i>
+          <% } %>
+          <span class="chat-item-title" style="font-size:0.78rem; color: var(--text-secondary);"><%= activeBooking.item ? activeBooking.item.title : 'Deleted listing' %></span>
         </span>
         <div style="display: flex; gap: 8px; margin-left: 10px;">
-          <form action="/seller/messages/<%= activeBooking._id %>/clear" method="POST" onsubmit="return confirm('Are you sure you want to clear all messages in this chat?');" style="display: inline;">
+          <form action="/seller/messages/<%= activeBooking._id %>/clear" method="POST" style="display: inline;">
             <button type="submit" class="btn" style="padding: 5px 10px; font-size: 0.75rem; color: #dc2626; border: 1px solid #fca5a5; background: #fff5f5; border-radius: var(--radius-md); cursor: pointer;" title="Clear Chat">
               <i class="fa-regular fa-trash-can"></i> Clear
             </button>
           </form>
-          <form action="/seller/messages/<%= activeBooking._id %>/delete" method="POST" onsubmit="return confirm('Are you sure you want to delete this chat history?');" style="display: inline;">
+          <form action="/seller/messages/<%= activeBooking._id %>/delete" method="POST" style="display: inline;">
             <button type="submit" class="btn" style="padding: 5px 10px; font-size: 0.75rem; color: #7f1d1d; border: 1px solid #f87171; background: #fee2e2; border-radius: var(--radius-md); cursor: pointer;" title="Delete Chat">
               <i class="fa-solid fa-trash-can"></i> Delete
             </button>

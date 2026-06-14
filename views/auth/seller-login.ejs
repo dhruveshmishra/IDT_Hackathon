@@ -1,14 +1,69 @@
 <%- include('../layouts/main') %>
 
+<style>
+  .login-card-container {
+    width: 100%;
+    height: 520px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border);
+    border-top: 4px solid var(--accent);
+    margin: 0 auto;
+    background: var(--surface);
+    border-radius: 24px;
+    overflow: hidden;
+  }
+  .login-split {
+    display: flex;
+    height: 100%;
+    width: 100%;
+  }
+  .login-left {
+    width: 48%;
+    height: 100%;
+    overflow: hidden;
+    background: #f8fafc;
+  }
+  .login-left img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .login-right {
+    width: 52%;
+    padding: 3rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+  
+  @media (max-width: 768px) {
+    .login-card-container {
+      height: auto;
+      max-width: 480px;
+    }
+    .login-split {
+      flex-direction: column;
+    }
+    .login-left {
+      display: none;
+    }
+    .login-right {
+      width: 100%;
+      padding: 2.5rem 1.5rem;
+    }
+  }
+</style>
+
 <div class="container" style="max-width: 850px; margin: 3rem auto; padding: 0 1rem;">
-  <div class="p2p-modal-container" style="width: 100%; height: 520px; max-height: none; box-shadow: var(--shadow-md); border: 1px solid var(--border); border-top: 4px solid var(--accent); margin: 0 auto; animation: none; display: block;">
-    <div class="p2p-modal-split" style="display: flex; height: 100%; width: 100%;">
+  <div class="login-card-container">
+    <div class="login-split">
       <!-- Left side: Image of smiling girl with phone -->
-      <div class="p2p-modal-left" style="width: 48%; height: 100%; overflow: hidden; background: #f8fafc;">
-        <img src="/images/login_modal_girl.png" alt="Welcome to RentIt" style="width: 100%; height: 100%; object-fit: cover;">
+      <div class="login-left">
+        <img src="/images/login_modal_girl.png" alt="Welcome to RentIt">
       </div>
       <!-- Right side: Form controls -->
-      <div class="p2p-modal-right" style="width: 52%; padding: 3rem 2.5rem; display: flex; flex-direction: column; justify-content: center; box-sizing: border-box;">
+      <div class="login-right">
         <h2 style="text-align: center; margin-bottom: 0.5rem; font-family: var(--font-display); font-weight: 700; color: #0f172a;">Seller Portal</h2>
         <p style="text-align: center; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Log in to manage your listings, bookings, and earnings.</p>
         

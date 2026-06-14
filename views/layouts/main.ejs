@@ -63,7 +63,10 @@
     <nav class="navbar">
       <a href="/" class="nav-brand">RentIt<span>.</span></a>
       <% if (!currentPath || !currentPath.startsWith('/auth')) { %>
-        <ul class="nav-links">
+        <button class="mobile-nav-toggle" id="mobileGuestNavToggle" aria-label="Toggle Navigation">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <ul class="nav-links" id="guestNavLinks">
           <li><a href="/#how-it-works" class="nav-link">How it works</a></li>
           <li><a href="/items" class="nav-link">Browse Items</a></li>
           <li><a href="/auth/login" class="btn btn-primary">Login</a></li>
@@ -73,37 +76,74 @@
 
   <% } else if (currentUser && isDashboardRoute && currentUser.role === 'admin') { %>
     <!-- ============================
-         ADMIN: Left Sidebar + Mobile topbar (dashboard routes only)
+         ADMIN: Top navbar with mobile dropdown
          ============================ -->
     <div class="mobile-topbar">
-      <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+      <a href="/admin/dashboard" class="mobile-brand">RentIt<span>.</span> Admin</a>
+      <button class="mobile-nav-toggle" id="mobileAdminNavToggle" aria-label="Toggle Navigation">
         <i class="fa-solid fa-bars"></i>
       </button>
-      <span class="mobile-brand">RentIt<span>.</span> Admin</span>
+      <ul class="nav-links" id="adminNavLinks">
+        <li><a href="/admin/dashboard" class="nav-link">Admin Panel</a></li>
+        <li>
+          <form action="/auth/logout" method="POST" style="margin:0;">
+            <button type="submit" class="btn btn-outline" style="width:100%;">Logout</button>
+          </form>
+        </li>
+      </ul>
     </div>
     <%- include('./sidebar-admin') %>
 
   <% } else if (currentUser && isDashboardRoute && currentUser.role === 'seller') { %>
     <!-- ============================
-         SELLER: Left Sidebar + Mobile topbar (dashboard routes only)
+         SELLER: Top navbar with mobile dropdown
          ============================ -->
     <div class="mobile-topbar">
-      <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+      <a href="/seller/dashboard" class="mobile-brand">RentIt<span>.</span> Seller</a>
+      <button class="mobile-nav-toggle" id="mobileSellerNavToggle" aria-label="Toggle Navigation">
         <i class="fa-solid fa-bars"></i>
       </button>
-      <span class="mobile-brand">RentIt<span>.</span> Seller</span>
+      <ul class="nav-links" id="sellerNavLinks">
+        <li><a href="/seller/dashboard" class="nav-link"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+        <li><a href="/seller/items" class="nav-link"><i class="fa-solid fa-boxes-stacked"></i> My Listings</a></li>
+        <li><a href="/seller/items/new" class="nav-link"><i class="fa-solid fa-plus-circle"></i> Add Listing</a></li>
+        <li><a href="/seller/bookings" class="nav-link"><i class="fa-regular fa-calendar-days"></i> Booking Calendar</a></li>
+        <li><a href="/seller/inspection" class="nav-link"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Inspection</a></li>
+        <li><a href="/seller/messages" class="nav-link"><i class="fa-regular fa-comment-dots"></i> Inbox</a></li>
+        <li><a href="/seller/profile" class="nav-link"><i class="fa-regular fa-user"></i> My Profile</a></li>
+        <li><a href="/seller/verify" class="nav-link"><i class="fa-solid fa-shield-halved"></i> Verification Docs</a></li>
+        <li><a href="/items" class="nav-link"><i class="fa-solid fa-magnifying-glass"></i> Browse Items</a></li>
+        <li>
+          <form action="/auth/logout" method="POST" style="margin:0;">
+            <button type="submit" class="btn btn-outline" style="width:100%;"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</button>
+          </form>
+        </li>
+      </ul>
     </div>
     <%- include('./sidebar-seller') %>
 
   <% } else if (currentUser && isDashboardRoute && currentUser.role === 'user') { %>
     <!-- ============================
-         USER: Left Sidebar + Mobile topbar (dashboard routes only)
+         USER: Top navbar with mobile dropdown
          ============================ -->
     <div class="mobile-topbar">
-      <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+      <a href="/user/home" class="mobile-brand">RentIt<span>.</span></a>
+      <button class="mobile-nav-toggle" id="mobileUserDashboardNavToggle" aria-label="Toggle Navigation">
         <i class="fa-solid fa-bars"></i>
       </button>
-      <span class="mobile-brand">RentIt<span>.</span></span>
+      <ul class="nav-links" id="userDashboardNavLinks">
+        <li><a href="/user/home" class="nav-link">Home</a></li>
+        <li><a href="/items" class="nav-link">Browse Items</a></li>
+        <li><a href="/user/bookings" class="nav-link">My Bookings</a></li>
+        <li><a href="/user/inspection" class="nav-link">AI Inspection</a></li>
+        <li><a href="/user/messages" class="nav-link">Inbox</a></li>
+        <li><a href="/user/profile" class="nav-link">My Profile</a></li>
+        <li>
+          <form action="/auth/logout" method="POST" style="margin:0;">
+            <button type="submit" class="btn btn-outline" style="width:100%;">Logout</button>
+          </form>
+        </li>
+      </ul>
     </div>
     <%- include('./sidebar-user') %>
 
@@ -121,7 +161,10 @@
         }
       %>
       <a href="<%= brandHref %>" class="nav-brand">RentIt<span>.</span></a>
-      <ul class="nav-links" style="gap: 0.75rem;">
+      <button class="mobile-nav-toggle" id="mobileUserNavToggle" aria-label="Toggle Navigation">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <ul class="nav-links" id="userNavLinks" style="gap: 0.75rem;">
         <li><a href="/items" class="nav-link" style="font-size:0.9rem;">Browse</a></li>
         <li>
           <form action="/auth/logout" method="POST" style="margin:0;">
@@ -221,3 +264,62 @@
   <% if (currentUser && isDashboardRoute) { %>
   <div class="sidebar-page-content" id="pageContent">
   <% } %>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Guest navbar toggle
+      const guestToggle = document.getElementById('mobileGuestNavToggle');
+      const guestLinks = document.getElementById('guestNavLinks');
+      if (guestToggle && guestLinks) {
+        guestToggle.addEventListener('click', () => {
+          guestLinks.classList.toggle('open');
+          const isOpen = guestLinks.classList.contains('open');
+          guestToggle.innerHTML = isOpen ? '<i class="fa-solid fa-xmark"></i>' : '<i class="fa-solid fa-bars"></i>';
+        });
+      }
+
+      // User navbar toggle
+      const userToggle = document.getElementById('mobileUserNavToggle');
+      const userLinks = document.getElementById('userNavLinks');
+      if (userToggle && userLinks) {
+        userToggle.addEventListener('click', () => {
+          userLinks.classList.toggle('open');
+          const isOpen = userLinks.classList.contains('open');
+          userToggle.innerHTML = isOpen ? '<i class="fa-solid fa-xmark"></i>' : '<i class="fa-solid fa-bars"></i>';
+        });
+      }
+
+      // Admin dashboard navbar toggle
+      const adminToggle = document.getElementById('mobileAdminNavToggle');
+      const adminLinks = document.getElementById('adminNavLinks');
+      if (adminToggle && adminLinks) {
+        adminToggle.addEventListener('click', () => {
+          adminLinks.classList.toggle('open');
+          const isOpen = adminLinks.classList.contains('open');
+          adminToggle.innerHTML = isOpen ? '<i class="fa-solid fa-xmark"></i>' : '<i class="fa-solid fa-bars"></i>';
+        });
+      }
+
+      // Seller dashboard navbar toggle
+      const sellerToggle = document.getElementById('mobileSellerNavToggle');
+      const sellerLinks = document.getElementById('sellerNavLinks');
+      if (sellerToggle && sellerLinks) {
+        sellerToggle.addEventListener('click', () => {
+          sellerLinks.classList.toggle('open');
+          const isOpen = sellerLinks.classList.contains('open');
+          sellerToggle.innerHTML = isOpen ? '<i class="fa-solid fa-xmark"></i>' : '<i class="fa-solid fa-bars"></i>';
+        });
+      }
+
+      // User dashboard navbar toggle
+      const userDashToggle = document.getElementById('mobileUserDashboardNavToggle');
+      const userDashLinks = document.getElementById('userDashboardNavLinks');
+      if (userDashToggle && userDashLinks) {
+        userDashToggle.addEventListener('click', () => {
+          userDashLinks.classList.toggle('open');
+          const isOpen = userDashLinks.classList.contains('open');
+          userDashToggle.innerHTML = isOpen ? '<i class="fa-solid fa-xmark"></i>' : '<i class="fa-solid fa-bars"></i>';
+        });
+      }
+    });
+  </script>

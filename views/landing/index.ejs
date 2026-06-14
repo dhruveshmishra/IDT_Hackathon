@@ -61,10 +61,22 @@
     padding: 1.5rem 0.5rem;
     margin-bottom: 3.5rem;
     border-bottom: 1px solid var(--border);
-    scrollbar-width: none; /* Firefox */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
   }
   .scroll-wrapper::-webkit-scrollbar {
-    display: none; /* Safari / Chrome */
+    height: 5px;
+  }
+  .scroll-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scroll-wrapper::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 10px;
+  }
+  .scroll-wrapper::-webkit-scrollbar-thumb:hover {
+    background: var(--text-hint);
   }
   .features-section {
     display: inline-flex;
@@ -288,6 +300,17 @@
     }
     .banner-overlay-content h1 {
       font-size: 1.8rem;
+    }
+    .scroll-wrapper {
+      padding: 1rem 0.25rem 1.5rem 0.25rem;
+      margin-bottom: 2.5rem;
+    }
+    .features-section {
+      gap: 1rem;
+    }
+    .feature-item {
+      min-width: 220px;
+      padding: 0.85rem 1.25rem;
     }
   }
 </style>
