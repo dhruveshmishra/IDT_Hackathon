@@ -91,18 +91,7 @@ Once started:
 
 RentIt utilizes role-based logic with strict authentication barriers. The platform supports three primary workflows:
 
-```
-                  ┌──────────────────────┐
-                  │   User Registration  │
-                  └──────────┬───────────┘
-                             │ (Select Role / Port Routing)
-       ┌─────────────────────┼─────────────────────┐
-       ▼                     ▼                     ▼
-┌──────────────┐      ┌──────────────┐      ┌──────────────┐
-│ RENTER FLOW  │      │ SELLER FLOW  │      │  ADMIN FLOW  │
-│  (Port 3000) │      │  (Port 3002) │      │  (Port 3001) │
-└──────────────┘      └──────────────┘      └──────────────┘
-```
+
 
 ### 1. Renter Workflow (Port 3000)
 * **Registration & KyC:** Users register and input their profile details. Simulated Aadhaar verification ensures renters provide valid IDs before booking high-value goods.
