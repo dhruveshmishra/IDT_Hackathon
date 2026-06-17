@@ -82,7 +82,6 @@ Start the application using one of the following commands:
 Once started:
 * 🛒 **Renter Marketplace:** Access on [http://localhost:3000](http://localhost:3000)
 * 💼 **Seller Dashboard:** Access on [http://localhost:3002](http://localhost:3002)
-* 🛡️ **Admin Portal:** Access on [http://localhost:3001](http://localhost:3001)
 
 *Note: If you change `APP_MODE` to `user`, `seller`, or `admin`, the server will only listen on the single port corresponding to that profile. This is ideal for isolated cloud deployment container replicas.*
 
@@ -121,9 +120,3 @@ RentIt utilizes role-based logic with strict authentication barriers. The platfo
   * **AI Pricing Helper:** Get data-driven suggestions for daily/hourly rental prices and security deposits.
 * **Booking Approvals & Handovers:** Sellers review pending bookings from renters. They can accept or decline bookings, update inventory status, and mark items as "Handed Over" or "Returned".
 * **Earnings Analytics:** Interactive analytics panel built with Chart.js displays monthly earnings, item popularity, and payout reports.
-
-### 3. Admin Workflow (Port 3001)
-* **Listing Auditing & Moderation:** All listings created by sellers must be approved by the Admin before they become visible on the public renter marketplace.
-* **User & Seller Verification:** Admins audit seller documents, approve KYC applications, and manage system roles.
-* **Dispute & Refund Resolution:** Admins mediate rental disputes, handle payment settlements, release held security deposits, and override transactions when issues arise.
-* **System Metrics Panel:** Provides top-level charts highlighting active listings, platform commission earnings, booking volumes, and system resource updates.
