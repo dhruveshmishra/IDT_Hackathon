@@ -56,59 +56,7 @@ cd rentapp
 npm install
 ```
 
-### Step 2: Configure Environment Variables
-Create a `.env` file in the root of the `rentapp` folder and fill in the following configurations:
-
-```env
-# Server Ports
-USER_PORT=3000
-ADMIN_PORT=3001
-SELLER_PORT=3002
-
-# Application Execution Mode
-# Options: "all" (starts user, seller, and admin servers together), "user", "seller", "admin"
-APP_MODE=all
-
-# Base Domain URLs
-USER_APP_URL=http://localhost:3000
-SELLER_APP_URL=http://localhost:3002
-
-# Databases Configuration
-LOCAL_MONGO_URL=mongodb://127.0.0.1:27017/rentapp
-MONGO_URL=your_mongodb_atlas_connection_string
-REDIS_URL=redis://127.0.0.1:6379
-
-# Session & JWT Security Secrets
-SESSION_SECRET=your_long_session_secret_key
-JWT_SECRET=your_jwt_secret_token
-
-# Google Gemini AI Key
-GEMINI_API_KEY=your_gemini_api_key
-
-# Cloudinary Storage Credentials
-CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
-CLOUDINARY_API_KEY=your_cloudinary_api_key
-CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-
-# Twilio SMS OTP Settings
-TWILIO_ACCOUNT_SID=your_twilio_account_sid
-TWILIO_AUTH_TOKEN=your_twilio_auth_token
-TWILIO_VERIFY_SERVICE_SID=your_twilio_verify_service_sid
-
-# SMTP Email Configuration
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_gmail_app_password
-
-# Demo Accounts (Automatically generated via Seed script)
-DEMO_RENTER_EMAIL=renter@rentit.com
-DEMO_RENTER_PASS=renter123
-DEMO_SELLER_EMAIL=seller@rentit.com
-DEMO_SELLER_PASS=seller123
-DEMO_ADMIN_EMAIL=admin@rentit.com
-DEMO_ADMIN_PASS=admin123
-```
-
-### Step 3: Seed the Database
+### Step 2: Seed the Database
 Initialize your database with demo users, 50 pre-populated categorized items, locations in Bangalore, reviews, and test credentials:
 ```bash
 node seed.js
