@@ -5,6 +5,9 @@ const localMongoUrl = process.env.LOCAL_MONGO_URL || 'mongodb://127.0.0.1:27017/
 
 mongoose.set('strictQuery', false);
 
+const dns = require('dns').promises;
+const url = require('url');
+
 async function connectDB() {
   const connectionOptions = {
     serverSelectionTimeoutMS: 5000,
@@ -13,34 +16,49 @@ async function connectDB() {
     socketTimeoutMS: 45000
   };
 
-  try {
-    await mongoose.connect(mongoUrl, connectionOptions);
-    console.log('Successfully connected to MongoDB Atlas');
-  } catch (error) {
-    console.error('Failed to connect to MongoDB Atlas. Error:', error.message);
-    console.log(`Attempting fallback connection to local MongoDB: ${localMongoUrl}`);
+  const isLocal = !mongoUrl || mongoUrl.includes('127.0.0.1') || mongoUrl.includes('localhost');
+
+  if (!isLocal) {
     try {
-      await mongoose.connect(localMongoUrl, connectionOptions);
-      console.log('Successfully connected to local MongoDB');
-    } catch (localError) {
-      console.error('Fallback to local MongoDB also failed:', localError.message);
-      process.exit(1);
+      const hostPart = mongoUrl.replace(/^mongodb(\+srv)?:\/\//, '').split('/')[0].split('@').pop().split(':')[0];
+      console.log(`Checking DNS resolution for Atlas host: ${hostPart}`);
+      const dnsPromise = dns.lookup(hostPart);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('DNS lookup timeout')), 2500)
+      );
+      await Promise.race([dnsPromise, timeoutPromise]);
+      
+      console.log('Connecting to MongoDB Atlas...');
+      await mongoose.connect(mongoUrl, connectionOptions);
+      console.log('Successfully connected to MongoDB Atlas');
+      return;
+    } catch (error) {
+      console.error('Failed to connect to MongoDB Atlas. Error:', error.message);
     }
+  }
+
+  console.log(`Connecting to local MongoDB: ${localMongoUrl}`);
+  try {
+    await mongoose.connect(localMongoUrl, connectionOptions);
+    console.log('Successfully connected to local MongoDB');
+  } catch (localError) {
+    console.error('Connection to local MongoDB failed:', localError.message);
+    process.exit(1);
   }
 }
 
 connectDB();
 
-mongoose.connection.once('open', async () => {
-  try {
-    // Drop the old single-field unique index on email
-    await mongoose.connection.db.collection('users').dropIndex('email_1');
-    console.log('Successfully dropped legacy single-field unique email index');
-  } catch (err) {
-    if (err.codeName !== 'IndexNotFound' && err.message !== 'index not found with name [email_1]') {
-      console.warn('Could not drop index email_1:', err.message);
-    }
-  }
-});
+// mongoose.connection.once('open', async () => {
+//   try {
+//     // Drop the old single-field unique index on email
+//     await mongoose.connection.db.collection('users').dropIndex('email_1');
+//     console.log('Successfully dropped legacy single-field unique email index');
+//   } catch (err) {
+//     if (err.codeName !== 'IndexNotFound' && err.message !== 'index not found with name [email_1]') {
+//       console.warn('Could not drop index email_1:', err.message);
+//     }
+//   }
+// });
 
 module.exports = mongoose.connection;
