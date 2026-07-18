@@ -27,7 +27,7 @@ async function connectDB() {
         ? dns.resolveSrv('_mongodb._tcp.' + hostPart)
         : dns.lookup(hostPart);
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('DNS lookup timeout')), 2500)
+        setTimeout(() => reject(new Error('DNS lookup timeout')), 15000)
       );
       await Promise.race([dnsPromise, timeoutPromise]);
       

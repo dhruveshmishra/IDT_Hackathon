@@ -56,7 +56,7 @@ async function bootstrap() {
           ? dns.resolveSrv('_mongodb._tcp.' + hostPart)
           : dns.lookup(hostPart);
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('timeout')), 2500)
+          setTimeout(() => reject(new Error('timeout')), 15000)
         );
         await Promise.race([dnsPromise, timeoutPromise]);
         console.log('DNS resolution succeeded for MongoDB Atlas.');
