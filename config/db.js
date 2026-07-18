@@ -20,23 +20,13 @@ async function connectDB() {
 
   if (!isLocal) {
     try {
-      const hostPart = mongoUrl.replace(/^mongodb(\+srv)?:\/\//, '').split('/')[0].split('@').pop().split(':')[0];
-      console.log(`Checking DNS resolution for Atlas host: ${hostPart}`);
-      const isSrv = mongoUrl.startsWith('mongodb+srv://');
-      const dnsPromise = isSrv 
-        ? dns.resolveSrv('_mongodb._tcp.' + hostPart)
-        : dns.lookup(hostPart);
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('DNS lookup timeout')), 15000)
-      );
-      await Promise.race([dnsPromise, timeoutPromise]);
-      
       console.log('Connecting to MongoDB Atlas...');
       await mongoose.connect(mongoUrl, connectionOptions);
       console.log('Successfully connected to MongoDB Atlas');
       return;
     } catch (error) {
       console.error('Failed to connect to MongoDB Atlas. Error:', error.message);
+      process.env.MONGO_URL = localMongoUrl;
     }
   }
 

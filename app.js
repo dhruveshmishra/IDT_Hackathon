@@ -43,29 +43,7 @@ const localMongoUrl = process.env.LOCAL_MONGO_URL || 'mongodb://127.0.0.1:27017/
 const dns = require('dns').promises;
 
 async function bootstrap() {
-  const mongoUrl = process.env.MONGO_URL;
-  if (mongoUrl) {
-    try {
-      const hostPart = mongoUrl.replace(/^mongodb(\+srv)?:\/\//, '').split('/')[0].split('@').pop().split(':')[0];
-      if (hostPart === 'localhost' || hostPart === '127.0.0.1' || require('net').isIP(hostPart)) {
-        console.log(`Host ${hostPart} is local, skipping DNS lookup.`);
-      } else {
-        console.log(`Checking DNS resolution for Atlas host: ${hostPart}`);
-        const isSrv = mongoUrl.startsWith('mongodb+srv://');
-        const dnsPromise = isSrv 
-          ? dns.resolveSrv('_mongodb._tcp.' + hostPart)
-          : dns.lookup(hostPart);
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('timeout')), 15000)
-        );
-        await Promise.race([dnsPromise, timeoutPromise]);
-        console.log('DNS resolution succeeded for MongoDB Atlas.');
-      }
-    } catch (err) {
-      console.log('MongoDB Atlas host is unreachable. Falling back to local MongoDB.');
-      process.env.MONGO_URL = localMongoUrl;
-    }
-  }
+  // MONGO_URL will be verified and resolved dynamically inside config/db.js
 
   const sessionMongoUrl = process.env.MONGO_URL || localMongoUrl;
 
