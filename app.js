@@ -19,6 +19,8 @@ const { Server } = require('socket.io');
 const http = require('http');
 const path = require('path');
 const compression = require('compression');
+const { RedisStore } = require('connect-redis');
+const { createClient } = require('redis');
 
 
 // Port & deployment mode
@@ -71,12 +73,36 @@ async function bootstrap() {
   // ----------------------------------------------------
   // Isolated Session Configurations (to prevent cookie collisions on different localhost ports)
   // ----------------------------------------------------
+  let redisClient;
+  let useRedis = false;
+
+  if (process.env.REDIS_URL) {
+    console.log(`Connecting to Redis: ${process.env.REDIS_URL}`);
+    redisClient = createClient({ url: process.env.REDIS_URL });
+    redisClient.connect().catch(err => {
+      console.error('Redis connection failed:', err.message);
+    });
+    useRedis = true;
+  }
+
+  const userSessionStore = useRedis
+    ? new RedisStore({ client: redisClient, prefix: 'rentit:user:' })
+    : MongoStore.create({ mongoUrl: sessionMongoUrl });
+
+  const adminSessionStore = useRedis
+    ? new RedisStore({ client: redisClient, prefix: 'rentit:admin:' })
+    : MongoStore.create({ mongoUrl: sessionMongoUrl });
+
+  const sellerSessionStore = useRedis
+    ? new RedisStore({ client: redisClient, prefix: 'rentit:seller:' })
+    : MongoStore.create({ mongoUrl: sessionMongoUrl });
+
   const userSession = session({
     name: 'rentit.user.sid',
     secret: process.env.SESSION_SECRET || 'rentit_user_secret_key',
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: sessionMongoUrl }),
+    store: userSessionStore,
     cookie: { maxAge: 7 * 24 * 60 * 60 * 1000, httpOnly: true }
   });
 
@@ -85,7 +111,7 @@ async function bootstrap() {
     secret: process.env.SESSION_SECRET || 'rentit_admin_secret_key',
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: sessionMongoUrl }),
+    store: adminSessionStore,
     cookie: { maxAge: 7 * 24 * 60 * 60 * 1000, httpOnly: true }
   });
 
@@ -94,7 +120,7 @@ async function bootstrap() {
     secret: process.env.SESSION_SECRET || 'rentit_seller_secret_key',
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: sessionMongoUrl }),
+    store: sellerSessionStore,
     cookie: { maxAge: 7 * 24 * 60 * 60 * 1000, httpOnly: true }
   });
 
@@ -242,6 +268,19 @@ async function bootstrap() {
   console.log('Attaching Socket.io...');
   // Mount Socket.io onto ALL three servers so sellers/admins can also use real-time chat
   const io = new Server({ cors: { origin: '*' } });
+
+  if (useRedis) {
+    const { createAdapter } = require('@socket.io/redis-adapter');
+    const pubClient = redisClient.duplicate();
+    const subClient = redisClient.duplicate();
+    Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
+      io.adapter(createAdapter(pubClient, subClient));
+      console.log('Socket.io Redis Adapter successfully attached');
+    }).catch(err => {
+      console.error('Socket.io Redis Adapter failed to attach:', err.message);
+    });
+  }
+
   io.attach(userServer);
   io.attach(adminServer);
   io.attach(sellerServer);

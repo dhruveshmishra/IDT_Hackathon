@@ -29,5 +29,7 @@ const itemSchema = new mongoose.Schema({
 
 itemSchema.index({ location: '2dsphere' });
 itemSchema.index({ title: 'text', description: 'text', tags: 'text' });
+itemSchema.index({ status: 1, isAvailable: 1 });
+itemSchema.index({ owner: 1 });
 
 module.exports = mongoose.model('Item', itemSchema);

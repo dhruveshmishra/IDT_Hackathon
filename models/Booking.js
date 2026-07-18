@@ -30,5 +30,6 @@ const bookingSchema = new mongoose.Schema({
 
 bookingSchema.index({ seller: 1, createdAt: -1 });
 bookingSchema.index({ renter: 1, createdAt: -1 });
+bookingSchema.index({ item: 1, status: 1 });
 
 module.exports = mongoose.model('Booking', bookingSchema);

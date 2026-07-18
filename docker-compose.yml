@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # 1. MongoDB Database Service
+  mongodb:
+    image: mongo:6.0
+    container_name: rentapp_mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - rentapp_network
+
+  # 2. Redis Cache & Session Broker Service
+  redis:
+    image: redis:7-alpine
+    container_name: rentapp_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - rentapp_network
+
+  # 3. User Marketplace Service
+  user-app:
+    build: .
+    container_name: rentapp_user
+    ports:
+      - "3000:3000"
+    environment:
+      - APP_MODE=user
+      - PORT=3000
+      - MONGO_URL=mongodb://mongodb:27017/rentapp
+      - REDIS_URL=redis://redis:6379
+      # Inherit other .env configurations below if needed
+      - SESSION_SECRET=rentit_super_secret_session_key_123987
+      - JWT_SECRET=rentit_jwt_secret_token_88372
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - rentapp_network
+
+  # 4. Seller Dashboard Service
+  seller-app:
+    build: .
+    container_name: rentapp_seller
+    ports:
+      - "3002:3002"
+    environment:
+      - APP_MODE=seller
+      - PORT=3002
+      - MONGO_URL=mongodb://mongodb:27017/rentapp
+      - REDIS_URL=redis://redis:6379
+      - SESSION_SECRET=rentit_super_secret_session_key_123987
+      - JWT_SECRET=rentit_jwt_secret_token_88372
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - rentapp_network
+
+  # 5. Admin Portal Service
+  admin-app:
+    build: .
+    container_name: rentapp_admin
+    ports:
+      - "3001:3001"
+    environment:
+      - APP_MODE=admin
+      - PORT=3001
+      - MONGO_URL=mongodb://mongodb:27017/rentapp
+      - REDIS_URL=redis://redis:6379
+      - SESSION_SECRET=rentit_super_secret_session_key_123987
+      - JWT_SECRET=rentit_jwt_secret_token_88372
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - rentapp_network
+
+volumes:
+  mongo_data:
+
+networks:
+  rentapp_network:
+    driver: bridge
