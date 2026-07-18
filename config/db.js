@@ -22,7 +22,10 @@ async function connectDB() {
     try {
       const hostPart = mongoUrl.replace(/^mongodb(\+srv)?:\/\//, '').split('/')[0].split('@').pop().split(':')[0];
       console.log(`Checking DNS resolution for Atlas host: ${hostPart}`);
-      const dnsPromise = dns.lookup(hostPart);
+      const isSrv = mongoUrl.startsWith('mongodb+srv://');
+      const dnsPromise = isSrv 
+        ? dns.resolveSrv('_mongodb._tcp.' + hostPart)
+        : dns.lookup(hostPart);
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('DNS lookup timeout')), 2500)
       );

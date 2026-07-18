@@ -51,7 +51,10 @@ async function bootstrap() {
         console.log(`Host ${hostPart} is local, skipping DNS lookup.`);
       } else {
         console.log(`Checking DNS resolution for Atlas host: ${hostPart}`);
-        const dnsPromise = dns.lookup(hostPart);
+        const isSrv = mongoUrl.startsWith('mongodb+srv://');
+        const dnsPromise = isSrv 
+          ? dns.resolveSrv('_mongodb._tcp.' + hostPart)
+          : dns.lookup(hostPart);
         const timeoutPromise = new Promise((_, reject) => 
           setTimeout(() => reject(new Error('timeout')), 2500)
         );
