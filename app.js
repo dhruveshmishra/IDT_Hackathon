@@ -31,8 +31,8 @@ const ADMIN_PORT  = PORT && APP_MODE === 'admin'  ? PORT : (process.env.ADMIN_PO
 const SELLER_PORT = PORT && APP_MODE === 'seller' ? PORT : (process.env.SELLER_PORT || 3002);
 
 // Public-facing URLs (used in email links & EJS templates)
-const USER_APP_URL   = process.env.USER_APP_URL   || `http://localhost:${USER_PORT}`;
-const SELLER_APP_URL = process.env.SELLER_APP_URL || `http://localhost:${SELLER_PORT}`;
+const USER_APP_URL   = process.env.USER_APP_URL   || (process.env.VERCEL ? '' : `http://localhost:${USER_PORT}`);
+const SELLER_APP_URL = process.env.SELLER_APP_URL || (process.env.VERCEL ? '/seller' : `http://localhost:${SELLER_PORT}`);
 
 // Export for use in other modules (admin.js email links etc.)
 module.exports = { USER_APP_URL, SELLER_APP_URL, bootstrap };
