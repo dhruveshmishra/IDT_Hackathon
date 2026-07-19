@@ -1,4 +1,5 @@
 const express = require('express');
+const ejs = require('ejs'); // Explicitly required for Vercel's file-trace bundling
 const { bootstrap } = require('../app');
 
 const mainApp = express();
