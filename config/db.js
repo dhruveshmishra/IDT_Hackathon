@@ -36,7 +36,7 @@ async function connectDB() {
     console.log('Successfully connected to local MongoDB');
   } catch (localError) {
     console.error('Connection to local MongoDB failed:', localError.message);
-    process.exit(1);
+    throw new Error(`Connection to local MongoDB failed: ${localError.message}`);
   }
 }
 
