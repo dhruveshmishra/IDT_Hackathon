@@ -35,7 +35,7 @@ const USER_APP_URL   = process.env.USER_APP_URL   || `http://localhost:${USER_PO
 const SELLER_APP_URL = process.env.SELLER_APP_URL || `http://localhost:${SELLER_PORT}`;
 
 // Export for use in other modules (admin.js email links etc.)
-module.exports = { USER_APP_URL, SELLER_APP_URL };
+module.exports = { USER_APP_URL, SELLER_APP_URL, bootstrap };
 
 // Database details
 const localMongoUrl = process.env.LOCAL_MONGO_URL || 'mongodb://127.0.0.1:27017/rentapp';
@@ -276,21 +276,27 @@ async function bootstrap() {
   // -----------------------------------------------
   // Start the correct server(s) based on APP_MODE
   // -----------------------------------------------
-  if (APP_MODE === 'user') {
-    userServer.listen(USER_PORT, () => console.log(`[USER]   Marketplace running on port ${USER_PORT}  → ${USER_APP_URL}`));
-  } else if (APP_MODE === 'seller') {
-    sellerServer.listen(SELLER_PORT, () => console.log(`[SELLER] Dashboard running on port ${SELLER_PORT} → ${SELLER_APP_URL}`));
-  } else if (APP_MODE === 'admin') {
-    adminServer.listen(ADMIN_PORT, () => console.log(`[ADMIN]  Portal running on port ${ADMIN_PORT}`));
-  } else {
-    // APP_MODE=all  — local development (default)
-    userServer.listen(USER_PORT,     () => console.log(`[USER]   Marketplace running on port ${USER_PORT}`));
-    adminServer.listen(ADMIN_PORT,   () => console.log(`[ADMIN]  Portal running on port ${ADMIN_PORT}`));
-    sellerServer.listen(SELLER_PORT, () => console.log(`[SELLER] Dashboard running on port ${SELLER_PORT}`));
+  if (!process.env.VERCEL) {
+    if (APP_MODE === 'user') {
+      userServer.listen(USER_PORT, () => console.log(`[USER]   Marketplace running on port ${USER_PORT}  → ${USER_APP_URL}`));
+    } else if (APP_MODE === 'seller') {
+      sellerServer.listen(SELLER_PORT, () => console.log(`[SELLER] Dashboard running on port ${SELLER_PORT} → ${SELLER_APP_URL}`));
+    } else if (APP_MODE === 'admin') {
+      adminServer.listen(ADMIN_PORT, () => console.log(`[ADMIN]  Portal running on port ${ADMIN_PORT}`));
+    } else {
+      // APP_MODE=all  — local development (default)
+      userServer.listen(USER_PORT,     () => console.log(`[USER]   Marketplace running on port ${USER_PORT}`));
+      adminServer.listen(ADMIN_PORT,   () => console.log(`[ADMIN]  Portal running on port ${ADMIN_PORT}`));
+      sellerServer.listen(SELLER_PORT, () => console.log(`[SELLER] Dashboard running on port ${SELLER_PORT}`));
+    }
   }
+
+  return { userApp, adminApp, sellerApp };
 }
 
-bootstrap().catch(err => {
-  console.error('Error bootstrapping application:', err);
-  process.exit(1);
-});
+if (!process.env.VERCEL) {
+  bootstrap().catch(err => {
+    console.error('Error bootstrapping application:', err);
+    process.exit(1);
+  });
+}
